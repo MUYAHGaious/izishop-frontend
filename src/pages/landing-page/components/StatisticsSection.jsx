@@ -4,52 +4,52 @@ import Icon from '../../../components/AppIcon';
 const StatisticsSection = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [animatedStats, setAnimatedStats] = useState({
-    shops: 0,
     products: 0,
-    users: 0,
-    orders: 0
+    suppliers: 0,
+    categories: 0,
+    regions: 0
   });
   const sectionRef = useRef(null);
 
   const targetStats = {
-    shops: 2847,
-    products: 45632,
-    users: 18945,
-    orders: 127834
+    products: 200000000, // 200M+
+    suppliers: 200000,   // 200K+
+    categories: 5900,    // 5,900
+    regions: 200         // 200+
   };
 
   const statsData = [
     {
-      key: 'shops',
-      label: 'Active Shops',
-      icon: 'Store',
-      color: 'text-primary',
-      bgColor: 'bg-primary/10',
-      suffix: '+'
-    },
-    {
       key: 'products',
-      label: 'Products Listed',
+      label: 'Products',
       icon: 'Package',
-      color: 'text-success',
-      bgColor: 'bg-success/10',
-      suffix: '+'
+      color: '#0A73B7',
+      suffix: 'M+',
+      displayValue: '200'
     },
     {
-      key: 'users',
-      label: 'Happy Customers',
-      icon: 'Users',
-      color: 'text-accent',
-      bgColor: 'bg-accent/10',
-      suffix: '+'
+      key: 'suppliers',
+      label: 'Suppliers',
+      icon: 'Store',
+      color: '#F56522',
+      suffix: 'K+',
+      displayValue: '200'
     },
     {
-      key: 'orders',
-      label: 'Orders Completed',
-      icon: 'ShoppingBag',
-      color: 'text-secondary',
-      bgColor: 'bg-secondary/10',
-      suffix: '+'
+      key: 'categories',
+      label: 'Product Categories',
+      icon: 'Grid3X3',
+      color: '#0A73B7',
+      suffix: '',
+      displayValue: '5,900'
+    },
+    {
+      key: 'regions',
+      label: 'Countries and Regions',
+      icon: 'Globe',
+      color: '#F56522',
+      suffix: '+',
+      displayValue: '200'
     }
   ];
 
@@ -87,10 +87,10 @@ const StatisticsSection = () => {
       const easeOutQuart = 1 - Math.pow(1 - progress, 4);
 
       setAnimatedStats({
-        shops: Math.floor(targetStats.shops * easeOutQuart),
         products: Math.floor(targetStats.products * easeOutQuart),
-        users: Math.floor(targetStats.users * easeOutQuart),
-        orders: Math.floor(targetStats.orders * easeOutQuart)
+        suppliers: Math.floor(targetStats.suppliers * easeOutQuart),
+        categories: Math.floor(targetStats.categories * easeOutQuart),
+        regions: Math.floor(targetStats.regions * easeOutQuart)
       });
 
       if (currentStep >= steps) {
@@ -102,152 +102,158 @@ const StatisticsSection = () => {
     return () => clearInterval(timer);
   }, [isVisible]);
 
-  const formatNumber = (num) => {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + 'M';
-    } else if (num >= 1000) {
-      return (num / 1000).toFixed(1) + 'K';
+  const formatNumber = (num, key) => {
+    if (key === 'products') {
+      return Math.floor(num / 1000000);
+    } else if (key === 'suppliers') {
+      return Math.floor(num / 1000);
+    } else if (key === 'categories') {
+      return num.toLocaleString();
+    } else {
+      return num;
     }
-    return num.toLocaleString();
   };
 
   return (
-    <section ref={sectionRef} className="py-16 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+    <section ref={sectionRef} className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Trusted by Thousands
+          <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: '#111827' }}>
+            Discover your next business opportunity
           </h2>
-          <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-            Join the growing community of buyers and sellers across Cameroon
+          <p className="text-lg max-w-3xl mx-auto" style={{ color: '#6B7280' }}>
+            Connect with millions of products and thousands of verified suppliers across diverse categories
           </p>
         </div>
 
         {/* Statistics Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
           {statsData.map((stat) => (
             <div
               key={stat.key}
               className="text-center group"
             >
-              <div className="relative">
+              <div className="relative mb-6">
                 {/* Icon Background */}
-                <div className={`w-16 h-16 md:w-20 md:h-20 ${stat.bgColor} rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 marketplace-transition`}>
+                <div 
+                  className="w-20 h-20 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300"
+                  style={{ backgroundColor: `${stat.color}15` }}
+                >
                   <Icon 
                     name={stat.icon} 
                     size={32} 
-                    className={`${stat.color} group-hover:scale-110 marketplace-transition`} 
+                    style={{ color: stat.color }}
                   />
-                </div>
-
-                {/* Animated Ring */}
-                <div className="absolute inset-0 w-16 h-16 md:w-20 md:h-20 mx-auto">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="45"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className="text-muted opacity-20"
-                    />
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="45"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeDasharray="283"
-                      strokeDashoffset={isVisible ? "70" : "283"}
-                      className={`${stat.color} marketplace-transition`}
-                      style={{ transitionDuration: '2s' }}
-                    />
-                  </svg>
                 </div>
               </div>
 
               {/* Number */}
               <div className="mb-2">
-                <span className="text-3xl md:text-4xl font-bold text-foreground font-mono">
-                  {formatNumber(animatedStats[stat.key])}
+                <span className="text-4xl md:text-5xl font-bold font-mono" style={{ color: '#111827' }}>
+                  {stat.displayValue}
                 </span>
-                <span className="text-2xl md:text-3xl font-bold text-foreground">
+                <span className="text-3xl md:text-4xl font-bold" style={{ color: '#111827' }}>
                   {stat.suffix}
                 </span>
               </div>
 
               {/* Label */}
-              <p className="text-sm md:text-base font-medium text-text-secondary">
+              <p className="text-base font-medium" style={{ color: '#6B7280' }}>
                 {stat.label}
               </p>
             </div>
           ))}
         </div>
 
-        {/* Additional Stats */}
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center mr-3">
-                <Icon name="TrendingUp" size={24} className="text-success" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">98.5%</p>
-                <p className="text-sm text-text-secondary">Customer Satisfaction</p>
-              </div>
-            </div>
+        {/* Trust and Quality Section */}
+        <div className="bg-gradient-to-r from-blue-50 to-orange-50 rounded-2xl p-8 md:p-12">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl md:text-3xl font-bold mb-4" style={{ color: '#111827' }}>
+              Streamline ordering from search to fulfillment, all in one place
+            </h3>
+            <p className="text-lg max-w-3xl mx-auto" style={{ color: '#6B7280' }}>
+              Our comprehensive platform ensures quality, security, and efficiency at every step of your business journey
+            </p>
           </div>
 
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center mr-3">
-                <Icon name="Clock" size={24} className="text-accent" />
+          {/* Process Steps */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+            {[
+              { icon: 'Search', title: 'Search for matches', desc: 'Find products and suppliers' },
+              { icon: 'CheckCircle', title: 'Identify the right one', desc: 'Verify credentials and quality' },
+              { icon: 'CreditCard', title: 'Pay with confidence', desc: 'Secure payment options' },
+              { icon: 'Truck', title: 'Fulfill with transparency', desc: 'Track your orders' },
+              { icon: 'Settings', title: 'Manage with ease', desc: 'Complete order management' }
+            ].map((step, index) => (
+              <div key={index} className="text-center relative">
+                <div 
+                  className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                  style={{ backgroundColor: index % 2 === 0 ? '#0A73B7' : '#F56522' }}
+                >
+                  <Icon name={step.icon} size={24} color="white" />
+                </div>
+                <h4 className="font-semibold mb-2" style={{ color: '#111827' }}>
+                  {step.title}
+                </h4>
+                <p className="text-sm" style={{ color: '#6B7280' }}>
+                  {step.desc}
+                </p>
+                {index < 4 && (
+                  <div className="hidden md:block absolute top-8 left-full w-full">
+                    <div className="w-full h-0.5" style={{ backgroundColor: '#D1D5DB' }}></div>
+                  </div>
+                )}
               </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">24/7</p>
-                <p className="text-sm text-text-secondary">Customer Support</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-3">
-                <Icon name="Shield" size={24} className="text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">100%</p>
-                <p className="text-sm text-text-secondary">Secure Payments</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* Trust Indicators */}
-        <div className="mt-12 text-center">
-          <p className="text-sm text-text-secondary mb-6">Trusted by leading businesses in Cameroon</p>
-          <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-success rounded-full flex items-center justify-center">
-                <Icon name="Check" size={16} className="text-success-foreground" />
-              </div>
-              <span className="text-sm font-medium text-foreground">SSL Secured</span>
+        {/* Additional Trust Indicators */}
+        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="text-center p-6 rounded-xl" style={{ backgroundColor: '#F3F4F6' }}>
+            <div 
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ backgroundColor: '#10B981' }}
+            >
+              <Icon name="Shield" size={24} color="white" />
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                <Icon name="Shield" size={16} className="text-primary-foreground" />
-              </div>
-              <span className="text-sm font-medium text-foreground">Verified Sellers</span>
+            <h4 className="font-bold text-lg mb-2" style={{ color: '#111827' }}>
+              Trade Assurance
+            </h4>
+            <p className="text-sm" style={{ color: '#6B7280' }}>
+              Protection against product or shipping issues with secure payment options
+            </p>
+          </div>
+
+          <div className="text-center p-6 rounded-xl" style={{ backgroundColor: '#F3F4F6' }}>
+            <div 
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ backgroundColor: '#0A73B7' }}
+            >
+              <Icon name="Award" size={24} color="white" />
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
-                <Icon name="Award" size={16} className="text-accent-foreground" />
-              </div>
-              <span className="text-sm font-medium text-foreground">Quality Guaranteed</span>
+            <h4 className="font-bold text-lg mb-2" style={{ color: '#111827' }}>
+              Verified Suppliers
+            </h4>
+            <p className="text-sm" style={{ color: '#6B7280' }}>
+              Connect with suppliers with third-party-verified credentials and capabilities
+            </p>
+          </div>
+
+          <div className="text-center p-6 rounded-xl" style={{ backgroundColor: '#F3F4F6' }}>
+            <div 
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ backgroundColor: '#F56522' }}
+            >
+              <Icon name="Headphones" size={24} color="white" />
             </div>
+            <h4 className="font-bold text-lg mb-2" style={{ color: '#111827' }}>
+              24/7 Support
+            </h4>
+            <p className="text-sm" style={{ color: '#6B7280' }}>
+              Get assistance and mediation support for any purchase-related concerns
+            </p>
           </div>
         </div>
       </div>
@@ -256,3 +262,4 @@ const StatisticsSection = () => {
 };
 
 export default StatisticsSection;
+

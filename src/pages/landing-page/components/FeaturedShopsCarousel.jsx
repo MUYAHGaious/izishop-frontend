@@ -12,203 +12,115 @@ const FeaturedShopsCarousel = () => {
   const featuredShops = [
     {
       id: 1,
-      name: "TechHub Store",
+      name: "TechHub Suppliers",
       image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop",
       rating: 4.8,
       reviewCount: 1247,
-      category: "Electronics",
-      description: "Premium electronics and gadgets",
-      productsCount: 156,
+      category: "Electronics & Technology",
+      description: "Leading supplier of premium electronics and tech accessories",
+      productsCount: "2.5K+",
       location: "Douala, Cameroon",
       verified: true,
-      badge: "Top Seller"
+      badge: "Gold Supplier",
+      yearsInBusiness: 8,
+      responseRate: "98%"
     },
     {
       id: 2,
-      name: "Fashion Central",
+      name: "Fashion Forward Ltd",
       image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop",
       rating: 4.6,
       reviewCount: 892,
-      category: "Fashion",
-      description: "Trendy clothing and accessories",
-      productsCount: 234,
+      category: "Fashion & Apparel",
+      description: "Wholesale fashion and clothing manufacturer",
+      productsCount: "1.8K+",
       location: "Yaoundé, Cameroon",
       verified: true,
-      badge: "Featured"
+      badge: "Verified Supplier",
+      yearsInBusiness: 5,
+      responseRate: "95%"
     },
     {
       id: 3,
-      name: "Home & Garden Plus",
-      image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop",
+      name: "Industrial Solutions Co",
+      image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=300&fit=crop",
       rating: 4.7,
       reviewCount: 634,
-      category: "Home & Garden",
-      description: "Everything for your home",
-      productsCount: 189,
+      category: "Industrial Equipment",
+      description: "Heavy machinery and industrial equipment supplier",
+      productsCount: "950+",
       location: "Bamenda, Cameroon",
       verified: true,
-      badge: "New"
+      badge: "Trade Assurance",
+      yearsInBusiness: 12,
+      responseRate: "99%"
     },
     {
       id: 4,
-      name: "Sports Arena",
-      image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop",
-      rating: 4.5,
-      reviewCount: 456,
-      category: "Sports",
-      description: "Sports equipment and gear",
-      productsCount: 98,
+      name: "AgriCorp Cameroon",
+      image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=300&fit=crop",
+      rating: 4.9,
+      reviewCount: 1156,
+      category: "Food & Agriculture",
+      description: "Premium agricultural products and food processing",
+      productsCount: "750+",
       location: "Garoua, Cameroon",
       verified: true,
-      badge: "Popular"
+      badge: "Premium Supplier",
+      yearsInBusiness: 15,
+      responseRate: "97%"
     },
     {
       id: 5,
-      name: "Beauty Boutique",
-      image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=300&fit=crop",
-      rating: 4.9,
-      reviewCount: 1089,
-      category: "Beauty",
-      description: "Cosmetics and skincare",
-      productsCount: 267,
+      name: "AutoParts Central",
+      image: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=400&h=300&fit=crop",
+      rating: 4.5,
+      reviewCount: 723,
+      category: "Automotive",
+      description: "Complete automotive parts and accessories",
+      productsCount: "1.2K+",
       location: "Douala, Cameroon",
       verified: true,
-      badge: "Best Rated"
-    },
-    {
-      id: 6,
-      name: "Book Haven",
-      image: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop",
-      rating: 4.4,
-      reviewCount: 321,
-      category: "Books",
-      description: "Books and educational materials",
-      productsCount: 445,
-      location: "Yaoundé, Cameroon",
-      verified: true,
-      badge: "Educational"
+      badge: "Verified Supplier",
+      yearsInBusiness: 7,
+      responseRate: "94%"
     }
   ];
 
-  const itemsPerView = {
-    mobile: 1,
-    tablet: 2,
-    desktop: 4
-  };
-
-  const [currentItemsPerView, setCurrentItemsPerView] = useState(itemsPerView.mobile);
+  const itemsPerView = 3;
+  const maxIndex = Math.max(0, featuredShops.length - itemsPerView);
 
   useEffect(() => {
-    const handleResize = () => {
-      const width = window.innerWidth;
-      if (width >= 1024) {
-        setCurrentItemsPerView(itemsPerView.desktop);
-      } else if (width >= 768) {
-        setCurrentItemsPerView(itemsPerView.tablet);
-      } else {
-        setCurrentItemsPerView(itemsPerView.mobile);
-      }
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    if (!isAutoPlaying) return;
-
-    const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => {
-        const maxIndex = Math.max(0, featuredShops.length - currentItemsPerView);
-        return prevIndex >= maxIndex ? 0 : prevIndex + 1;
-      });
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [isAutoPlaying, currentItemsPerView, featuredShops.length]);
-
-  const handlePrevious = () => {
-    setIsAutoPlaying(false);
-    setCurrentIndex((prevIndex) => {
-      const maxIndex = Math.max(0, featuredShops.length - currentItemsPerView);
-      return prevIndex <= 0 ? maxIndex : prevIndex - 1;
-    });
-    setTimeout(() => setIsAutoPlaying(true), 3000);
-  };
-
-  const handleNext = () => {
-    setIsAutoPlaying(false);
-    setCurrentIndex((prevIndex) => {
-      const maxIndex = Math.max(0, featuredShops.length - currentItemsPerView);
-      return prevIndex >= maxIndex ? 0 : prevIndex + 1;
-    });
-    setTimeout(() => setIsAutoPlaying(true), 3000);
-  };
-
-  const handleDotClick = (index) => {
-    setIsAutoPlaying(false);
-    setCurrentIndex(index);
-    setTimeout(() => setIsAutoPlaying(true), 3000);
-  };
-
-  const renderStars = (rating) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 !== 0;
-
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(
-        <Icon key={i} name="Star" size={14} className="text-accent fill-current" />
-      );
+    if (isAutoPlaying) {
+      const interval = setInterval(() => {
+        setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
+      }, 4000);
+      return () => clearInterval(interval);
     }
+  }, [isAutoPlaying, maxIndex]);
 
-    if (hasHalfStar) {
-      stars.push(
-        <Icon key="half" name="Star" size={14} className="text-accent fill-current opacity-50" />
-      );
-    }
-
-    const remainingStars = 5 - Math.ceil(rating);
-    for (let i = 0; i < remainingStars; i++) {
-      stars.push(
-        <Icon key={`empty-${i}`} name="Star" size={14} className="text-muted-foreground" />
-      );
-    }
-
-    return stars;
+  const nextSlide = () => {
+    setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
   };
 
-  const getBadgeColor = (badge) => {
-    switch (badge) {
-      case 'Top Seller':
-        return 'bg-accent text-accent-foreground';
-      case 'Featured':
-        return 'bg-primary text-primary-foreground';
-      case 'New':
-        return 'bg-success text-success-foreground';
-      case 'Popular':
-        return 'bg-secondary text-secondary-foreground';
-      case 'Best Rated':
-        return 'bg-warning text-warning-foreground';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
+  const prevSlide = () => {
+    setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1));
   };
 
-  const maxIndex = Math.max(0, featuredShops.length - currentItemsPerView);
-  const totalDots = maxIndex + 1;
+  const goToSlide = (index) => {
+    setCurrentIndex(Math.min(index, maxIndex));
+  };
 
   return (
-    <section className="py-16 bg-background">
+    <section className="py-16" style={{ backgroundColor: '#F3F4F6' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Featured Shops
+          <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: '#111827' }}>
+            Trade with confidence from production quality to purchase protection
           </h2>
-          <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-            Discover amazing products from our top-rated sellers across Cameroon
+          <p className="text-lg max-w-3xl mx-auto" style={{ color: '#6B7280' }}>
+            Connect with verified suppliers who have proven track records and quality certifications
           </p>
         </div>
 
@@ -216,140 +128,167 @@ const FeaturedShopsCarousel = () => {
         <div className="relative">
           {/* Navigation Buttons */}
           <button
-            onClick={handlePrevious}
-            className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-card border border-border rounded-full flex items-center justify-center text-text-secondary hover:text-primary hover:bg-muted marketplace-transition shadow-card"
-            style={{ marginLeft: '-24px' }}
+            onClick={prevSlide}
+            className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 rounded-full shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center"
+            style={{ backgroundColor: 'white', color: '#0A73B7' }}
+            onMouseEnter={() => setIsAutoPlaying(false)}
+            onMouseLeave={() => setIsAutoPlaying(true)}
           >
-            <Icon name="ChevronLeft" size={20} />
+            <Icon name="ChevronLeft" size={24} />
           </button>
 
           <button
-            onClick={handleNext}
-            className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-card border border-border rounded-full flex items-center justify-center text-text-secondary hover:text-primary hover:bg-muted marketplace-transition shadow-card"
-            style={{ marginRight: '-24px' }}
+            onClick={nextSlide}
+            className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 rounded-full shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center"
+            style={{ backgroundColor: 'white', color: '#0A73B7' }}
+            onMouseEnter={() => setIsAutoPlaying(false)}
+            onMouseLeave={() => setIsAutoPlaying(true)}
           >
-            <Icon name="ChevronRight" size={20} />
+            <Icon name="ChevronRight" size={24} />
           </button>
 
-          {/* Carousel Track */}
-          <div className="overflow-hidden" ref={carouselRef}>
+          {/* Carousel Content */}
+          <div className="overflow-hidden mx-12">
             <div
-              className="flex marketplace-transition-page"
-              style={{
-                transform: `translateX(-${currentIndex * (100 / currentItemsPerView)}%)`,
-                width: `${(featuredShops.length / currentItemsPerView) * 100}%`
-              }}
+              ref={carouselRef}
+              className="flex transition-transform duration-500 ease-in-out"
+              style={{ transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)` }}
             >
               {featuredShops.map((shop) => (
                 <div
                   key={shop.id}
-                  className="px-3"
-                  style={{ width: `${100 / featuredShops.length}%` }}
+                  className="w-1/3 flex-shrink-0 px-3"
                 >
-                  <div className="bg-card border border-border rounded-lg shadow-card hover:shadow-modal marketplace-transition overflow-hidden group">
+                  <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
                     {/* Shop Image */}
-                    <div className="relative h-48 overflow-hidden">
+                    <div className="relative h-48">
                       <Image
                         src={shop.image}
                         alt={shop.name}
-                        className="w-full h-full object-cover group-hover:scale-105 marketplace-transition"
+                        className="w-full h-full object-cover"
                       />
-                      
                       {/* Badge */}
-                      <div className="absolute top-3 left-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getBadgeColor(shop.badge)}`}>
-                          {shop.badge}
-                        </span>
+                      <div 
+                        className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold text-white"
+                        style={{ backgroundColor: shop.badge === 'Gold Supplier' ? '#F56522' : '#0A73B7' }}
+                      >
+                        {shop.badge}
                       </div>
-
                       {/* Verified Badge */}
                       {shop.verified && (
-                        <div className="absolute top-3 right-3">
-                          <div className="w-6 h-6 bg-success rounded-full flex items-center justify-center">
-                            <Icon name="Check" size={14} className="text-success-foreground" />
-                          </div>
+                        <div className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#10B981' }}>
+                          <Icon name="Check" size={16} color="white" />
                         </div>
                       )}
                     </div>
 
                     {/* Shop Info */}
-                    <div className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="text-lg font-semibold text-foreground truncate flex-1">
-                          {shop.name}
-                        </h3>
+                    <div className="p-6">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-bold text-lg mb-1" style={{ color: '#111827' }}>
+                            {shop.name}
+                          </h3>
+                          <p className="text-sm" style={{ color: '#6B7280' }}>
+                            {shop.category}
+                          </p>
+                        </div>
+                        <div className="flex items-center">
+                          <Icon name="Star" size={16} style={{ color: '#F59E0B' }} />
+                          <span className="ml-1 text-sm font-medium" style={{ color: '#111827' }}>
+                            {shop.rating}
+                          </span>
+                        </div>
                       </div>
 
-                      <p className="text-sm text-text-secondary mb-3 line-clamp-2">
+                      <p className="text-sm mb-4" style={{ color: '#6B7280' }}>
                         {shop.description}
                       </p>
 
-                      {/* Rating */}
-                      <div className="flex items-center mb-3">
-                        <div className="flex items-center mr-2">
-                          {renderStars(shop.rating)}
+                      {/* Stats */}
+                      <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                        <div>
+                          <span style={{ color: '#6B7280' }}>Products: </span>
+                          <span className="font-medium" style={{ color: '#111827' }}>{shop.productsCount}</span>
                         </div>
-                        <span className="text-sm font-medium text-foreground">
-                          {shop.rating}
-                        </span>
-                        <span className="text-sm text-text-secondary ml-1">
-                          ({shop.reviewCount.toLocaleString()})
-                        </span>
-                      </div>
-
-                      {/* Shop Stats */}
-                      <div className="flex items-center justify-between text-sm text-text-secondary mb-4">
-                        <div className="flex items-center">
-                          <Icon name="Package" size={14} className="mr-1" />
-                          {shop.productsCount} products
+                        <div>
+                          <span style={{ color: '#6B7280' }}>Response: </span>
+                          <span className="font-medium" style={{ color: '#111827' }}>{shop.responseRate}</span>
                         </div>
-                        <div className="flex items-center">
-                          <Icon name="MapPin" size={14} className="mr-1" />
-                          {shop.location.split(',')[0]}
+                        <div>
+                          <span style={{ color: '#6B7280' }}>Experience: </span>
+                          <span className="font-medium" style={{ color: '#111827' }}>{shop.yearsInBusiness} years</span>
+                        </div>
+                        <div>
+                          <span style={{ color: '#6B7280' }}>Reviews: </span>
+                          <span className="font-medium" style={{ color: '#111827' }}>{shop.reviewCount}</span>
                         </div>
                       </div>
 
-                      {/* Category */}
-                      <div className="mb-4">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                          <Icon name="Tag" size={12} className="mr-1" />
-                          {shop.category}
+                      {/* Location */}
+                      <div className="flex items-center mb-4">
+                        <Icon name="MapPin" size={14} style={{ color: '#6B7280' }} />
+                        <span className="ml-1 text-sm" style={{ color: '#6B7280' }}>
+                          {shop.location}
                         </span>
                       </div>
 
-                      {/* Visit Shop Button */}
-                      <Link to={`/shop-profile?id=${shop.id}`}>
-                        <Button variant="outline" size="sm" fullWidth iconName="Store" iconPosition="left">
-                          Visit Shop
-                        </Button>
-                      </Link>
+                      {/* Action Buttons */}
+                      <div className="flex gap-2">
+                        <Link 
+                          to={`/shop-profile/${shop.id}`}
+                          className="flex-1"
+                        >
+                          <button 
+                            className="w-full py-2 px-4 text-white font-medium rounded-lg hover:opacity-90 transition-opacity"
+                            style={{ backgroundColor: '#0A73B7' }}
+                          >
+                            View Supplier
+                          </button>
+                        </Link>
+                        <button 
+                          className="px-4 py-2 border-2 rounded-lg hover:shadow-md transition-shadow"
+                          style={{ 
+                            color: '#0A73B7', 
+                            borderColor: '#0A73B7',
+                            backgroundColor: 'white'
+                          }}
+                        >
+                          <Icon name="MessageCircle" size={16} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
+
+          {/* Dots Indicator */}
+          <div className="flex justify-center mt-8 space-x-2">
+            {Array.from({ length: maxIndex + 1 }).map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToSlide(index)}
+                className={`w-3 h-3 rounded-full transition-colors ${
+                  index === currentIndex ? 'bg-blue-600' : 'bg-gray-300'
+                }`}
+                style={{ backgroundColor: index === currentIndex ? '#0A73B7' : '#D1D5DB' }}
+              />
+            ))}
+          </div>
         </div>
 
-        {/* Dots Indicator */}
-        <div className="flex justify-center mt-8 space-x-2">
-          {Array.from({ length: totalDots }).map((_, index) => (
-            <button
-              key={index}
-              onClick={() => handleDotClick(index)}
-              className={`w-3 h-3 rounded-full marketplace-transition ${
-                index === currentIndex ? 'bg-primary' : 'bg-muted hover:bg-muted-foreground/20'
-              }`}
-            />
-          ))}
-        </div>
-
-        {/* View All Shops Link */}
-        <div className="text-center mt-8">
-          <Link to="/product-catalog">
-            <Button variant="outline" size="lg" iconName="ArrowRight" iconPosition="right">
-              View All Shops
-            </Button>
+        {/* CTA Section */}
+        <div className="text-center mt-12">
+          <Link to="/shops-listing">
+            <button 
+              className="px-8 py-3 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: '#F56522' }}
+            >
+              View All Suppliers
+              <Icon name="ArrowRight" size={16} className="ml-2 inline" />
+            </button>
           </Link>
         </div>
       </div>
@@ -358,3 +297,4 @@ const FeaturedShopsCarousel = () => {
 };
 
 export default FeaturedShopsCarousel;
+

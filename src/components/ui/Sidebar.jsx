@@ -124,7 +124,7 @@ const Sidebar = () => {
                     Shop Owner
                   </div>
                   <div className="text-xs text-text-secondary truncate">
-                    owner@izishop.com
+                    owner@izishopin.com
                   </div>
                 </div>
               </div>

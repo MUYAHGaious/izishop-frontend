@@ -16,11 +16,11 @@ const LoginForm = ({ onLogin, isLoading }) => {
 
   // Mock credentials for different user types
   const mockCredentials = {
-    customer: { email: 'customer@izishop.com', password: 'Customer123!' },
-    shop_owner: { email: 'shop@izishop.com', password: 'Shop123!' },
-    casual_seller: { email: 'seller@izishop.com', password: 'Seller123!' },
-    delivery_agent: { email: 'delivery@izishop.com', password: 'Delivery123!' },
-    admin: { email: 'admin@izishop.com', password: 'Admin123!' }
+    customer: { email: 'customer@izishopin.com', password: 'Customer123!' },
+    shop_owner: { email: 'shop@izishopin.com', password: 'Shop123!' },
+    casual_seller: { email: 'seller@izishopin.com', password: 'Seller123!' },
+    delivery_agent: { email: 'delivery@izishopin.com', password: 'Delivery123!' },
+    admin: { email: 'admin@izishopin.com', password: 'Admin123!' }
   };
 
   const validateForm = () => {
@@ -160,10 +160,10 @@ const LoginForm = ({ onLogin, isLoading }) => {
       <div className="mt-4 p-3 bg-muted/50 rounded-lg">
         <p className="text-xs text-text-secondary mb-2">Demo Credentials:</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
-          <div>Customer: customer@izishop.com</div>
-          <div>Shop: shop@izishop.com</div>
-          <div>Seller: seller@izishop.com</div>
-          <div>Delivery: delivery@izishop.com</div>
+          <div>Customer: customer@izishopin.com</div>
+          <div>Shop: shop@izishopin.com</div>
+          <div>Seller: seller@izishopin.com</div>
+          <div>Delivery: delivery@izishopin.com</div>
         </div>
         <p className="text-xs text-text-secondary mt-1">Password for all: [Role]123!</p>
       </div>

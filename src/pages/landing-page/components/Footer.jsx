@@ -39,7 +39,7 @@ const Footer = () => {
     {
       title: 'Company',
       links: [
-        { label: 'About IziShop', href: '#' },
+        { label: 'About IziShopin', href: '#' },
         { label: 'Careers', href: '#' },
         { label: 'Press & Media', href: '#' },
         { label: 'Investor Relations', href: '#' },
@@ -49,11 +49,11 @@ const Footer = () => {
   ];
 
   const socialLinks = [
-    { name: 'Facebook', icon: 'Facebook', href: 'https://facebook.com/izishop' },
-    { name: 'Twitter', icon: 'Twitter', href: 'https://twitter.com/izishop' },
-    { name: 'Instagram', icon: 'Instagram', href: 'https://instagram.com/izishop' },
-    { name: 'LinkedIn', icon: 'Linkedin', href: 'https://linkedin.com/company/izishop' },
-    { name: 'YouTube', icon: 'Youtube', href: 'https://youtube.com/izishop' }
+    { name: 'Facebook', icon: 'Facebook', href: 'https://facebook.com/izishopin' },
+    { name: 'Twitter', icon: 'Twitter', href: 'https://twitter.com/izishopin' },
+    { name: 'Instagram', icon: 'Instagram', href: 'https://instagram.com/izishopin' },
+    { name: 'LinkedIn', icon: 'Linkedin', href: 'https://linkedin.com/company/izishopin' },
+    { name: 'YouTube', icon: 'Youtube', href: 'https://youtube.com/izishopin' }
   ];
 
   const paymentMethods = [
@@ -81,7 +81,7 @@ const Footer = () => {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <Icon name="ShoppingBag" size={20} color="white" />
               </div>
-              <span className="text-xl font-bold text-primary">IziShop</span>
+              <span className="text-xl font-bold text-primary">IziShopin</span>
             </div>
             <p className="text-sm text-background/80 mb-6 leading-relaxed">
               Cameroon's leading marketplace connecting buyers and sellers across the nation. Shop with confidence, sell with ease.
@@ -99,7 +99,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center">
                 <Icon name="Mail" size={16} className="mr-2 text-primary" />
-                support@izishop.cm
+                support@izishopin.cm
               </div>
             </div>
           </div>
@@ -201,7 +201,7 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             {/* Copyright */}
             <div className="text-sm text-background/80">
-              © {currentYear} IziShop. All rights reserved. Made with{' '}
+              © {currentYear} IziShopin. All rights reserved. Made with{' '}
               <Icon name="Heart" size={14} className="inline text-error mx-1" />
               in Cameroon.
             </div>
@@ -225,7 +225,7 @@ const Footer = () => {
             <p className="text-xs text-background/60">
               IziShop is a registered trademark. Platform operated under Cameroon e-commerce regulations.
               <br />
-              For business inquiries: business@izishop.cm | For technical support: tech@izishop.cm
+              For business inquiries: business@izishopin.cm | For technical support: tech@izishopin.cm
             </p>
           </div>
         </div>

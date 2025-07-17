@@ -17,17 +17,17 @@ const LandingPage = () => {
   return (
     <>
       <Helmet>
-        <title>IziShop - Cameroon's Leading Marketplace | Shop & Sell Online</title>
+        <title>IziShopin - Cameroon's Leading Marketplace | Shop & Sell Online</title>
         <meta 
           name="description" 
           content="Discover amazing products from verified sellers across Cameroon. Shop electronics, fashion, home goods and more. Start selling today with secure payments via MTN MoMo, Orange Money & Visa." 
         />
         <meta name="keywords" content="Cameroon marketplace, online shopping, MTN MoMo, Orange Money, e-commerce, buy sell online, Douala, Yaoundé" />
-        <meta property="og:title" content="IziShop - Cameroon's Leading Marketplace" />
+        <meta property="og:title" content="IziShopin - Cameroon's Leading Marketplace" />
         <meta property="og:description" content="Shop from thousands of verified sellers across Cameroon with secure payments and fast delivery." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://izishop.cm" />
-        <link rel="canonical" href="https://izishop.cm/landing-page" />
+        <meta property="og:url" content="https://izishopin.cm" />
+        <link rel="canonical" href="https://izishopin.cm/landing-page" />
       </Helmet>
 
       <div className="min-h-screen bg-background">

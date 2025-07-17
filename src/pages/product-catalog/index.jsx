@@ -523,7 +523,7 @@ const ProductCatalog = () => {
                 </div>
                 <div className="flex items-center space-x-3">
                   <Icon name="Mail" size={16} className="text-gray-400" />
-                  <span className="text-gray-300 text-sm">support@izishop.cm</span>
+                  <span className="text-gray-300 text-sm">support@izishopin.cm</span>
                 </div>
               </div>
             </div>

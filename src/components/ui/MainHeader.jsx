@@ -68,11 +68,12 @@ const MainHeader = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link to="/landing-page" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Icon name="ShoppingBag" size={20} color="white" />
-              </div>
-              <span className="text-xl font-bold text-primary">izishipin</span>
+            <Link to="/landing-page" className="flex items-center">
+              <img 
+                src="/izishopin_logo_transparent.png" 
+                alt="IziShopin" 
+                className="h-8 w-auto"
+              />
             </Link>
           </div>
 

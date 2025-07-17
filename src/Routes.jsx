@@ -29,7 +29,7 @@ const Routes = () => {
       <ScrollToTop />
       <RouterRoutes>
         {/* Define your routes here */}
-        <Route path="/" element={<ProductCatalog />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/product-catalog" element={<ProductCatalog />} />
         <Route path="/shopping-cart-checkout" element={<ShoppingCartCheckout />} />
         <Route path="/shop-profile" element={<ShopProfile />} />

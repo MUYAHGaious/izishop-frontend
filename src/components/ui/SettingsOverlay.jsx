@@ -108,7 +108,7 @@ const SettingsOverlay = ({ isOpen, onClose }) => {
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'izishop-settings.json';
+    link.download = 'izishopin-settings.json';
     link.click();
     URL.revokeObjectURL(url);
     showToast('Settings exported successfully', 'success');

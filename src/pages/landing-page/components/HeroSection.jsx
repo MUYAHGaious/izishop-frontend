@@ -7,6 +7,8 @@ const HeroSection = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // IMPORTANT: If you add or remove images from /public/slideshow/,
+  // you MUST update this 'heroSlides' array with the correct image paths.
   const heroSlides = [
     {
       title: "The Leading B2B Marketplace for Cameroon",
@@ -14,7 +16,7 @@ const HeroSection = () => {
       cta: "Start Sourcing",
       ctaLink: "/product-catalog",
       searchPlaceholder: "Search for products, suppliers, or categories...",
-      image: "/slideshow/22712e4843f01829cb692beae287e411.png"
+      image: "/slideshow/499A7189-Edit-2.jpg"
     },
     {
       title: "Millions of Products, Thousands of Suppliers",
@@ -22,7 +24,7 @@ const HeroSection = () => {
       cta: "Explore Products",
       ctaLink: "/product-catalog",
       searchPlaceholder: "What are you looking for today?",
-      image: "/slideshow/344027d54165fa047c22d4ef9788592c.png"
+      image: "/slideshow/FARO.webp"
     },
     {
       title: "Trade with Confidence",
@@ -30,7 +32,7 @@ const HeroSection = () => {
       cta: "Learn More",
       ctaLink: "/product-catalog",
       searchPlaceholder: "Find your next business opportunity...",
-      image: "/slideshow/96ea720ee066b68f8f664462db839ada.png"
+      image: "/slideshow/ged_20180112_africa_tech001.webp"
     },
     {
       title: "Empowering African Commerce",
@@ -38,7 +40,7 @@ const HeroSection = () => {
       cta: "Join Now",
       ctaLink: "/authentication-login-register",
       searchPlaceholder: "Start your business journey...",
-      image: "/slideshow979b42907473fd0c1ef10c8112802193.png"
+      image: "/slideshow/man-fixing-second-hand-computers-in-ivory-coast-west-africa-BXH7NK.jpg"
     },
     {
       title: "Innovation Meets Tradition",
@@ -135,7 +137,7 @@ const HeroSection = () => {
                 />
                 <button
                   type="submit"
-                  className="px-6 sm:px-8 py-3 sm:py-4 text-white font-semibold text-base sm:text-lg hover:opacity-90 transition-opacity bg-orange-500"
+                  className="px-6 sm:px-8 py-3 sm:py-4 text-white font-semibold text-base sm:text-lg rounded-lg hover:opacity-90 transition-opacity w-full sm:w-auto bg-orange-500"
                 >
                   <Icon name="Search" size={20} className="mr-2 inline" />
                   <span className="hidden sm:inline">Search</span>
@@ -180,21 +182,21 @@ const HeroSection = () => {
           </div>
 
           {/* Statistics - Mobile Responsive Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 max-w-4xl mx-auto px-4">
-            <div className="text-center bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-3 sm:p-4">
-              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white drop-shadow-md">200M+</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 max-w-3xl mx-auto px-4">
+            <div className="text-center bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-2 sm:p-3">
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-white drop-shadow-md">200M+</div>
               <div className="text-xs sm:text-sm text-white drop-shadow-sm">Products</div>
             </div>
-            <div className="text-center bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-3 sm:p-4">
-              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white drop-shadow-md">200K+</div>
+            <div className="text-center bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-2 sm:p-3">
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-white drop-shadow-md">200K+</div>
               <div className="text-xs sm:text-sm text-white drop-shadow-sm">Suppliers</div>
             </div>
-            <div className="text-center bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-3 sm:p-4">
-              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white drop-shadow-md">5,900</div>
+            <div className="text-center bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-2 sm:p-3">
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-white drop-shadow-md">5,900</div>
               <div className="text-xs sm:text-sm text-white drop-shadow-sm">Categories</div>
             </div>
-            <div className="text-center bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-3 sm:p-4">
-              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white drop-shadow-md">200+</div>
+            <div className="text-center bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-2 sm:p-3">
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-white drop-shadow-md">200+</div>
               <div className="text-xs sm:text-sm text-white drop-shadow-sm">Regions</div>
             </div>
           </div>

@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import MainHeader from '../../components/ui/MainHeader';
 import HeroSection from './components/HeroSection';
-import FeaturedShopsCarousel from './components/FeaturedShopsCarousel';
 import ProductCategoriesGrid from './components/ProductCategoriesGrid';
 import StatisticsSection from './components/StatisticsSection';
 import NewsletterSection from './components/NewsletterSection';
@@ -38,9 +37,6 @@ const LandingPage = () => {
         <main className="pt-16">
           {/* Hero Section */}
           <HeroSection />
-
-          {/* Featured Shops Carousel */}
-          <FeaturedShopsCarousel />
 
           {/* Product Categories Grid */}
           <ProductCategoriesGrid />

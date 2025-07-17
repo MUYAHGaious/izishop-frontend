@@ -106,12 +106,12 @@ const ProductCategoriesGrid = () => {
         </div>
 
         {/* Featured Categories Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {featuredCategories.map((category) => (
             <Link
               key={category.id}
               to={`/product-catalog?category=${category.name.toLowerCase().replace(/\s+/g, '-')}`}
-              className="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2"
+              className="group relative overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
               onMouseEnter={() => setHoveredCategory(category.id)}
               onMouseLeave={() => setHoveredCategory(null)}
             >
@@ -120,7 +120,7 @@ const ProductCategoriesGrid = () => {
                 <Image
                   src={category.image}
                   alt={category.name}
-                  className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                  className="w-full h-32 object-cover group-hover:scale-110 transition-transform duration-300"
                 />
                 <div 
                   className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"
@@ -131,32 +131,32 @@ const ProductCategoriesGrid = () => {
               </div>
 
               {/* Content Overlay */}
-              <div className="absolute inset-0 p-6 flex flex-col justify-end text-white">
+              <div className="absolute inset-0 p-4 flex flex-col justify-end text-white">
                 <div className="flex items-center mb-2">
                   <div 
-                    className="w-10 h-10 rounded-lg flex items-center justify-center mr-3"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center mr-2"
                     style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
                   >
-                    <Icon name={category.icon} size={20} color="white" />
+                    <Icon name={category.icon} size={16} color="white" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg">{category.name}</h3>
-                    <p className="text-sm opacity-90">{category.productCount} products</p>
+                    <h3 className="font-bold text-sm">{category.name}</h3>
+                    <p className="text-xs opacity-90">{category.productCount} products</p>
                   </div>
                 </div>
-                <p className="text-sm opacity-80 group-hover:opacity-100 transition-opacity">
+                <p className="text-xs opacity-80 group-hover:opacity-100 transition-opacity">
                   {category.description}
                 </p>
               </div>
 
               {/* Hover Effect */}
               <div 
-                className={`absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+                className={`absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ${
                   hoveredCategory === category.id ? 'scale-110' : 'scale-100'
                 }`}
                 style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
               >
-                <Icon name="ArrowRight" size={16} color="white" />
+                <Icon name="ArrowRight" size={12} color="white" />
               </div>
             </Link>
           ))}

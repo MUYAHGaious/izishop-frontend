@@ -153,11 +153,12 @@ const AuthenticationLoginRegister = () => {
       <header className="relative z-20 bg-card/80 backdrop-blur-sm border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Link to="/landing-page" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Icon name="ShoppingBag" size={20} color="white" />
-              </div>
-              <span className="text-xl font-bold text-primary">IziShop</span>
+            <Link to="/landing-page" className="flex items-center">
+              <img 
+                src="/izishopin_logo_transparent.png" 
+                alt="IziShopin" 
+                className="h-8 w-auto"
+              />
             </Link>
             
             <Link
@@ -171,14 +172,14 @@ const AuthenticationLoginRegister = () => {
       </header>
 
       {/* Main Content */}
-      <div className="relative z-10 min-h-[calc(100vh-4rem)] flex items-center justify-center p-4">
+      <div className="relative z-10 min-h-screen pt-16 pb-20 flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <AuthModal>
-          <div className="p-6 sm:p-8 md:p-10">
-            <div className="max-w-md mx-auto">
+          <div className="p-4 sm:p-6 md:p-8">
+            <div className="max-w-md mx-auto w-full">
               <AuthTabs activeTab={activeTab} onTabChange={setActiveTab} />
               
               {activeTab === 'login' ? (
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   <LoginForm onLogin={handleLogin} isLoading={isLoading} />
                   <SocialAuthButtons onSocialLogin={handleSocialLogin} isLoading={isLoading} />
                   
@@ -195,7 +196,7 @@ const AuthenticationLoginRegister = () => {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   <RegisterForm onRegister={handleRegister} isLoading={isLoading} />
                   <SocialAuthButtons onSocialLogin={handleSocialLogin} isLoading={isLoading} />
                   

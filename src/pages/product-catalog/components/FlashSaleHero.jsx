@@ -78,9 +78,9 @@ const FlashSaleHero = ({ products }) => {
         <div className="absolute top-1/3 right-1/3 w-10 h-10 bg-white rounded-full animate-pulse"></div>
       </div>
 
-      <div className="container mx-auto px-4 py-6 relative z-10">
+      <div className="container mx-auto px-4 py-4 relative z-10">
         {/* Header Section */}
-        <div className="text-center mb-6">
+        <div className="text-center mb-8">
           <div className="inline-flex items-center space-x-3 bg-black/20 backdrop-blur-sm rounded-full px-6 py-3 mb-4">
             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center animate-pulse">
               <Icon name="Zap" size={24} className="text-orange-500" />
@@ -150,7 +150,7 @@ const FlashSaleHero = ({ products }) => {
                         <img 
                           src={product.image} 
                           alt={product.name}
-                          className="w-full h-48 lg:h-60 object-cover rounded-xl shadow-2xl"
+                          className="w-full h-64 lg:h-80 object-cover rounded-xl shadow-2xl"
                         />
                         
                         {/* Discount Badge */}

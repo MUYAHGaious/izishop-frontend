@@ -72,7 +72,7 @@ const MainHeader = () => {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <Icon name="ShoppingBag" size={20} color="white" />
               </div>
-              <span className="text-xl font-bold text-primary">IziShop</span>
+              <span className="text-xl font-bold text-primary">izishipin</span>
             </Link>
           </div>
 

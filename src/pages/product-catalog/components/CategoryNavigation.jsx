@@ -45,14 +45,14 @@ const CategoryNavigation = ({ categories, selectedCategory, onCategoryChange }) 
                     : 'bg-gray-50 text-gray-700 hover:bg-gray-100 hover:shadow-md'
                 }`}
               >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${
                   selectedCategory === category.id
                     ? 'bg-white/20'
                     : 'bg-white'
                 }`}>
                   <Icon 
                     name={category.icon} 
-                    size={20} 
+                    size={16} 
                     className={selectedCategory === category.id ? 'text-white' : 'text-orange-500'} 
                   />
                 </div>

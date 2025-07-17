@@ -109,21 +109,24 @@ const ShoppingCart = () => {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Load from localStorage or use mock data
-      const savedCartItems = localStorage.getItem('cartItems');
-      const savedForLaterItems = localStorage.getItem('savedForLaterItems');
-      
-      if (savedCartItems) {
-        setCartItems(JSON.parse(savedCartItems));
-      } else {
-        setCartItems(mockCartItems);
+      let savedCartItems = localStorage.getItem('cartItems');
+      let savedForLaterItems = localStorage.getItem('savedForLaterItems');
+      let parsedCartItems = null;
+      let parsedSavedItems = null;
+      try {
+        parsedCartItems = savedCartItems ? JSON.parse(savedCartItems) : null;
+      } catch (e) {
+        localStorage.removeItem('cartItems');
+        parsedCartItems = null;
       }
-      
-      if (savedForLaterItems) {
-        setSavedItems(JSON.parse(savedForLaterItems));
-      } else {
-        setSavedItems(mockSavedItems);
+      try {
+        parsedSavedItems = savedForLaterItems ? JSON.parse(savedForLaterItems) : null;
+      } catch (e) {
+        localStorage.removeItem('savedForLaterItems');
+        parsedSavedItems = null;
       }
-      
+      setCartItems(parsedCartItems || mockCartItems);
+      setSavedItems(parsedSavedItems || mockSavedItems);
       setIsLoading(false);
     };
 
@@ -260,7 +263,7 @@ const ShoppingCart = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>Shopping Cart ({itemCount}) - IziShop</title>
+        <title>Shopping Cart ({typeof itemCount === 'number' && !isNaN(itemCount) ? itemCount : 0}) - IziShop</title>
         <meta name="description" content="Review your cart items and proceed to checkout on IziShop marketplace" />
       </Helmet>
       

@@ -128,7 +128,7 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist }) => {
       </div>
 
       {/* Product Info */}
-      <div className="p-4">
+      <div className="p-3">
         {/* Shop Name */}
         <Link 
           to={`/shop-profile?id=${product.shopId}`}
@@ -139,13 +139,13 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist }) => {
 
         {/* Product Name */}
         <Link to={`/product-detail-modal?id=${product.id}`}>
-          <h3 className="font-medium text-text-primary line-clamp-2 hover:text-primary transition-colors mb-2">
+          <h3 className="font-medium text-text-primary line-clamp-2 hover:text-primary transition-colors mb-1">
             {product.name}
           </h3>
         </Link>
 
         {/* Rating */}
-        <div className="flex items-center gap-1 mb-2">
+        <div className="flex items-center gap-1 mb-1">
           <div className="flex items-center">
             {renderStars(product.rating)}
           </div>
@@ -155,7 +155,7 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist }) => {
         </div>
 
         {/* Price */}
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 mb-2">
           <span className="text-lg font-semibold text-text-primary">
             {formatPrice(product.price)}
           </span>
@@ -167,7 +167,7 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist }) => {
         </div>
 
         {/* Stock Status */}
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 mb-2">
           <div className={`w-2 h-2 rounded-full ${
             product.stock > 10 ? 'bg-success' : 
             product.stock > 0 ? 'bg-warning' : 'bg-destructive'

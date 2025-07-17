@@ -3,10 +3,10 @@ import { useSearchParams } from 'react-router-dom';
 import Header from '../../components/ui/Header';
 import MobileBottomTab from '../../components/ui/MobileBottomTab';
 import FilterPanel from './components/FilterPanel';
-import FilterChips from './components/FilterChips';
-import SortDropdown from './components/SortDropdown';
 import ProductGrid from './components/ProductGrid';
-import CategoryBreadcrumbs from './components/CategoryBreadcrumbs';
+import CategoryNavigation from './components/CategoryNavigation';
+import FlashSaleHero from './components/FlashSaleHero';
+import SearchSection from './components/SearchSection';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
 
@@ -20,13 +20,14 @@ const ProductCatalog = () => {
   const [filters, setFilters] = useState({});
   const [sortBy, setSortBy] = useState('relevance');
   const [resultsCount, setResultsCount] = useState(0);
-  const [categories, setCategories] = useState([]);
+  const [viewMode, setViewMode] = useState('grid'); // grid or list
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
-  // Mock product data
+  // Enhanced mock product data with more variety
   const mockProducts = [
     {
       id: 1,
-      name: "Samsung Galaxy S24 Ultra 256GB",
+      name: "Samsung Galaxy S24 Ultra 256GB - Titanium Black",
       price: 850000,
       originalPrice: 950000,
       image: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&h=400&fit=crop",
@@ -39,13 +40,16 @@ const ProductCatalog = () => {
       discount: 11,
       category: "electronics",
       brand: "samsung",
-      isWishlisted: false
+      isWishlisted: false,
+      isFreeShipping: true,
+      isFlashSale: true,
+      badges: ['Best Seller', 'Free Shipping']
     },
     {
       id: 2,
-      name: "Nike Air Max 270 Running Shoes",
+      name: "Nike Air Max 270 Running Shoes - Black/White",
       price: 125000,
-      originalPrice: null,
+      originalPrice: 145000,
       image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop",
       rating: 4.6,
       reviewCount: 892,
@@ -53,15 +57,17 @@ const ProductCatalog = () => {
       shopName: "SportZone Douala",
       shopId: 2,
       isNew: false,
-      discount: null,
+      discount: 14,
       category: "sports",
       brand: "nike",
       isBestSeller: true,
-      isWishlisted: true
+      isWishlisted: true,
+      isFreeShipping: true,
+      badges: ['Limited Edition']
     },
     {
       id: 3,
-      name: "Apple MacBook Pro 14-inch M3",
+      name: "Apple MacBook Pro 14-inch M3 Chip",
       price: 1250000,
       originalPrice: 1350000,
       image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop",
@@ -74,11 +80,13 @@ const ProductCatalog = () => {
       discount: 7,
       category: "electronics",
       brand: "apple",
-      isWishlisted: false
+      isWishlisted: false,
+      isFreeShipping: true,
+      badges: ['Premium', 'Fast Delivery']
     },
     {
       id: 4,
-      name: "Adidas Ultraboost 22 Black",
+      name: "Adidas Ultraboost 22 Running Shoes",
       price: 95000,
       originalPrice: 110000,
       image: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=400&h=400&fit=crop",
@@ -91,11 +99,13 @@ const ProductCatalog = () => {
       discount: 14,
       category: "sports",
       brand: "adidas",
-      isWishlisted: false
+      isWishlisted: false,
+      isFreeShipping: false,
+      badges: ['Eco-Friendly']
     },
     {
       id: 5,
-      name: "Sony WH-1000XM5 Headphones",
+      name: "Sony WH-1000XM5 Wireless Headphones",
       price: 285000,
       originalPrice: 320000,
       image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
@@ -109,13 +119,16 @@ const ProductCatalog = () => {
       category: "electronics",
       brand: "sony",
       isBestSeller: true,
-      isWishlisted: false
+      isWishlisted: false,
+      isFreeShipping: true,
+      isFlashSale: true,
+      badges: ['Noise Cancelling', 'Wireless']
     },
     {
       id: 6,
-      name: "Elegant Summer Dress",
+      name: "Elegant Summer Dress - Floral Print",
       price: 45000,
-      originalPrice: null,
+      originalPrice: 55000,
       image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400&h=400&fit=crop",
       rating: 4.3,
       reviewCount: 289,
@@ -123,14 +136,16 @@ const ProductCatalog = () => {
       shopName: "Fashion Boutique",
       shopId: 5,
       isNew: true,
-      discount: null,
+      discount: 18,
       category: "fashion",
       brand: "local",
-      isWishlisted: true
+      isWishlisted: true,
+      isFreeShipping: false,
+      badges: ['Trending', 'Summer Collection']
     },
     {
       id: 7,
-      name: "Home Garden Plant Set",
+      name: "Home Garden Plant Set - Indoor Collection",
       price: 35000,
       originalPrice: 42000,
       image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=400&fit=crop",
@@ -143,11 +158,13 @@ const ProductCatalog = () => {
       discount: 17,
       category: "home",
       brand: "local",
-      isWishlisted: false
+      isWishlisted: false,
+      isFreeShipping: true,
+      badges: ['Eco-Friendly', 'Air Purifying']
     },
     {
       id: 8,
-      name: "Professional Camera Lens",
+      name: "Canon EF 50mm f/1.8 STM Lens",
       price: 450000,
       originalPrice: 500000,
       image: "https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=400&h=400&fit=crop",
@@ -160,23 +177,34 @@ const ProductCatalog = () => {
       discount: 10,
       category: "electronics",
       brand: "canon",
-      isWishlisted: false
+      isWishlisted: false,
+      isFreeShipping: true,
+      badges: ['Professional', 'Portrait Lens']
     }
+  ];
+
+  // Categories for navigation
+  const categories = [
+    { id: 'all', name: 'All Categories', icon: 'Grid3X3', count: 2847 },
+    { id: 'electronics', name: 'Electronics', icon: 'Smartphone', count: 1247 },
+    { id: 'fashion', name: 'Fashion', icon: 'Shirt', count: 892 },
+    { id: 'sports', name: 'Sports', icon: 'Dumbbell', count: 634 },
+    { id: 'home', name: 'Home & Garden', icon: 'Home', count: 456 },
+    { id: 'beauty', name: 'Beauty', icon: 'Sparkles', count: 321 },
+    { id: 'books', name: 'Books', icon: 'Book', count: 289 },
+    { id: 'automotive', name: 'Automotive', icon: 'Car', count: 178 }
   ];
 
   // Initialize from URL params
   useEffect(() => {
     const query = searchParams.get('q') || '';
-    const category = searchParams.get('category') || '';
+    const category = searchParams.get('category') || 'all';
     const sort = searchParams.get('sort') || 'relevance';
     
     if (query) {
       setFilters(prev => ({ ...prev, search: query }));
     }
-    if (category) {
-      setFilters(prev => ({ ...prev, categories: [category] }));
-      setCategories([{ label: category.charAt(0).toUpperCase() + category.slice(1), path: `/product-catalog?category=${category}` }]);
-    }
+    setSelectedCategory(category);
     setSortBy(sort);
     
     // Simulate initial load
@@ -187,22 +215,25 @@ const ProductCatalog = () => {
     }, 1000);
   }, [searchParams]);
 
+  // Handle category change
+  const handleCategoryChange = useCallback((categoryId) => {
+    setSelectedCategory(categoryId);
+    const newParams = new URLSearchParams(searchParams);
+    if (categoryId !== 'all') {
+      newParams.set('category', categoryId);
+    } else {
+      newParams.delete('category');
+    }
+    setSearchParams(newParams);
+  }, [searchParams, setSearchParams]);
+
   // Handle filter changes
   const handleFilterChange = useCallback((filterType, value) => {
     setFilters(prev => ({
       ...prev,
       [filterType]: value
     }));
-    
-    // Update URL params
-    const newParams = new URLSearchParams(searchParams);
-    if (filterType === 'categories' && value.length > 0) {
-      newParams.set('category', value[0]);
-    } else if (filterType === 'categories' && value.length === 0) {
-      newParams.delete('category');
-    }
-    setSearchParams(newParams);
-  }, [searchParams, setSearchParams]);
+  }, []);
 
   // Handle sort change
   const handleSortChange = useCallback((newSort) => {
@@ -231,7 +262,7 @@ const ProductCatalog = () => {
   // Clear all filters
   const handleClearAllFilters = useCallback(() => {
     setFilters({});
-    setCategories([]);
+    setSelectedCategory('all');
     const newParams = new URLSearchParams();
     const query = searchParams.get('q');
     if (query) newParams.set('q', query);
@@ -266,7 +297,6 @@ const ProductCatalog = () => {
     return new Promise((resolve) => {
       setTimeout(() => {
         console.log('Added to cart:', product);
-        // Show success notification
         resolve();
       }, 500);
     });
@@ -287,109 +317,132 @@ const ProductCatalog = () => {
     });
   }, []);
 
-  // Pull to refresh (mobile)
-  useEffect(() => {
-    let startY = 0;
-    let currentY = 0;
-    let isRefreshing = false;
-
-    const handleTouchStart = (e) => {
-      startY = e.touches[0].clientY;
-    };
-
-    const handleTouchMove = (e) => {
-      currentY = e.touches[0].clientY;
-      const diff = currentY - startY;
-      
-      if (diff > 100 && window.scrollY === 0 && !isRefreshing) {
-        isRefreshing = true;
-        setLoading(true);
-        
-        setTimeout(() => {
-          setProducts(mockProducts);
-          setCurrentPage(1);
-          setHasMore(true);
-          setLoading(false);
-          isRefreshing = false;
-        }, 1000);
-      }
-    };
-
-    document.addEventListener('touchstart', handleTouchStart);
-    document.addEventListener('touchmove', handleTouchMove);
-
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
-    };
-  }, [mockProducts]);
-
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <main className="pt-16 pb-16 lg:pb-0">
-        {/* Category Breadcrumbs */}
-        <CategoryBreadcrumbs categories={categories} />
-        
-        {/* Filter Chips */}
-        <FilterChips
-          filters={filters}
-          onRemoveFilter={handleRemoveFilter}
-          onClearAll={handleClearAllFilters}
-        />
+      {/* Enhanced Search Section */}
+      <SearchSection 
+        searchParams={searchParams}
+        setSearchParams={setSearchParams}
+      />
+      
+      {/* Flash Sale Hero Section */}
+      <FlashSaleHero products={mockProducts.filter(p => p.isFlashSale)} />
+      
+      {/* Category Navigation */}
+      <CategoryNavigation 
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onCategoryChange={handleCategoryChange}
+      />
+      
+      <div className="flex min-h-screen">
+        {/* Main Content Area */}
+        <div className="flex-1">
+          {/* Toolbar Section */}
+          <div className="bg-white border-b border-gray-200 sticky top-16 z-10">
+            <div className="px-4 py-4">
+              <div className="flex items-center justify-between">
+                {/* Filter Button - Works on both mobile and desktop */}
+                <div>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsFilterOpen(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Icon name="Filter" size={16} />
+                    Filters
+                    {Object.keys(filters).length > 0 && (
+                      <span className="bg-orange-500 text-white text-xs rounded-full px-2 py-1 ml-1">
+                        {Object.keys(filters).length}
+                      </span>
+                    )}
+                  </Button>
+                </div>
 
-        <div className="flex">
-          {/* Desktop Filter Sidebar */}
-          <div className="hidden lg:block">
-            <FilterPanel
-              isOpen={true}
-              onClose={() => {}}
-              filters={filters}
-              onFilterChange={handleFilterChange}
-              onClearAll={handleClearAllFilters}
-            />
-          </div>
+                {/* Results Count */}
+                <div className="text-sm text-gray-600">
+                  {loading ? 'Loading...' : `${resultsCount.toLocaleString()} products found`}
+                </div>
 
-          {/* Main Content */}
-          <div className="flex-1 lg:ml-80">
-            {/* Mobile Filter Button & Sort */}
-            <div className="lg:hidden flex items-center justify-between p-4 bg-surface border-b border-border">
-              <Button
-                variant="outline"
-                onClick={() => setIsFilterOpen(true)}
-                iconName="Filter"
-                iconPosition="left"
-              >
-                Filters
-              </Button>
-              
-              <div className="flex items-center gap-2">
-                <Icon name="ArrowUpDown" size={16} className="text-text-secondary" />
-                <span className="text-sm text-text-secondary">Sort</span>
+                {/* Sort & View Options */}
+                <div className="flex items-center gap-4">
+                  {/* Sort Dropdown */}
+                  <select
+                    value={sortBy}
+                    onChange={(e) => handleSortChange(e.target.value)}
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  >
+                    <option value="relevance">Most Relevant</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="rating">Highest Rated</option>
+                    <option value="newest">Newest First</option>
+                    <option value="popular">Most Popular</option>
+                  </select>
+
+                  {/* View Mode Toggle */}
+                  <div className="hidden md:flex border border-gray-300 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`p-2 ${viewMode === 'grid' ? 'bg-orange-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                    >
+                      <Icon name="Grid3X3" size={16} />
+                    </button>
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`p-2 ${viewMode === 'list' ? 'bg-orange-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                    >
+                      <Icon name="List" size={16} />
+                    </button>
+                  </div>
+                </div>
               </div>
+
+              {/* Active Filters */}
+              {Object.keys(filters).length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {Object.entries(filters).map(([key, values]) => 
+                    Array.isArray(values) ? values.map(value => (
+                      <span 
+                        key={`${key}-${value}`}
+                        className="inline-flex items-center px-3 py-1 bg-orange-100 text-orange-800 text-sm rounded-full"
+                      >
+                        {value}
+                        <button
+                          onClick={() => handleRemoveFilter(key, value)}
+                          className="ml-2 hover:text-orange-600"
+                        >
+                          <Icon name="X" size={12} />
+                        </button>
+                      </span>
+                    )) : null
+                  )}
+                  <button
+                    onClick={handleClearAllFilters}
+                    className="text-sm text-gray-500 hover:text-gray-700 underline"
+                  >
+                    Clear all
+                  </button>
+                </div>
+              )}
             </div>
-
-            {/* Sort Dropdown */}
-            <SortDropdown
-              value={sortBy}
-              onChange={handleSortChange}
-              resultsCount={resultsCount}
-            />
-
-            {/* Product Grid */}
-            <ProductGrid
-              products={products}
-              loading={loading}
-              onLoadMore={handleLoadMore}
-              hasMore={hasMore}
-              onAddToCart={handleAddToCart}
-              onToggleWishlist={handleToggleWishlist}
-            />
           </div>
+
+          {/* Product Grid */}
+          <ProductGrid
+            products={products}
+            loading={loading}
+            onLoadMore={handleLoadMore}
+            hasMore={hasMore}
+            onAddToCart={handleAddToCart}
+            onToggleWishlist={handleToggleWishlist}
+            viewMode={viewMode}
+          />
         </div>
 
-        {/* Mobile Filter Panel */}
+        {/* Filter Panel Overlay */}
         <FilterPanel
           isOpen={isFilterOpen}
           onClose={() => setIsFilterOpen(false)}
@@ -397,7 +450,92 @@ const ProductCatalog = () => {
           onFilterChange={handleFilterChange}
           onClearAll={handleClearAllFilters}
         />
-      </main>
+      </div>
+
+      {/* Enhanced Footer */}
+      <footer className="bg-gray-900 text-white mt-16">
+        <div className="container mx-auto px-4 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Company Info */}
+            <div>
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-pink-500 rounded-lg flex items-center justify-center">
+                  <Icon name="ShoppingBag" size={20} color="white" />
+                </div>
+                <span className="text-xl font-bold bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
+                  IziShop
+                </span>
+              </div>
+              <p className="text-gray-300 text-sm mb-4">
+                Your trusted marketplace for quality products in Cameroon. Shop with confidence and discover amazing deals.
+              </p>
+              <div className="flex space-x-4">
+                <a href="#" className="text-gray-400 hover:text-orange-400 transition-colors">
+                  <Icon name="Facebook" size={20} />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-orange-400 transition-colors">
+                  <Icon name="Twitter" size={20} />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-orange-400 transition-colors">
+                  <Icon name="Instagram" size={20} />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-orange-400 transition-colors">
+                  <Icon name="Linkedin" size={20} />
+                </a>
+              </div>
+            </div>
+
+            {/* Quick Links */}
+            <div>
+              <h3 className="font-semibold text-white mb-4">Quick Links</h3>
+              <ul className="space-y-2">
+                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">About Us</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">Contact</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">Help Center</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">Terms of Service</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">Privacy Policy</a></li>
+              </ul>
+            </div>
+
+            {/* Categories */}
+            <div>
+              <h3 className="font-semibold text-white mb-4">Categories</h3>
+              <ul className="space-y-2">
+                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">Electronics</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">Fashion</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">Sports</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">Home & Garden</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">Books</a></li>
+              </ul>
+            </div>
+
+            {/* Contact Info */}
+            <div>
+              <h3 className="font-semibold text-white mb-4">Contact Info</h3>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <Icon name="MapPin" size={16} className="text-gray-400" />
+                  <span className="text-gray-300 text-sm">Douala, Cameroon</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Icon name="Phone" size={16} className="text-gray-400" />
+                  <span className="text-gray-300 text-sm">+237 6XX XXX XXX</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Icon name="Mail" size={16} className="text-gray-400" />
+                  <span className="text-gray-300 text-sm">support@izishop.cm</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center">
+            <p className="text-gray-400 text-sm">
+              © 2025 IziShop. All rights reserved. Made with ❤️ in Cameroon.
+            </p>
+          </div>
+        </div>
+      </footer>
 
       <MobileBottomTab />
     </div>

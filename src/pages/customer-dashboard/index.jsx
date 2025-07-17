@@ -9,6 +9,7 @@ import DeliveryTracking from './components/DeliveryTracking';
 import LoyaltyProgram from './components/LoyaltyProgram';
 import QuickActions from './components/QuickActions';
 import Icon from '../../components/AppIcon';
+import Button from '../../components/ui/Button';
 
 const CustomerDashboard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -233,6 +234,15 @@ const CustomerDashboard = () => {
                   </p>
                 </div>
                 <div className="hidden md:flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.location.href = '/admin-login'}
+                    className="text-xs"
+                  >
+                    <Icon name="Shield" size={16} className="mr-1" />
+                    Admin Access
+                  </Button>
                   <Icon name="Bell" size={20} className="text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
                     {currentTime.toLocaleTimeString('en-GB', {

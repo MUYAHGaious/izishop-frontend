@@ -1,0 +1,71 @@
+/home/ubuntu/frontend/fd
+├── README.md
+├── build
+│   ├── _redirects
+│   ├── assets
+│   │   ├── images
+│   │   ├── index-BXX1_S_2.css
+│   │   ├── index-C9M06vtp.js
+│   │   ├── index-C9M06vtp.js.map
+│   │   ├── index-Dfq94YjH.js
+│   │   └── index-Dfq94YjH.js.map
+│   ├── favicon.ico
+│   ├── index.html
+│   ├── manifest.json
+│   └── robots.txt
+├── favicon.ico
+├── index.html
+├── jsconfig.json
+├── package-lock.json
+├── package.json
+├── pnpm-lock.yaml
+├── postcss.config.js
+├── public
+│   ├── _redirects
+│   ├── assets
+│   │   └── images
+│   ├── favicon.ico
+│   ├── manifest.json
+│   └── robots.txt
+├── src
+│   ├── App.jsx
+│   ├── Routes.jsx
+│   ├── components
+│   │   ├── AppIcon.jsx
+│   │   ├── AppImage.jsx
+│   │   ├── ErrorBoundary.jsx
+│   │   ├── ScrollToTop.jsx
+│   │   └── ui
+│   ├── index.jsx
+│   ├── pages
+│   │   ├── NotFound.jsx
+│   │   ├── admin-dashboard
+│   │   ├── admin-login
+│   │   ├── authentication-login-register
+│   │   ├── chat-interface-modal
+│   │   ├── checkout
+│   │   ├── customer-dashboard
+│   │   ├── landing-page
+│   │   ├── notification-center-modal
+│   │   ├── order-management
+│   │   ├── product-catalog
+│   │   ├── product-detail
+│   │   ├── product-detail-modal
+│   │   ├── product-management
+│   │   ├── shop-owner-dashboard
+│   │   ├── shop-profile
+│   │   ├── shopping-cart
+│   │   ├── shopping-cart-checkout
+│   │   └── shops-listing
+│   ├── styles
+│   │   ├── dark-theme.css
+│   │   ├── index.css
+│   │   └── tailwind.css
+│   └── utils
+│       └── cn.js
+├── tailwind.config.js
+└── vite.config.mjs
+
+30 directories, 36 files
+
+

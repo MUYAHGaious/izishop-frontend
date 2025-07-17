@@ -8,6 +8,7 @@ import Icon from '../../components/AppIcon';
 import ShopCard from './components/ShopCard';
 import FilterPanel from './components/FilterPanel';
 import FeaturedShops from './components/FeaturedShops';
+import CreateShopModal from '../../components/ui/CreateShopModal';
 
 const ShopsListing = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -21,6 +22,7 @@ const ShopsListing = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [resultsCount, setResultsCount] = useState(0);
+  const [isCreateShopOpen, setIsCreateShopOpen] = useState(false);
 
   // Mock shops data
   const mockShops = [
@@ -271,18 +273,30 @@ const ShopsListing = () => {
                 Find the perfect shops for all your needs in Cameroon
               </p>
               
-              <form onSubmit={handleSearch} className="flex gap-2 max-w-md mx-auto">
-                <Input
-                  type="search"
-                  placeholder="Search shops..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1"
-                />
-                <Button type="submit" iconName="Search">
-                  Search
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-center mb-6">
+                <form onSubmit={handleSearch} className="flex gap-2 max-w-md">
+                  <Input
+                    type="search"
+                    placeholder="Search shops..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button type="submit" iconName="Search">
+                    Search
+                  </Button>
+                </form>
+                
+                <Button
+                  variant="outline"
+                  iconName="Plus"
+                  iconPosition="left"
+                  onClick={() => setIsCreateShopOpen(true)}
+                  className="whitespace-nowrap"
+                >
+                  Create Shop
                 </Button>
-              </form>
+              </div>
             </div>
           </div>
         </div>
@@ -456,9 +470,20 @@ const ShopsListing = () => {
               />
             </div>
           </div>
-        )}
+         )}
       </main>
-
+      
+      {/* Create Shop Modal */}
+      <CreateShopModal
+        isOpen={isCreateShopOpen}
+        onClose={() => setIsCreateShopOpen(false)}
+        onShopCreated={(newShop) => {
+          // Add new shop to the list
+          setShops(prev => [newShop, ...prev]);
+          setResultsCount(prev => prev + 1);
+        }}
+      />
+      
       <MobileBottomTab />
     </div>
   );

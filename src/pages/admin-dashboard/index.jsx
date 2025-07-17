@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../../components/ui/Header';
 import Sidebar from '../../components/ui/Sidebar';
 import MobileBottomTab from '../../components/ui/MobileBottomTab';
@@ -14,6 +15,21 @@ import SystemMonitoringWidget from './components/SystemMonitoringWidget';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('users');
+  const navigate = useNavigate();
+
+  // Check admin authentication on component mount
+  useEffect(() => {
+    const isAdminAuthenticated = localStorage.getItem('adminAuthenticated');
+    if (!isAdminAuthenticated) {
+      navigate('/admin-login');
+    }
+  }, [navigate]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('adminAuthenticated');
+    localStorage.removeItem('userRole');
+    navigate('/customer-dashboard');
+  };
 
   const tabs = [
     { id: 'users', label: 'User Management', icon: 'Users' },
@@ -66,6 +82,14 @@ const AdminDashboard = () => {
               </Button>
               <Button variant="outline" iconName="Settings" iconPosition="left">
                 Settings
+              </Button>
+              <Button 
+                variant="destructive" 
+                iconName="LogOut" 
+                iconPosition="left"
+                onClick={handleLogout}
+              >
+                Logout
               </Button>
             </div>
           </div>

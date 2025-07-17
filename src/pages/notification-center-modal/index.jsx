@@ -256,7 +256,7 @@ const NotificationCenterModal = ({ isOpen, onClose, notifications: initialNotifi
           </div>
 
           {/* Notifications List */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto min-h-0">
             {filteredNotifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <Bell size={48} className="text-muted-foreground mb-4" />

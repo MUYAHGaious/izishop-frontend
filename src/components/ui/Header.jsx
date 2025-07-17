@@ -1,14 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Icon from '../AppIcon';
 import Button from './Button';
 import Input from './Input';
+import NotificationOverlay from './NotificationOverlay';
+import SettingsOverlay from './SettingsOverlay';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [cartCount] = useState(3);
+  const [cartCount, setCartCount] = useState(0);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(3);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const location = useLocation();
+
+  // Update cart count from localStorage
+  useEffect(() => {
+    const updateCartCount = () => {
+      const count = localStorage.getItem('cartItemCount');
+      setCartCount(count ? parseInt(count) : 0);
+    };
+
+    updateCartCount();
+    
+    // Listen for storage changes
+    window.addEventListener('storage', updateCartCount);
+    
+    // Custom event for cart updates
+    window.addEventListener('cartUpdated', updateCartCount);
+    
+    return () => {
+      window.removeEventListener('storage', updateCartCount);
+      window.removeEventListener('cartUpdated', updateCartCount);
+    };
+  }, []);
 
   const isActive = (path) => location.pathname === path;
 
@@ -74,6 +100,25 @@ const Header = () => {
 
         {/* Desktop Actions */}
         <div className="hidden lg:flex items-center space-x-4">
+          <button
+            onClick={() => setIsNotificationOpen(true)}
+            className="relative p-2 text-text-secondary hover:text-text-primary transition-colors"
+          >
+            <Icon name="Bell" size={20} />
+            {notificationCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center">
+                {notificationCount}
+              </span>
+            )}
+          </button>
+          
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="p-2 text-text-secondary hover:text-text-primary transition-colors"
+          >
+            <Icon name="Settings" size={20} />
+          </button>
+          
           <Link
             to="/shopping-cart-checkout"
             className="relative p-2 text-text-secondary hover:text-text-primary transition-colors"
@@ -130,6 +175,35 @@ const Header = () => {
 
             {/* Mobile Actions */}
             <div className="pt-4 border-t border-border space-y-3">
+              <button
+                onClick={() => {
+                  setIsNotificationOpen(true);
+                  setIsMenuOpen(false);
+                }}
+                className="flex items-center justify-between px-3 py-3 rounded-md text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-muted transition-colors w-full"
+              >
+                <div className="flex items-center space-x-3">
+                  <Icon name="Bell" size={18} />
+                  <span>Notifications</span>
+                </div>
+                {notificationCount > 0 && (
+                  <span className="bg-red-500 text-white text-xs font-medium rounded-full px-2 py-1">
+                    {notificationCount}
+                  </span>
+                )}
+              </button>
+              
+              <button
+                onClick={() => {
+                  setIsSettingsOpen(true);
+                  setIsMenuOpen(false);
+                }}
+                className="flex items-center space-x-3 px-3 py-3 rounded-md text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-muted transition-colors w-full"
+              >
+                <Icon name="Settings" size={18} />
+                <span>Settings</span>
+              </button>
+              
               <Link
                 to="/shopping-cart-checkout"
                 onClick={() => setIsMenuOpen(false)}
@@ -169,6 +243,18 @@ const Header = () => {
           </div>
         </div>
       )}
+
+      {/* Notification Overlay */}
+      <NotificationOverlay
+        isOpen={isNotificationOpen}
+        onClose={() => setIsNotificationOpen(false)}
+      />
+      
+      {/* Settings Overlay */}
+      <SettingsOverlay
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </header>
   );
 };

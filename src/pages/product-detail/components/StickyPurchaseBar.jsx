@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import { showToast } from '../../../components/ui/Toast';
 
 const StickyPurchaseBar = ({ product, selectedVariant, quantity, onQuantityChange }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -73,11 +74,15 @@ const StickyPurchaseBar = ({ product, selectedVariant, quantity, onQuantityChang
       const totalItems = existingCart.reduce((sum, item) => sum + item.quantity, 0);
       localStorage.setItem('cartItemCount', totalItems.toString());
 
-      // Show success feedback
-      // You could dispatch a toast notification here
+      // Dispatch cart update event
+      window.dispatchEvent(new Event('cartUpdated'));
+
+      // Show success toast notification
+      showToast(`${product.name} added to cart!`, 'success', 3000);
       
     } catch (error) {
       console.error('Error adding to cart:', error);
+      showToast('Failed to add item to cart', 'error', 3000);
     } finally {
       setIsAddingToCart(false);
     }

@@ -198,6 +198,14 @@ const RegisterForm = ({ onRegister, isLoading }) => {
     if (!validateStep(currentStep)) return;
 
     try {
+      // Map frontend role values to backend enum values
+      const roleMapping = {
+        'customer': 'CUSTOMER',
+        'shop_owner': 'SHOP_OWNER',
+        'casual_seller': 'CASUAL_SELLER',
+        'delivery_agent': 'DELIVERY_AGENT'
+      };
+
       // Prepare user data for API
       const userData = {
         email: formData.email,
@@ -205,7 +213,7 @@ const RegisterForm = ({ onRegister, isLoading }) => {
         confirm_password: formData.confirmPassword,
         first_name: formData.firstName,
         last_name: formData.lastName,
-        role: formData.role,
+        role: roleMapping[formData.role] || formData.role,
         phone: formData.phone
       };
 

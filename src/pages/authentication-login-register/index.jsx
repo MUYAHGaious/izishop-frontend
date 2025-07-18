@@ -47,16 +47,24 @@ const AuthenticationLoginRegister = () => {
   }, []);
 
   const redirectToDashboard = (role) => {
-    switch (role) {
-      case 'customer': navigate('/landing-page');
+    // Handle both frontend role format and backend enum format
+    const normalizedRole = role.toLowerCase().replace('_', '');
+    
+    switch (normalizedRole) {
+      case 'customer': 
+        navigate('/landing-page');
         break;
-      case 'shop_owner': navigate('/shop-profile');
+      case 'shopowner': 
+        navigate('/shops-listing'); // Changed to correct route
         break;
-      case 'casual_seller': navigate('/product-catalog');
+      case 'casualseller': 
+        navigate('/product-catalog');
         break;
-      case 'delivery_agent': navigate('/landing-page');
+      case 'deliveryagent': 
+        navigate('/landing-page');
         break;
-      case 'admin': navigate('/landing-page');
+      case 'admin': 
+        navigate('/landing-page');
         break;
       default:
         navigate('/landing-page');

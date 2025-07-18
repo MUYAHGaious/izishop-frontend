@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import { showToast } from '../../../components/ui/Toast';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const StickyPurchaseBar = ({ product, selectedVariant, quantity, onQuantityChange }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,6 +34,17 @@ const StickyPurchaseBar = ({ product, selectedVariant, quantity, onQuantityChang
 
   const handleAddToCart = async () => {
     if (!product || !product.inStock) return;
+
+    // Check if user is authenticated
+    if (!isAuthenticated()) {
+      showToast({
+        type: 'info',
+        message: 'Please log in to add items to your cart',
+        duration: 3000
+      });
+      navigate('/authentication-login-register');
+      return;
+    }
 
     setIsAddingToCart(true);
     
@@ -90,6 +103,17 @@ const StickyPurchaseBar = ({ product, selectedVariant, quantity, onQuantityChang
 
   const handleBuyNow = () => {
     if (!product || !product.inStock) return;
+
+    // Check if user is authenticated
+    if (!isAuthenticated()) {
+      showToast({
+        type: 'info',
+        message: 'Please log in to place an order',
+        duration: 3000
+      });
+      navigate('/authentication-login-register');
+      return;
+    }
 
     // Add to cart first
     handleAddToCart();

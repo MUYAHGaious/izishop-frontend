@@ -1,153 +1,436 @@
-import React, { useState } from 'react';
-
-import Button from '../../../components/ui/Button';
+import React, { useState, useEffect } from 'react';
+import Icon from '../../../components/AppIcon';
+import api from '../../../services/api';
 
 const UserManagement = () => {
-  const [selectedTimeframe, setSelectedTimeframe] = useState('week');
+  const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRole, setSelectedRole] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage] = useState(10);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const userStats = {
-    totalUsers: 12847,
-    newRegistrations: 234,
-    activeUsers: 8945,
-    suspendedUsers: 45,
-    pendingVerifications: 67
+  // Fetch real user data
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const userData = await api.getDashboardUsers();
+      
+      // Transform the real user data to match the expected format
+      const transformedUsers = userData.recent_users.map(user => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role.toLowerCase(),
+        status: user.is_active ? 'active' : 'inactive',
+        joinDate: new Date(user.created_at).toLocaleDateString(),
+        lastLogin: user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never',
+        orders: 0, // Would need order data
+        revenue: 0, // Would need revenue data
+        verified: user.is_verified
+      }));
+      
+      setUsers(transformedUsers);
+      setFilteredUsers(transformedUsers);
+    } catch (err) {
+      setError(err.message || 'Failed to fetch user data');
+      console.error('User data fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const roleDistribution = [
-    { role: 'Customers', count: 10234, percentage: 79.6, color: 'bg-primary' },
-    { role: 'Shop Owners', count: 1234, percentage: 9.6, color: 'bg-secondary' },
-    { role: 'Casual Sellers', count: 1289, percentage: 10.0, color: 'bg-success' },
-    { role: 'Delivery Agents', count: 90, percentage: 0.7, color: 'bg-warning' }
+  // Filter users based on search and filters
+  useEffect(() => {
+    let filtered = users.filter(user => {
+      const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesRole = selectedRole === 'all' || user.role === selectedRole;
+      const matchesStatus = selectedStatus === 'all' || user.status === selectedStatus;
+      
+      return matchesSearch && matchesRole && matchesStatus;
+    });
+    
+    setFilteredUsers(filtered);
+    setCurrentPage(1);
+  }, [searchTerm, selectedRole, selectedStatus, users]);
+
+  const roles = [
+    { value: 'all', label: 'All Roles' },
+    { value: 'customer', label: 'Customer' },
+    { value: 'shop_owner', label: 'Shop Owner' },
+    { value: 'casual_seller', label: 'Casual Seller' },
+    { value: 'delivery_agent', label: 'Delivery Agent' }
   ];
 
-  const recentUsers = [
-    {
-      id: 1,
-      name: "Marie Dubois",
-      email: "marie.dubois@email.com",
-      role: "Customer",
-      status: "Active",
-      joinDate: "2025-01-15",
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b9c8c8b0?w=150"
-    },
-    {
-      id: 2,
-      name: "Jean Kamga",
-      email: "jean.kamga@shop.cm",
-      role: "Shop Owner",
-      status: "Pending",
-      joinDate: "2025-01-14",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150"
-    },
-    {
-      id: 3,
-      name: "Fatima Nkomo",
-      email: "fatima.nkomo@email.com",
-      role: "Casual Seller",
-      status: "Active",
-      joinDate: "2025-01-13",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150"
-    }
+  const statuses = [
+    { value: 'all', label: 'All Status' },
+    { value: 'active', label: 'Active' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'suspended', label: 'Suspended' }
   ];
+
+  const getRoleColor = (role) => {
+    switch (role) {
+      case 'shop_owner': return 'bg-purple-100 text-purple-800';
+      case 'customer': return 'bg-blue-100 text-blue-800';
+      case 'casual_seller': return 'bg-green-100 text-green-800';
+      case 'delivery_agent': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Active': return 'text-success bg-success/10';
-      case 'Pending': return 'text-warning bg-warning/10';
-      case 'Suspended': return 'text-error bg-error/10';
-      default: return 'text-muted-foreground bg-muted/10';
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'suspended': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('fr-CM', {
+      style: 'currency',
+      currency: 'XAF',
+      minimumFractionDigits: 0
+    }).format(amount);
+  };
+
+  const handleUserAction = (action, userId) => {
+    console.log(`${action} user ${userId}`);
+    // Implement user actions here
+  };
+
+  const handleBulkAction = (action) => {
+    console.log(`${action} users:`, selectedUsers);
+    // Implement bulk actions here
+  };
+
+  const toggleUserSelection = (userId) => {
+    setSelectedUsers(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const selectAllUsers = () => {
+    const currentPageUsers = getCurrentPageUsers().map(user => user.id);
+    setSelectedUsers(prev => 
+      prev.length === currentPageUsers.length 
+        ? []
+        : currentPageUsers
+    );
+  };
+
+  const getCurrentPageUsers = () => {
+    const indexOfLastUser = currentPage * usersPerPage;
+    const indexOfFirstUser = indexOfLastUser - usersPerPage;
+    return filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  };
+
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
   return (
-    <div className="bg-surface rounded-lg border border-border p-6 elevation-1">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-foreground">User Management</h2>
-        <Button variant="outline" iconName="UserPlus" iconPosition="left">
-          Add User
-        </Button>
+    <div className="p-4 lg:p-6 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
+          <p className="text-gray-600">Manage all platform users and their permissions</p>
+        </div>
+        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+          <Icon name="UserPlus" size={16} />
+          <span>Add User</span>
+        </button>
       </div>
 
-      {/* User Statistics */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        <div className="text-center p-4 bg-muted/50 rounded-lg">
-          <div className="text-2xl font-bold text-foreground">{userStats.totalUsers.toLocaleString()}</div>
-          <div className="text-sm text-muted-foreground">Total Users</div>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center space-x-2">
+            <Icon name="Users" size={20} className="text-blue-600" />
+            <span className="text-sm text-gray-600">Total Users</span>
+          </div>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{users.length}</p>
         </div>
-        <div className="text-center p-4 bg-success/10 rounded-lg">
-          <div className="text-2xl font-bold text-success">{userStats.newRegistrations}</div>
-          <div className="text-sm text-muted-foreground">New This Week</div>
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center space-x-2">
+            <Icon name="UserCheck" size={20} className="text-green-600" />
+            <span className="text-sm text-gray-600">Active</span>
+          </div>
+          <p className="text-2xl font-bold text-gray-900 mt-1">
+            {users.filter(u => u.status === 'active').length}
+          </p>
         </div>
-        <div className="text-center p-4 bg-primary/10 rounded-lg">
-          <div className="text-2xl font-bold text-primary">{userStats.activeUsers.toLocaleString()}</div>
-          <div className="text-sm text-muted-foreground">Active Users</div>
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center space-x-2">
+            <Icon name="Clock" size={20} className="text-yellow-600" />
+            <span className="text-sm text-gray-600">Pending</span>
+          </div>
+          <p className="text-2xl font-bold text-gray-900 mt-1">
+            {users.filter(u => u.status === 'pending').length}
+          </p>
         </div>
-        <div className="text-center p-4 bg-error/10 rounded-lg">
-          <div className="text-2xl font-bold text-error">{userStats.suspendedUsers}</div>
-          <div className="text-sm text-muted-foreground">Suspended</div>
-        </div>
-        <div className="text-center p-4 bg-warning/10 rounded-lg">
-          <div className="text-2xl font-bold text-warning">{userStats.pendingVerifications}</div>
-          <div className="text-sm text-muted-foreground">Pending</div>
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center space-x-2">
+            <Icon name="Store" size={20} className="text-purple-600" />
+            <span className="text-sm text-gray-600">Shop Owners</span>
+          </div>
+          <p className="text-2xl font-bold text-gray-900 mt-1">
+            {users.filter(u => u.role === 'shop_owner').length}
+          </p>
         </div>
       </div>
 
-      {/* Role Distribution */}
-      <div className="mb-6">
-        <h3 className="text-lg font-medium text-foreground mb-4">Role Distribution</h3>
-        <div className="space-y-3">
-          {roleDistribution.map((role, index) => (
-            <div key={index} className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className={`w-3 h-3 rounded-full ${role.color}`}></div>
-                <span className="text-sm font-medium text-foreground">{role.role}</span>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="w-32 bg-muted rounded-full h-2">
-                  <div 
-                    className={`h-2 rounded-full ${role.color}`}
-                    style={{ width: `${role.percentage}%` }}
-                  ></div>
-                </div>
-                <span className="text-sm text-muted-foreground w-16 text-right">
-                  {role.count.toLocaleString()}
-                </span>
-              </div>
+      {/* Filters */}
+      <div className="bg-white rounded-lg p-4 border border-gray-200">
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Search */}
+          <div className="flex-1">
+            <div className="relative">
+              <Icon name="Search" size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search users by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
-          ))}
+          </div>
+          
+          {/* Role Filter */}
+          <select
+            value={selectedRole}
+            onChange={(e) => setSelectedRole(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            {roles.map(role => (
+              <option key={role.value} value={role.value}>{role.label}</option>
+            ))}
+          </select>
+          
+          {/* Status Filter */}
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            {statuses.map(status => (
+              <option key={status.value} value={status.value}>{status.label}</option>
+            ))}
+          </select>
         </div>
+
+        {/* Bulk Actions */}
+        {selectedUsers.length > 0 && (
+          <div className="mt-4 flex items-center space-x-2">
+            <span className="text-sm text-gray-600">{selectedUsers.length} selected</span>
+            <button
+              onClick={() => handleBulkAction('activate')}
+              className="px-3 py-1 bg-green-100 text-green-800 rounded text-sm hover:bg-green-200 transition-colors"
+            >
+              Activate
+            </button>
+            <button
+              onClick={() => handleBulkAction('suspend')}
+              className="px-3 py-1 bg-red-100 text-red-800 rounded text-sm hover:bg-red-200 transition-colors"
+            >
+              Suspend
+            </button>
+            <button
+              onClick={() => handleBulkAction('delete')}
+              className="px-3 py-1 bg-gray-100 text-gray-800 rounded text-sm hover:bg-gray-200 transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Recent Users */}
-      <div>
-        <h3 className="text-lg font-medium text-foreground mb-4">Recent Registrations</h3>
-        <div className="space-y-3">
-          {recentUsers.map((user) => (
-            <div key={user.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <img 
-                  src={user.avatar} 
-                  alt={user.name}
-                  className="w-10 h-10 rounded-full object-cover"
+      {/* Users Table/Cards */}
+      <div className="bg-white rounded-lg border border-gray-200">
+        {/* Desktop Table */}
+        <div className="hidden lg:block overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    checked={selectedUsers.length === getCurrentPageUsers().length && getCurrentPageUsers().length > 0}
+                    onChange={selectAllUsers}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Orders</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Login</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {getCurrentPageUsers().map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedUsers.includes(user.id)}
+                      onChange={() => toggleUserSelection(user.id)}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                        <Icon name="User" size={20} className="text-gray-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{user.name}</p>
+                        <p className="text-sm text-gray-500">{user.email}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                      {user.role.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
+                      {user.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{user.orders}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{formatCurrency(user.revenue)}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{user.lastLogin}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => setSelectedUser(user)}
+                        className="text-blue-600 hover:text-blue-700"
+                      >
+                        <Icon name="Eye" size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleUserAction('edit', user.id)}
+                        className="text-gray-600 hover:text-gray-700"
+                      >
+                        <Icon name="Edit" size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleUserAction('delete', user.id)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Icon name="Trash2" size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="lg:hidden divide-y divide-gray-200">
+          {getCurrentPageUsers().map((user) => (
+            <div key={user.id} className="p-4">
+              <div className="flex items-start space-x-3">
+                <input
+                  type="checkbox"
+                  checked={selectedUsers.includes(user.id)}
+                  onChange={() => toggleUserSelection(user.id)}
+                  className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
-                <div>
-                  <div className="font-medium text-foreground">{user.name}</div>
-                  <div className="text-sm text-muted-foreground">{user.email}</div>
+                <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                  <Icon name="User" size={20} className="text-gray-600" />
                 </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-muted-foreground">{user.role}</span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
-                  {user.status}
-                </span>
-                <Button variant="ghost" size="sm" iconName="MoreHorizontal" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-gray-900 truncate">{user.name}</p>
+                    <div className="flex items-center space-x-1">
+                      <button
+                        onClick={() => setSelectedUser(user)}
+                        className="p-1 text-blue-600 hover:text-blue-700"
+                      >
+                        <Icon name="Eye" size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleUserAction('edit', user.id)}
+                        className="p-1 text-gray-600 hover:text-gray-700"
+                      >
+                        <Icon name="Edit" size={16} />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                  <div className="flex items-center space-x-2 mt-2">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                      {user.role.replace('_', ' ')}
+                    </span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
+                      {user.status}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between mt-2 text-sm text-gray-500">
+                    <span>{user.orders} orders</span>
+                    <span>{formatCurrency(user.revenue)}</span>
+                  </div>
+                </div>
               </div>
             </div>
           ))}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="px-6 py-3 border-t border-gray-200 flex items-center justify-between">
+            <div className="text-sm text-gray-500">
+              Showing {((currentPage - 1) * usersPerPage) + 1} to {Math.min(currentPage * usersPerPage, filteredUsers.length)} of {filteredUsers.length} users
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-gray-500">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
 export default UserManagement;
+

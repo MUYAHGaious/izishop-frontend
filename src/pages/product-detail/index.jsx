@@ -10,10 +10,13 @@ import ProductDescription from './components/ProductDescription';
 import ReviewsSection from './components/ReviewsSection';
 import RelatedProducts from './components/RelatedProducts';
 import StickyPurchaseBar from './components/StickyPurchaseBar';
+import { useAuth } from '../../contexts/AuthContext';
+import { showToast } from '../../components/ui/Toast';
 
 const ProductDetail = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [product, setProduct] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);

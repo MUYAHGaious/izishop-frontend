@@ -9,10 +9,12 @@ import ShopCard from './components/ShopCard';
 import FilterPanel from './components/FilterPanel';
 import FeaturedShops from './components/FeaturedShops';
 import CreateShopModal from '../../components/ui/CreateShopModal';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ShopsListing = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
@@ -238,6 +240,17 @@ const ShopsListing = () => {
     });
   }, [currentPage, hasMore, loading, mockShops]);
 
+  const handleCreateShop = useCallback(() => {
+    if (!isAuthenticated() || user?.role !== 'SHOP_OWNER') {
+      // Redirect to login/register page for both non-authenticated and non-shop-owner users
+      navigate('/authentication-login-register');
+      return;
+    }
+    
+    // Open create shop modal
+    setIsCreateShopOpen(true);
+  }, [isAuthenticated, user, navigate]);
+
   const filteredShops = shops.filter(shop => {
     if (filters.categories?.length > 0 && !filters.categories.includes(shop.category)) {
       return false;
@@ -291,7 +304,7 @@ const ShopsListing = () => {
                   variant="outline"
                   iconName="Plus"
                   iconPosition="left"
-                  onClick={() => setIsCreateShopOpen(true)}
+                  onClick={handleCreateShop}
                   className="whitespace-nowrap"
                 >
                   Create Shop

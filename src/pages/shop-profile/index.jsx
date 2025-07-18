@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import apiService from '../../services/api';
 import Header from '../../components/ui/Header';
 import MobileBottomTab from '../../components/ui/MobileBottomTab';
 import Breadcrumbs from '../../components/ui/Breadcrumbs';
@@ -13,280 +15,125 @@ import FloatingContact from './components/FloatingContact';
 
 const ShopProfile = () => {
   const [searchParams] = useSearchParams();
+  const { slug, id } = useParams();
+  const navigate = useNavigate();
+  const { user, isAuthenticated, isShopOwner, getShopBySlug, getShopById } = useAuth();
+  
   const [activeTab, setActiveTab] = useState('products');
   const [isLoading, setIsLoading] = useState(true);
+  const [shopData, setShopData] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [error, setError] = useState(null);
+  const [isOwner, setIsOwner] = useState(false);
 
-  const shopId = searchParams.get('id') || '1';
-
-  // Mock shop data
-  const shopData = {
-    id: shopId,
-    name: "TechHub Electronics",
-    logo: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=200&h=200&fit=crop&crop=center",
-    bannerImage: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&h=400&fit=crop&crop=center",
-    rating: 4.8,
-    reviewCount: 1247,
-    location: "Douala, Cameroon",
-    productCount: 156,
-    followerCount: 2834,
-    yearsActive: 5,
-    isVerified: true,
-    isPremium: true,
-    isOnline: true,
-    description: `TechHub Electronics is your premier destination for cutting-edge technology and electronics in Cameroon. We specialize in providing high-quality smartphones, laptops, gaming equipment, and smart home devices from leading global brands.`,
-    mission: `Our mission is to make advanced technology accessible to everyone in Cameroon while providing exceptional customer service and competitive prices.`,
-    vision: `To become the leading electronics retailer in Central Africa, known for innovation, reliability, and customer satisfaction.`,
-    address: "123 Commercial Avenue, Akwa, Douala, Cameroon",
-    phone: "+237 6XX XXX XXX",
-    email: "info@techhub.cm",
-    website: "www.techhub.cm",
-    coordinates: {
-      lat: 4.0511,
-      lng: 9.7679
-    },
-    certifications: [
-      { name: "Authorized Apple Reseller", issuer: "Apple Inc." },
-      { name: "Samsung Partner", issuer: "Samsung Electronics" },
-      { name: "ISO 9001:2015", issuer: "International Organization for Standardization" }
-    ]
-  };
-
-  const ownerData = {
-    name: "Jean-Baptiste Kouam",
-    photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=center",
-    bio: "Passionate technology entrepreneur with over 10 years of experience in the electronics industry. Committed to bringing the latest innovations to the Cameroonian market.",
-    email: "jb.kouam@techhub.cm",
-    phone: "+237 6XX XXX XXX",
-    memberSince: "January 2019",
-    isVerified: true,
-    certifications: ["Electronics Engineering", "Business Management", "Apple Certified Technician"]
-  };
-
-  const statsData = {
-    salesVolume: "2.5M XAF",
-    salesChange: 15.3,
-    responseTime: "< 2 hours",
-    shippingTime: "1-3 days",
-    satisfactionRate: 96
-  };
-
-  const productsData = [
-    {
-      id: 1,
-      name: "iPhone 15 Pro Max 256GB",
-      image: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&h=400&fit=crop&crop=center",
-      price: 850000,
-      originalPrice: 950000,
-      rating: 4.9,
-      reviewCount: 127,
-      stock: 15,
-      isNew: true,
-      discount: 11,
-      category: "electronics"
-    },
-    {
-      id: 2,
-      name: "MacBook Air M2 13-inch",
-      image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop&crop=center",
-      price: 1200000,
-      originalPrice: null,
-      rating: 4.8,
-      reviewCount: 89,
-      stock: 8,
-      isNew: false,
-      discount: 0,
-      category: "electronics"
-    },
-    {
-      id: 3,
-      name: "Samsung Galaxy S24 Ultra",
-      image: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&h=400&fit=crop&crop=center",
-      price: 750000,
-      originalPrice: 800000,
-      rating: 4.7,
-      reviewCount: 203,
-      stock: 22,
-      isNew: false,
-      discount: 6,
-      category: "electronics"
-    },
-    {
-      id: 4,
-      name: "Sony WH-1000XM5 Headphones",
-      image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop&crop=center",
-      price: 180000,
-      originalPrice: 220000,
-      rating: 4.6,
-      reviewCount: 156,
-      stock: 35,
-      isNew: false,
-      discount: 18,
-      category: "electronics"
-    },
-    {
-      id: 5,
-      name: "iPad Pro 12.9-inch M2",
-      image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&h=400&fit=crop&crop=center",
-      price: 950000,
-      originalPrice: null,
-      rating: 4.8,
-      reviewCount: 94,
-      stock: 12,
-      isNew: true,
-      discount: 0,
-      category: "electronics"
-    },
-    {
-      id: 6,
-      name: "Dell XPS 13 Laptop",
-      image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=400&fit=crop&crop=center",
-      price: 680000,
-      originalPrice: 750000,
-      rating: 4.5,
-      reviewCount: 67,
-      stock: 18,
-      isNew: false,
-      discount: 9,
-      category: "electronics"
-    },
-    {
-      id: 7,
-      name: "Nintendo Switch OLED",
-      image: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=400&h=400&fit=crop&crop=center",
-      price: 280000,
-      originalPrice: 320000,
-      rating: 4.7,
-      reviewCount: 189,
-      stock: 25,
-      isNew: false,
-      discount: 13,
-      category: "electronics"
-    },
-    {
-      id: 8,
-      name: "Apple Watch Series 9",
-      image: "https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=400&h=400&fit=crop&crop=center",
-      price: 320000,
-      originalPrice: null,
-      rating: 4.6,
-      reviewCount: 112,
-      stock: 30,
-      isNew: true,
-      discount: 0,
-      category: "electronics"
-    }
-  ];
-
-  const reviewsData = [
-    {
-      id: 1,
-      customerName: "Marie Ngozi",
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=center",
-      rating: 5,
-      date: "2025-01-10",
-      comment: "Excellent service! My iPhone arrived exactly as described and the customer support was outstanding. TechHub really knows their products.",
-      productName: "iPhone 15 Pro Max 256GB",
-      isVerified: true,
-      helpfulCount: 12,
-      images: [
-        "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=200&h=200&fit=crop&crop=center"
-      ]
-    },
-    {
-      id: 2,
-      customerName: "Paul Mbarga",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=center",
-      rating: 4,
-      date: "2025-01-08",
-      comment: "Great selection of products and competitive prices. Delivery was fast and packaging was secure. Will definitely shop here again.",
-      productName: "MacBook Air M2 13-inch",
-      isVerified: true,
-      helpfulCount: 8,
-      images: []
-    },
-    {
-      id: 3,
-      customerName: "Fatima Bello",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=center",
-      rating: 5,
-      date: "2025-01-05",
-      comment: "Amazing experience from start to finish. The staff is knowledgeable and helped me choose the perfect laptop for my needs. Highly recommended!",
-      productName: "Dell XPS 13 Laptop",
-      isVerified: true,
-      helpfulCount: 15,
-      images: []
-    },
-    {
-      id: 4,
-      customerName: "Emmanuel Tabi",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=center",
-      rating: 4,
-      date: "2025-01-03",
-      comment: "Good quality products and reasonable prices. The headphones I bought work perfectly and the sound quality is excellent.",
-      productName: "Sony WH-1000XM5 Headphones",
-      isVerified: true,
-      helpfulCount: 6,
-      images: []
-    },
-    {
-      id: 5,
-      customerName: "Grace Asong",
-      avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=center",
-      rating: 5,
-      date: "2024-12-28",
-      comment: "TechHub is my go-to store for all electronics. They always have the latest products and their customer service is exceptional.",
-      productName: "Samsung Galaxy S24 Ultra",
-      isVerified: true,
-      helpfulCount: 9,
-      images: []
-    }
-  ];
-
-  const ratingDistribution = {
-    5: 847,
-    4: 298,
-    3: 78,
-    2: 18,
-    1: 6
-  };
-
-  const breadcrumbItems = [
-    { label: 'Home', path: '/product-catalog' },
-    { label: 'Shops', path: '/product-catalog' },
-    { label: shopData.name, path: `/shop-profile?id=${shopId}` }
-  ];
-
-  const tabs = [
-    { id: 'products', label: 'Products', count: shopData.productCount },
-    { id: 'reviews', label: 'Reviews', count: shopData.reviewCount },
-    { id: 'about', label: 'About' }
-  ];
+  // Get shop identifier from URL
+  const shopId = id || searchParams.get('id');
+  const shopSlug = slug;
 
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
+    loadShopData();
+  }, [shopId, shopSlug, user]);
+
+  const loadShopData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      let shop = null;
+      
+      // Try to get shop from user's shops first (if authenticated and shop owner)
+      if (isAuthenticated() && isShopOwner()) {
+        if (shopSlug) {
+          shop = getShopBySlug(shopSlug);
+        } else if (shopId) {
+          shop = getShopById(shopId);
+        }
+      }
+      
+      // If not found in user's shops, fetch from API
+      if (!shop) {
+        if (shopSlug) {
+          // For slug-based URLs, we need to search shops by slug
+          const response = await apiService.getShops({ search: shopSlug });
+          shop = response.shops.find(s => s.slug === shopSlug);
+        } else if (shopId) {
+          const response = await apiService.getShop(shopId);
+          shop = response.shop;
+        }
+      }
+      
+      if (!shop) {
+        setError('Shop not found');
+        return;
+      }
+      
+      setShopData(shop);
+      setIsOwner(isAuthenticated() && user?.id === shop.owner_id);
+      
+      // Load products and reviews
+      await Promise.all([
+        loadProducts(shop.id),
+        loadReviews(shop.id)
+      ]);
+      
+    } catch (error) {
+      console.error('Error loading shop data:', error);
+      setError(error.message);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
+  };
 
-    return () => clearTimeout(timer);
-  }, []);
+  const loadProducts = async (shopId) => {
+    try {
+      const response = await apiService.getShopProducts(shopId);
+      setProducts(response.products || []);
+    } catch (error) {
+      console.error('Error loading products:', error);
+    }
+  };
 
-  const handleFollow = (isFollowing) => {
-    console.log('Follow status:', isFollowing);
+  const loadReviews = async (shopId) => {
+    try {
+      const response = await apiService.getShopReviews(shopId);
+      setReviews(response.reviews || []);
+    } catch (error) {
+      console.error('Error loading reviews:', error);
+    }
+  };
+
+  const handleFollow = async (isFollowing) => {
+    if (!isAuthenticated()) {
+      navigate('/authentication-login-register');
+      return;
+    }
+    
+    try {
+      await apiService.followShop(shopData.id);
+      // Refresh shop data to get updated follower count
+      loadShopData();
+    } catch (error) {
+      console.error('Error following shop:', error);
+    }
   };
 
   const handleContact = (type) => {
-    console.log('Contact type:', type);
+    if (!shopData) return;
     
     switch (type) {
       case 'chat':
         // Open chat modal or redirect to chat
         break;
       case 'call':
-        window.open(`tel:${shopData.phone}`);
+        if (shopData.phone) {
+          window.open(`tel:${shopData.phone}`);
+        }
         break;
       case 'email':
-        window.open(`mailto:${shopData.email}`);
+        if (shopData.email) {
+          window.open(`mailto:${shopData.email}`);
+        }
         break;
       default:
         console.log('General contact');
@@ -324,6 +171,61 @@ const ShopProfile = () => {
     );
   }
 
+  if (error || !shopData) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="pt-16 lg:pt-20 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-foreground mb-4">
+              {error || 'Shop not found'}
+            </h1>
+            <button
+              onClick={() => navigate('/shops-listing')}
+              className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              Browse All Shops
+            </button>
+          </div>
+        </div>
+        <MobileBottomTab />
+      </div>
+    );
+  }
+
+  const breadcrumbItems = [
+    { label: 'Home', path: '/product-catalog' },
+    { label: 'Shops', path: '/shops-listing' },
+    { label: shopData.name, path: shopSlug ? `/shop/${shopSlug}` : `/shops/${shopData.id}` }
+  ];
+
+  const tabs = [
+    { id: 'products', label: 'Products', count: products.length },
+    { id: 'reviews', label: 'Reviews', count: reviews.length },
+    { id: 'about', label: 'About' }
+  ];
+
+  // Add management tab for shop owners
+  if (isOwner) {
+    tabs.push({ id: 'manage', label: 'Manage Shop' });
+  }
+
+  const statsData = {
+    salesVolume: shopData.total_sales ? `${(shopData.total_sales / 1000).toFixed(1)}K XAF` : "0 XAF",
+    salesChange: 15.3,
+    responseTime: "< 2 hours",
+    shippingTime: "1-3 days",
+    satisfactionRate: Math.round(shopData.rating * 20) // Convert 5-star to percentage
+  };
+
+  const ratingDistribution = {
+    5: Math.floor(reviews.length * 0.68),
+    4: Math.floor(reviews.length * 0.24),
+    3: Math.floor(reviews.length * 0.06),
+    2: Math.floor(reviews.length * 0.01),
+    1: Math.floor(reviews.length * 0.01)
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -334,6 +236,7 @@ const ShopProfile = () => {
           shop={shopData} 
           onFollow={handleFollow}
           onContact={() => handleContact('general')}
+          isOwner={isOwner}
         />
 
         <div className="container mx-auto px-4 py-8">
@@ -350,14 +253,16 @@ const ShopProfile = () => {
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                       activeTab === tab.id
-                        ? 'border-primary text-primary' :'border-transparent text-text-secondary hover:text-text-primary'
+                        ? 'border-primary text-primary' 
+                        : 'border-transparent text-text-secondary hover:text-text-primary'
                     }`}
                   >
                     <span>{tab.label}</span>
-                    {tab.count && (
+                    {tab.count !== undefined && (
                       <span className={`px-2 py-1 rounded-full text-xs ${
                         activeTab === tab.id
-                          ? 'bg-primary/10 text-primary' :'bg-muted text-text-secondary'
+                          ? 'bg-primary/10 text-primary' 
+                          : 'bg-muted text-text-secondary'
                       }`}>
                         {tab.count}
                       </span>
@@ -369,12 +274,12 @@ const ShopProfile = () => {
               {/* Tab Content */}
               <div className="animate-fade-in">
                 {activeTab === 'products' && (
-                  <ProductGrid products={productsData} shopId={shopId} />
+                  <ProductGrid products={products} shopId={shopData.id} />
                 )}
                 
                 {activeTab === 'reviews' && (
                   <ReviewsSection 
-                    reviews={reviewsData}
+                    reviews={reviews}
                     overallRating={shopData.rating}
                     ratingDistribution={ratingDistribution}
                   />
@@ -383,13 +288,35 @@ const ShopProfile = () => {
                 {activeTab === 'about' && (
                   <AboutSection shop={shopData} />
                 )}
+                
+                {activeTab === 'manage' && isOwner && (
+                  <div className="p-6">
+                    <h3 className="text-lg font-semibold mb-4">Shop Management</h3>
+                    <div className="space-y-4">
+                      <button
+                        onClick={() => navigate('/shop-owner-dashboard')}
+                        className="w-full p-4 text-left bg-surface border border-border rounded-lg hover:bg-muted transition-colors"
+                      >
+                        <h4 className="font-medium">Go to Dashboard</h4>
+                        <p className="text-sm text-text-secondary">Manage products, orders, and analytics</p>
+                      </button>
+                      <button
+                        onClick={() => navigate('/product-management')}
+                        className="w-full p-4 text-left bg-surface border border-border rounded-lg hover:bg-muted transition-colors"
+                      >
+                        <h4 className="font-medium">Manage Products</h4>
+                        <p className="text-sm text-text-secondary">Add, edit, or remove products</p>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Sidebar */}
             <div className="lg:col-span-1 space-y-6">
               <ShopStats stats={statsData} />
-              <ShopOwnerInfo owner={ownerData} />
+              <ShopOwnerInfo owner={shopData.owner} />
             </div>
           </div>
         </div>
@@ -402,3 +329,4 @@ const ShopProfile = () => {
 };
 
 export default ShopProfile;
+

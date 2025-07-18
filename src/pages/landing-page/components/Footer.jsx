@@ -227,6 +227,25 @@ const Footer = () => {
               <br />
               For business inquiries: business@izishopin.cm | For technical support: tech@izishopin.cm
             </p>
+            
+            {/* Admin Links */}
+            <div className="mt-2 pt-2 border-t border-background/10">
+              <p className="text-xs text-background/40 mb-1">Admin Access:</p>
+              <div className="flex justify-center space-x-4">
+                <a
+                  href="/admin-setup"
+                  className="text-xs text-background/60 hover:text-primary marketplace-transition"
+                >
+                  Admin Setup
+                </a>
+                <a
+                  href="/admin-login"
+                  className="text-xs text-background/60 hover:text-primary marketplace-transition"
+                >
+                  Admin Login
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </div>

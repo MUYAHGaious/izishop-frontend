@@ -1,207 +1,273 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../../components/ui/Header';
-import Sidebar from '../../components/ui/Sidebar';
-import MobileBottomTab from '../../components/ui/MobileBottomTab';
-import Breadcrumbs from '../../components/ui/Breadcrumbs';
+import { useAuth } from '../../contexts/AuthContext';
 import Icon from '../../components/AppIcon';
-import Button from '../../components/ui/Button';
-import UserManagementTab from './components/UserManagementTab';
-import ShopOversightTab from './components/ShopOversightTab';
-import DisputesTab from './components/DisputesTab';
-import AnalyticsTab from './components/AnalyticsTab';
-import CommissionTrackingTab from './components/CommissionTrackingTab';
-import SystemMonitoringWidget from './components/SystemMonitoringWidget';
+import DashboardOverview from './components/DashboardOverview';
+import UserManagement from './components/UserManagement';
+import ShopManagement from './components/ShopManagement';
+import OrderManagement from './components/OrderManagement';
+import Analytics from './components/Analytics';
+import SystemSettings from './components/SystemSettings';
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState('users');
+  const [activeTab, setActiveTab] = useState('overview');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const navigate = useNavigate();
+  const { user, logout, isAuthenticated } = useAuth();
 
-  // Check admin authentication on component mount
+  // Check admin authentication
   useEffect(() => {
-    const isAdminAuthenticated = localStorage.getItem('adminAuthenticated');
-    if (!isAdminAuthenticated) {
+    if (!isAuthenticated() || !user || user.role !== 'ADMIN') {
       navigate('/admin-login');
     }
-  }, [navigate]);
+  }, [user, isAuthenticated, navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminAuthenticated');
-    localStorage.removeItem('userRole');
-    navigate('/customer-dashboard');
+  // Mock real-time notifications
+  useEffect(() => {
+    const mockNotifications = [
+      { id: 1, type: 'order', message: 'New order #12345 requires approval', time: '2 min ago' },
+      { id: 2, type: 'user', message: 'New shop owner registration', time: '5 min ago' },
+      { id: 3, type: 'system', message: 'System backup completed', time: '1 hour ago' }
+    ];
+    setNotifications(mockNotifications);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/admin-login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force navigation anyway
+      navigate('/admin-login');
+    }
   };
 
   const tabs = [
-    { id: 'users', label: 'User Management', icon: 'Users' },
-    { id: 'shops', label: 'Shop Oversight', icon: 'Store' },
-    { id: 'disputes', label: 'Disputes', icon: 'AlertTriangle' },
-    { id: 'analytics', label: 'Analytics', icon: 'BarChart3' },
-    { id: 'commission', label: 'Commission', icon: 'DollarSign' }
-  ];
-
-  const breadcrumbItems = [
-    { label: 'Home', path: '/product-catalog' },
-    { label: 'Admin Dashboard', path: '/admin-dashboard' }
+    { id: 'overview', label: 'Overview', icon: 'BarChart3', color: 'text-blue-600' },
+    { id: 'users', label: 'Users', icon: 'Users', color: 'text-green-600' },
+    { id: 'shops', label: 'Shops', icon: 'Store', color: 'text-purple-600' },
+    { id: 'orders', label: 'Orders', icon: 'ShoppingBag', color: 'text-orange-600' },
+    { id: 'analytics', label: 'Analytics', icon: 'TrendingUp', color: 'text-indigo-600' },
+    { id: 'settings', label: 'Settings', icon: 'Settings', color: 'text-gray-600' }
   ];
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'overview':
+        return <DashboardOverview />;
       case 'users':
-        return <UserManagementTab />;
+        return <UserManagement />;
       case 'shops':
-        return <ShopOversightTab />;
-      case 'disputes':
-        return <DisputesTab />;
+        return <ShopManagement />;
+      case 'orders':
+        return <OrderManagement />;
       case 'analytics':
-        return <AnalyticsTab />;
-      case 'commission':
-        return <CommissionTrackingTab />;
+        return <Analytics />;
+      case 'settings':
+        return <SystemSettings />;
       default:
-        return <UserManagementTab />;
+        return <DashboardOverview />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <Sidebar />
-      
-      <div className="lg:pl-64 pt-16">
-        <div className="p-4 lg:p-6 pb-20 lg:pb-6">
-          <Breadcrumbs items={breadcrumbItems} />
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile Header */}
+      <div className="lg:hidden bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <Icon name="Menu" size={24} className="text-gray-600" />
+            </button>
+            <h1 className="text-xl font-bold text-gray-900">Admin</h1>
+          </div>
           
-          {/* Dashboard Header */}
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-text-primary">Admin Dashboard</h1>
-              <p className="text-text-secondary mt-1">Comprehensive platform oversight and management</p>
+          <div className="flex items-center space-x-2">
+            {/* Notifications */}
+            <div className="relative">
+              <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative">
+                <Icon name="Bell" size={20} className="text-gray-600" />
+                {notifications.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {notifications.length}
+                  </span>
+                )}
+              </button>
             </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" iconName="RefreshCw" iconPosition="left">
-                Refresh
-              </Button>
-              <Button variant="outline" iconName="Settings" iconPosition="left">
-                Settings
-              </Button>
-              <Button 
-                variant="destructive" 
-                iconName="LogOut" 
-                iconPosition="left"
-                onClick={handleLogout}
+            
+            {/* Profile */}
+            <button 
+              onClick={handleLogout}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <Icon name="LogOut" size={20} className="text-gray-600" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
+        <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
+          {/* Logo */}
+          <div className="flex items-center h-16 px-6 border-b border-gray-200">
+            <h1 className="text-2xl font-bold text-gray-900">IziShopin</h1>
+            <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">Admin</span>
+          </div>
+          
+          {/* Navigation */}
+          <nav className="flex-1 px-4 py-6 space-y-2">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  activeTab === tab.id
+                    ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
               >
-                Logout
-              </Button>
-            </div>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-card rounded-lg border border-border p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-text-secondary text-sm">Total Users</p>
-                  <p className="text-2xl font-bold text-text-primary">16,847</p>
-                </div>
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Icon name="Users" size={24} className="text-primary" />
-                </div>
+                <Icon name={tab.icon} size={20} className={activeTab === tab.id ? 'text-blue-700' : tab.color} />
+                <span className="ml-3">{tab.label}</span>
+              </button>
+            ))}
+          </nav>
+          
+          {/* User Profile */}
+          <div className="p-4 border-t border-gray-200">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <Icon name="User" size={20} className="text-blue-600" />
               </div>
-              <div className="flex items-center mt-4 text-sm">
-                <Icon name="TrendingUp" size={16} className="text-success mr-1" />
-                <span className="text-success">+12.5%</span>
-                <span className="text-text-secondary ml-1">from last month</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">Admin User</p>
+                <p className="text-xs text-gray-500 truncate">admin@izishopin.com</p>
               </div>
-            </div>
-
-            <div className="bg-card rounded-lg border border-border p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-text-secondary text-sm">Active Shops</p>
-                  <p className="text-2xl font-bold text-text-primary">1,247</p>
-                </div>
-                <div className="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
-                  <Icon name="Store" size={24} className="text-secondary" />
-                </div>
-              </div>
-              <div className="flex items-center mt-4 text-sm">
-                <Icon name="TrendingUp" size={16} className="text-success mr-1" />
-                <span className="text-success">+8.2%</span>
-                <span className="text-text-secondary ml-1">from last month</span>
-              </div>
-            </div>
-
-            <div className="bg-card rounded-lg border border-border p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-text-secondary text-sm">Open Disputes</p>
-                  <p className="text-2xl font-bold text-text-primary">23</p>
-                </div>
-                <div className="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
-                  <Icon name="AlertTriangle" size={24} className="text-warning" />
-                </div>
-              </div>
-              <div className="flex items-center mt-4 text-sm">
-                <Icon name="TrendingDown" size={16} className="text-success mr-1" />
-                <span className="text-success">-15.3%</span>
-                <span className="text-text-secondary ml-1">from last month</span>
-              </div>
-            </div>
-
-            <div className="bg-card rounded-lg border border-border p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-text-secondary text-sm">Monthly Revenue</p>
-                  <p className="text-2xl font-bold text-text-primary">156.2M XAF</p>
-                </div>
-                <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
-                  <Icon name="DollarSign" size={24} className="text-success" />
-                </div>
-              </div>
-              <div className="flex items-center mt-4 text-sm">
-                <Icon name="TrendingUp" size={16} className="text-success mr-1" />
-                <span className="text-success">+18.7%</span>
-                <span className="text-text-secondary ml-1">from last month</span>
-              </div>
-            </div>
-          </div>
-
-          {/* System Monitoring Widget */}
-          <div className="mb-8">
-            <SystemMonitoringWidget />
-          </div>
-
-          {/* Main Content Area */}
-          <div className="bg-card rounded-lg border border-border">
-            {/* Tab Navigation */}
-            <div className="border-b border-border">
-              <div className="flex overflow-x-auto">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center space-x-2 px-6 py-4 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                      activeTab === tab.id
-                        ? 'border-primary text-primary bg-primary/5' :'border-transparent text-text-secondary hover:text-text-primary hover:border-border'
-                    }`}
-                  >
-                    <Icon name={tab.icon} size={18} />
-                    <span>{tab.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Tab Content */}
-            <div className="p-6">
-              {renderTabContent()}
+              <button 
+                onClick={handleLogout}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <Icon name="LogOut" size={16} className="text-gray-500" />
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      <MobileBottomTab />
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setIsMobileMenuOpen(false)}>
+          <div className="fixed inset-y-0 left-0 w-64 bg-white" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
+              <h1 className="text-xl font-bold text-gray-900">IziShopin Admin</h1>
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <Icon name="X" size={20} className="text-gray-600" />
+              </button>
+            </div>
+            
+            <nav className="px-4 py-6 space-y-2">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                    activeTab === tab.id
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <Icon name={tab.icon} size={20} className={activeTab === tab.id ? 'text-blue-700' : tab.color} />
+                  <span className="ml-3">{tab.label}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="lg:pl-64">
+        <main className="p-4 lg:p-8 pb-20 lg:pb-8">
+          {/* Desktop Header */}
+          <div className="hidden lg:flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {tabs.find(tab => tab.id === activeTab)?.label || 'Dashboard'}
+              </h1>
+              <p className="text-gray-600 mt-1">Manage your platform with comprehensive tools</p>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              {/* Search */}
+              <div className="relative">
+                <Icon name="Search" size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              
+              {/* Notifications */}
+              <div className="relative">
+                <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative">
+                  <Icon name="Bell" size={20} className="text-gray-600" />
+                  {notifications.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {notifications.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+              
+              {/* Quick Actions */}
+              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                <Icon name="Plus" size={16} />
+                <span>Quick Action</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Tab Content */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 min-h-[600px]">
+            {renderTabContent()}
+          </div>
+        </main>
+      </div>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
+        <div className="grid grid-cols-6 gap-1">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex flex-col items-center py-2 px-1 transition-colors ${
+                activeTab === tab.id
+                  ? 'text-blue-600'
+                  : 'text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              <Icon name={tab.icon} size={20} />
+              <span className="text-xs mt-1 truncate">{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
 
 export default AdminDashboard;
+

@@ -1,23 +1,26 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import Header from '../../components/ui/Header';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
 
 const AdminLogin = () => {
   const [credentials, setCredentials] = useState({
-    username: '',
+    email: '',
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login, user } = useAuth();
 
-  // Admin credentials (in production, this should be handled by backend)
-  const ADMIN_CREDENTIALS = {
-    username: 'admin',
-    password: 'admin123'
-  };
+  // Check if already logged in as admin
+  React.useEffect(() => {
+    if (user && user.role === 'ADMIN') {
+      navigate('/admin-dashboard');
+    }
+  }, [user, navigate]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -34,23 +37,19 @@ const AdminLogin = () => {
     setError('');
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Validate credentials
-      if (credentials.username === ADMIN_CREDENTIALS.username && 
-          credentials.password === ADMIN_CREDENTIALS.password) {
-        // Store admin session
-        localStorage.setItem('adminAuthenticated', 'true');
-        localStorage.setItem('userRole', 'admin');
-        
-        // Redirect to admin dashboard
-        navigate('/admin-dashboard');
-      } else {
-        setError('Invalid username or password');
+      // Use the auth context login function
+      const response = await login(credentials);
+      
+      // Check if user is admin
+      if (response.user.role !== 'ADMIN') {
+        setError('Access denied. Admin credentials required.');
+        return;
       }
+      
+      // Redirect to admin dashboard
+      navigate('/admin-dashboard');
     } catch (err) {
-      setError('Login failed. Please try again.');
+      setError(err.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -87,23 +86,23 @@ const AdminLogin = () => {
 
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="username" className="block text-sm font-medium text-foreground mb-2">
-                    Username
+                  <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+                    Admin Email
                   </label>
                   <div className="relative">
                     <Icon 
-                      name="User" 
+                      name="Mail" 
                       size={20} 
                       className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" 
                     />
                     <input
-                      type="text"
-                      id="username"
-                      name="username"
-                      value={credentials.username}
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={credentials.email}
                       onChange={handleInputChange}
                       className="w-full pl-10 pr-4 py-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="Enter admin username"
+                      placeholder="Enter admin email"
                       required
                     />
                   </div>
@@ -159,10 +158,10 @@ const AdminLogin = () => {
                 Admin access is restricted to authorized personnel only
               </p>
               <button
-                onClick={() => navigate('/customer-dashboard')}
+                onClick={() => navigate('/')}
                 className="text-primary hover:text-primary/80 text-sm mt-2 transition-colors"
               >
-                ← Back to Customer Dashboard
+                ← Back to Home
               </button>
             </div>
           </div>

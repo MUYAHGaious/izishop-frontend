@@ -9,6 +9,7 @@ import FlashSaleHero from './components/FlashSaleHero';
 import SearchSection from './components/SearchSection';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
+import api from '../../services/api';
 
 const ProductCatalog = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -23,165 +24,6 @@ const ProductCatalog = () => {
   const [viewMode, setViewMode] = useState('grid'); // grid or list
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  // Enhanced mock product data with more variety
-  const mockProducts = [
-    {
-      id: 1,
-      name: "Samsung Galaxy S24 Ultra 256GB - Titanium Black",
-      price: 850000,
-      originalPrice: 950000,
-      image: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&h=400&fit=crop",
-      rating: 4.8,
-      reviewCount: 1247,
-      stock: 15,
-      shopName: "TechHub Cameroon",
-      shopId: 1,
-      isNew: true,
-      discount: 11,
-      category: "electronics",
-      brand: "samsung",
-      isWishlisted: false,
-      isFreeShipping: true,
-      isFlashSale: true,
-      badges: ['Best Seller', 'Free Shipping']
-    },
-    {
-      id: 2,
-      name: "Nike Air Max 270 Running Shoes - Black/White",
-      price: 125000,
-      originalPrice: 145000,
-      image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop",
-      rating: 4.6,
-      reviewCount: 892,
-      stock: 8,
-      shopName: "SportZone Douala",
-      shopId: 2,
-      isNew: false,
-      discount: 14,
-      category: "sports",
-      brand: "nike",
-      isBestSeller: true,
-      isWishlisted: true,
-      isFreeShipping: true,
-      badges: ['Limited Edition']
-    },
-    {
-      id: 3,
-      name: "Apple MacBook Pro 14-inch M3 Chip",
-      price: 1250000,
-      originalPrice: 1350000,
-      image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop",
-      rating: 4.9,
-      reviewCount: 634,
-      stock: 3,
-      shopName: "Apple Store Yaoundé",
-      shopId: 3,
-      isNew: true,
-      discount: 7,
-      category: "electronics",
-      brand: "apple",
-      isWishlisted: false,
-      isFreeShipping: true,
-      badges: ['Premium', 'Fast Delivery']
-    },
-    {
-      id: 4,
-      name: "Adidas Ultraboost 22 Running Shoes",
-      price: 95000,
-      originalPrice: 110000,
-      image: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=400&h=400&fit=crop",
-      rating: 4.5,
-      reviewCount: 456,
-      stock: 12,
-      shopName: "SportZone Douala",
-      shopId: 2,
-      isNew: false,
-      discount: 14,
-      category: "sports",
-      brand: "adidas",
-      isWishlisted: false,
-      isFreeShipping: false,
-      badges: ['Eco-Friendly']
-    },
-    {
-      id: 5,
-      name: "Sony WH-1000XM5 Wireless Headphones",
-      price: 285000,
-      originalPrice: 320000,
-      image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
-      rating: 4.7,
-      reviewCount: 321,
-      stock: 6,
-      shopName: "AudioMax Cameroon",
-      shopId: 4,
-      isNew: false,
-      discount: 11,
-      category: "electronics",
-      brand: "sony",
-      isBestSeller: true,
-      isWishlisted: false,
-      isFreeShipping: true,
-      isFlashSale: true,
-      badges: ['Noise Cancelling', 'Wireless']
-    },
-    {
-      id: 6,
-      name: "Elegant Summer Dress - Floral Print",
-      price: 45000,
-      originalPrice: 55000,
-      image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400&h=400&fit=crop",
-      rating: 4.3,
-      reviewCount: 289,
-      stock: 20,
-      shopName: "Fashion Boutique",
-      shopId: 5,
-      isNew: true,
-      discount: 18,
-      category: "fashion",
-      brand: "local",
-      isWishlisted: true,
-      isFreeShipping: false,
-      badges: ['Trending', 'Summer Collection']
-    },
-    {
-      id: 7,
-      name: "Home Garden Plant Set - Indoor Collection",
-      price: 35000,
-      originalPrice: 42000,
-      image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=400&fit=crop",
-      rating: 4.4,
-      reviewCount: 178,
-      stock: 25,
-      shopName: "Green Paradise",
-      shopId: 6,
-      isNew: false,
-      discount: 17,
-      category: "home",
-      brand: "local",
-      isWishlisted: false,
-      isFreeShipping: true,
-      badges: ['Eco-Friendly', 'Air Purifying']
-    },
-    {
-      id: 8,
-      name: "Canon EF 50mm f/1.8 STM Lens",
-      price: 450000,
-      originalPrice: 500000,
-      image: "https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=400&h=400&fit=crop",
-      rating: 4.8,
-      reviewCount: 145,
-      stock: 4,
-      shopName: "Photo Pro Shop",
-      shopId: 7,
-      isNew: true,
-      discount: 10,
-      category: "electronics",
-      brand: "canon",
-      isWishlisted: false,
-      isFreeShipping: true,
-      badges: ['Professional', 'Portrait Lens']
-    }
-  ];
 
   // Categories for navigation
   const categories = [
@@ -207,13 +49,51 @@ const ProductCatalog = () => {
     setSelectedCategory(category);
     setSortBy(sort);
     
-    // Simulate initial load
-    setTimeout(() => {
-      setProducts(mockProducts);
-      setResultsCount(mockProducts.length);
-      setLoading(false);
-    }, 1000);
+    // Load products from API
+    loadProducts(query);
   }, [searchParams]);
+
+  const loadProducts = async (searchQuery = '') => {
+    try {
+      setLoading(true);
+      
+      // Fetch products from API
+      const response = await api.getAllProducts(0, 100, true, searchQuery);
+      
+      // Transform API response to match expected format
+      const transformedProducts = response.map(product => ({
+        id: product.id,
+        name: product.name,
+        price: parseFloat(product.price),
+        originalPrice: parseFloat(product.price) * 1.1, // Add 10% as original price
+        image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop", // Default image
+        rating: 4.5, // Default rating
+        reviewCount: Math.floor(Math.random() * 1000) + 100, // Random review count
+        stock: product.stock_quantity,
+        shopName: "Shop Owner", // Would come from seller info
+        shopId: product.seller_id,
+        isNew: false,
+        discount: 10, // Default discount
+        category: "general", // Default category
+        brand: "generic", // Default brand
+        isWishlisted: false,
+        isFreeShipping: true,
+        isFlashSale: false,
+        badges: product.stock_quantity > 0 ? ['In Stock'] : ['Out of Stock']
+      }));
+      
+      setProducts(transformedProducts);
+      setResultsCount(transformedProducts.length);
+      
+    } catch (error) {
+      console.error('Error loading products:', error);
+      // Fallback to empty array if API fails
+      setProducts([]);
+      setResultsCount(0);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Handle category change
   const handleCategoryChange = useCallback((categoryId) => {
@@ -273,24 +153,55 @@ const ProductCatalog = () => {
   const handleLoadMore = useCallback(async () => {
     if (!hasMore || loading) return;
     
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newProducts = mockProducts.map(product => ({
-          ...product,
-          id: product.id + (currentPage * 8)
-        }));
-        
-        setProducts(prev => [...prev, ...newProducts]);
-        setCurrentPage(prev => prev + 1);
-        
-        if (currentPage >= 3) {
-          setHasMore(false);
-        }
-        
-        resolve();
-      }, 1000);
-    });
-  }, [currentPage, hasMore, loading, mockProducts]);
+    try {
+      setLoading(true);
+      
+      // Load more products from API
+      const searchQuery = searchParams.get('q') || '';
+      const skip = currentPage * 20; // 20 products per page
+      const response = await api.getAllProducts(skip, 20, true, searchQuery);
+      
+      if (response.length === 0) {
+        setHasMore(false);
+        return;
+      }
+      
+      // Transform API response
+      const transformedProducts = response.map(product => ({
+        id: product.id,
+        name: product.name,
+        price: parseFloat(product.price),
+        originalPrice: parseFloat(product.price) * 1.1,
+        image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop",
+        rating: 4.5,
+        reviewCount: Math.floor(Math.random() * 1000) + 100,
+        stock: product.stock_quantity,
+        shopName: "Shop Owner",
+        shopId: product.seller_id,
+        isNew: false,
+        discount: 10,
+        category: "general",
+        brand: "generic",
+        isWishlisted: false,
+        isFreeShipping: true,
+        isFlashSale: false,
+        badges: product.stock_quantity > 0 ? ['In Stock'] : ['Out of Stock']
+      }));
+      
+      setProducts(prev => [...prev, ...transformedProducts]);
+      setCurrentPage(prev => prev + 1);
+      
+      if (response.length < 20) {
+        setHasMore(false);
+      }
+      
+    } catch (error) {
+      console.error('Error loading more products:', error);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, hasMore, loading, searchParams, api]);
 
   // Add to cart
   const handleAddToCart = useCallback(async (product) => {

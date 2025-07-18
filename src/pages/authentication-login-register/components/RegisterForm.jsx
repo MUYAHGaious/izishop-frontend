@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
+import { useAuth } from '../../../contexts/AuthContext';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import { Checkbox } from '../../../components/ui/Checkbox';
 import Icon from '../../../components/AppIcon';
-import apiService from '../../../services/api';
 
 const RegisterForm = ({ onRegister, isLoading }) => {
+  const { register } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     role: '',
@@ -16,15 +17,22 @@ const RegisterForm = ({ onRegister, isLoading }) => {
     password: '',
     confirmPassword: '',
     phone: '',
-    businessName: '',
+    // Shop creation fields
+    shopName: '',
+    shopDescription: '',
+    shopAddress: '',
+    shopCity: '',
+    shopPhone: '',
+    shopEmail: '',
     businessType: '',
-    businessAddress: '',
     businessLicense: '',
-    idDocument: '',
+    // Other role-specific fields
     vehicleType: '',
     licenseNumber: '',
+    idDocument: '',
     agreeToTerms: false,
-    agreeToPrivacy: false
+    agreeToPrivacy: false,
+    agreeToMarketing: false
   });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
@@ -119,14 +127,20 @@ const RegisterForm = ({ onRegister, isLoading }) => {
 
     if (step === 3) {
       if (formData.role === 'shop_owner') {
-        if (!formData.businessName) {
-          newErrors.businessName = 'Business name is required';
+        if (!formData.shopName) {
+          newErrors.shopName = 'Shop name is required';
+        }
+        if (!formData.shopDescription) {
+          newErrors.shopDescription = 'Shop description is required';
+        }
+        if (!formData.shopAddress) {
+          newErrors.shopAddress = 'Shop address is required';
+        }
+        if (!formData.shopCity) {
+          newErrors.shopCity = 'Shop city is required';
         }
         if (!formData.businessType) {
           newErrors.businessType = 'Business type is required';
-        }
-        if (!formData.businessAddress) {
-          newErrors.businessAddress = 'Business address is required';
         }
       }
 
@@ -198,14 +212,6 @@ const RegisterForm = ({ onRegister, isLoading }) => {
     if (!validateStep(currentStep)) return;
 
     try {
-      // Map frontend role values to backend enum values
-      const roleMapping = {
-        'customer': 'CUSTOMER',
-        'shop_owner': 'SHOP_OWNER',
-        'casual_seller': 'CASUAL_SELLER',
-        'delivery_agent': 'DELIVERY_AGENT'
-      };
-
       // Prepare user data for API
       const userData = {
         email: formData.email,
@@ -213,26 +219,56 @@ const RegisterForm = ({ onRegister, isLoading }) => {
         confirm_password: formData.confirmPassword,
         first_name: formData.firstName,
         last_name: formData.lastName,
-        role: roleMapping[formData.role] || formData.role,
+        role: formData.role.toUpperCase(),
         phone: formData.phone
       };
 
-      // Call real API
-      const response = await apiService.register(userData);
-      
-      // Save to localStorage
-      localStorage.setItem('user', JSON.stringify(response.user));
-      localStorage.setItem('authToken', response.access_token);
-      
-      if (onRegister) {
-        onRegister(response.user);
+      // Debug: Log the data being sent
+      console.log('Sending registration data:', userData);
+
+      // Add shop data if user is shop owner
+      if (formData.role === 'shop_owner') {
+        userData.shop = {
+          name: formData.shopName,
+          description: formData.shopDescription,
+          address: formData.shopAddress,
+          city: formData.shopCity,
+          phone: formData.shopPhone || formData.phone,
+          email: formData.shopEmail || formData.email
+        };
       }
+
+      // Call register function from auth context
+      const response = await register(userData);
+      
+      // Show success message
+      setErrors({
+        submit: '',
+        success: 'Registration successful! Redirecting to dashboard...'
+      });
+      
+      // Add a small delay to prevent rapid state changes
+      setTimeout(() => {
+        if (onRegister) {
+          onRegister(response.user);
+        }
+      }, 1000);
     } catch (error) {
       // Handle registration errors
-      const errorMessage = error.message || 'Registration failed. Please try again.';
+      console.error('Registration error:', error);
+      
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (error.message && typeof error.message === 'string') {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error.response && error.response.data && error.response.data.detail) {
+        errorMessage = error.response.data.detail;
+      }
+      
       setErrors({
-        email: errorMessage,
-        password: errorMessage
+        submit: errorMessage
       });
     }
   };
@@ -284,13 +320,13 @@ const RegisterForm = ({ onRegister, isLoading }) => {
   const renderStep1 = () => (
     <div className="space-y-4">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-foreground mb-2">Join IziShop</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Join IziShopin</h2>
         <p className="text-text-secondary">Choose your role to get started</p>
       </div>
 
       <Select
         label="I want to join as"
-        description="Select the role that best describes how you plan to use IziShop"
+        description="Select the role that best describes how you plan to use IziShopin"
         options={roleOptions}
         value={formData.role}
         onChange={(value) => handleSelectChange('role', value)}
@@ -315,10 +351,11 @@ const RegisterForm = ({ onRegister, isLoading }) => {
             )}
             {formData.role === 'shop_owner' && (
               <>
-                <li>• Create your online shop</li>
+                <li>• Create your online shop instantly</li>
                 <li>• Manage inventory and orders</li>
                 <li>• Access to analytics dashboard</li>
                 <li>• Marketing tools and promotions</li>
+                <li>• Custom shop profile with your branding</li>
               </>
             )}
             {formData.role === 'casual_seller' && (
@@ -465,12 +502,12 @@ const RegisterForm = ({ onRegister, isLoading }) => {
     <div className="space-y-4">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-foreground mb-2">
-          {formData.role === 'shop_owner' ? 'Business Information' : 
+          {formData.role === 'shop_owner' ? 'Create Your Shop' : 
            formData.role === 'delivery_agent' ? 'Delivery Information' : 
            'Almost Done!'}
         </h2>
         <p className="text-text-secondary">
-          {formData.role === 'shop_owner' ? 'Tell us about your business' : 
+          {formData.role === 'shop_owner' ? 'Set up your shop profile and start selling' : 
            formData.role === 'delivery_agent'? 'Delivery details required' : 'Complete your registration'}
         </p>
       </div>
@@ -478,36 +515,89 @@ const RegisterForm = ({ onRegister, isLoading }) => {
       {formData.role === 'shop_owner' && (
         <>
           <Input
-            label="Business Name"
+            label="Shop Name"
             type="text"
-            name="businessName"
-            placeholder="Enter your business name"
-            value={formData.businessName}
+            name="shopName"
+            placeholder="Enter your shop name"
+            value={formData.shopName}
             onChange={handleInputChange}
-            error={errors.businessName}
+            error={errors.shopName}
             required
+            description="This will be your shop's display name"
           />
 
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-foreground">
+              Shop Description <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              name="shopDescription"
+              placeholder="Describe your shop and what you sell..."
+              value={formData.shopDescription}
+              onChange={handleInputChange}
+              rows={3}
+              className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+            />
+            {errors.shopDescription && (
+              <p className="text-sm text-red-500">{errors.shopDescription}</p>
+            )}
+          </div>
+
           <Select
-            label="Business Type"
+            label="Business Category"
             options={businessTypeOptions}
             value={formData.businessType}
             onChange={(value) => handleSelectChange('businessType', value)}
             error={errors.businessType}
             required
-            placeholder="Select business category"
+            placeholder="Select your business category"
           />
 
-          <Input
-            label="Business Address"
-            type="text"
-            name="businessAddress"
-            placeholder="Enter your business address"
-            value={formData.businessAddress}
-            onChange={handleInputChange}
-            error={errors.businessAddress}
-            required
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Shop Address"
+              type="text"
+              name="shopAddress"
+              placeholder="Enter your shop address"
+              value={formData.shopAddress}
+              onChange={handleInputChange}
+              error={errors.shopAddress}
+              required
+            />
+
+            <Input
+              label="City"
+              type="text"
+              name="shopCity"
+              placeholder="Enter your city"
+              value={formData.shopCity}
+              onChange={handleInputChange}
+              error={errors.shopCity}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Shop Phone (Optional)"
+              type="tel"
+              name="shopPhone"
+              placeholder="Shop phone number"
+              value={formData.shopPhone}
+              onChange={handleInputChange}
+              description="Leave blank to use your personal phone"
+            />
+
+            <Input
+              label="Shop Email (Optional)"
+              type="email"
+              name="shopEmail"
+              placeholder="Shop email address"
+              value={formData.shopEmail}
+              onChange={handleInputChange}
+              description="Leave blank to use your personal email"
+            />
+          </div>
 
           <Input
             label="Business License (Optional)"
@@ -516,7 +606,21 @@ const RegisterForm = ({ onRegister, isLoading }) => {
             placeholder="Business license number"
             value={formData.businessLicense}
             onChange={handleInputChange}
+            description="Helps build trust with customers"
           />
+
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-start space-x-3">
+              <Icon name="Info" size={20} className="text-blue-600 mt-0.5" />
+              <div>
+                <h4 className="font-medium text-blue-900">Shop Creation</h4>
+                <p className="text-sm text-blue-700 mt-1">
+                  Your shop will be created automatically when you complete registration. 
+                  You can customize it further from your dashboard.
+                </p>
+              </div>
+            </div>
+          </div>
         </>
       )}
 
@@ -580,6 +684,18 @@ const RegisterForm = ({ onRegister, isLoading }) => {
           onChange={handleInputChange}
         />
       </div>
+
+      {errors.submit && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-700">{errors.submit}</p>
+        </div>
+      )}
+      
+      {errors.success && (
+        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-sm text-green-700">{errors.success}</p>
+        </div>
+      )}
     </div>
   );
 
@@ -620,10 +736,10 @@ const RegisterForm = ({ onRegister, isLoading }) => {
               type="submit"
               variant="default"
               loading={isLoading}
-              iconName="UserPlus"
+              iconName={formData.role === 'shop_owner' ? 'Store' : 'UserPlus'}
               iconPosition="right"
             >
-              Create Account
+              {formData.role === 'shop_owner' ? 'Create Account & Shop' : 'Create Account'}
             </Button>
           )}
         </div>
@@ -633,3 +749,4 @@ const RegisterForm = ({ onRegister, isLoading }) => {
 };
 
 export default RegisterForm;
+

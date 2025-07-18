@@ -4,6 +4,7 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import { Checkbox } from '../../../components/ui/Checkbox';
 import Icon from '../../../components/AppIcon';
+import apiService from '../../../services/api';
 
 const LoginForm = ({ onLogin, isLoading }) => {
   const [formData, setFormData] = useState({
@@ -42,38 +43,26 @@ const LoginForm = ({ onLogin, isLoading }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) return;
 
-    // Check against mock credentials
-    const matchedUser = Object.entries(mockCredentials).find(([role, creds]) => 
-      creds.email === formData.email && creds.password === formData.password
-    );
-
-    if (matchedUser) {
-      const [role] = matchedUser;
-      const userData = {
-        id: Date.now(),
-        email: formData.email,
-        name: role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        role: role,
-        avatar: `https://ui-avatars.com/api/?name=${role}&background=1E40AF&color=fff`,
-        createdAt: new Date().toISOString()
-      };
-
+    try {
+      // Call real API
+      const response = await apiService.login(formData.email, formData.password);
+      
       // Save to localStorage
-      localStorage.setItem('user', JSON.stringify(userData));
-      localStorage.setItem('authToken', 'mock-jwt-token-' + Date.now());
+      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem('authToken', response.access_token);
       
       if (onLogin) {
-        onLogin(userData);
+        onLogin(response.user);
       }
-    } else {
+    } catch (error) {
       setErrors({
-        email: 'Invalid email or password. Please check the mock credentials in the summary.',
-        password: 'Invalid email or password. Please check the mock credentials in the summary.'
+        email: 'Invalid email or password.',
+        password: 'Invalid email or password.'
       });
     }
   };

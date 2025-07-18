@@ -4,6 +4,7 @@ import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import { Checkbox } from '../../../components/ui/Checkbox';
 import Icon from '../../../components/AppIcon';
+import apiService from '../../../services/api';
 
 const RegisterForm = ({ onRegister, isLoading }) => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -191,30 +192,40 @@ const RegisterForm = ({ onRegister, isLoading }) => {
     setCurrentStep(prev => prev - 1);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateStep(currentStep)) return;
 
-    const userData = {
-      id: Date.now(),
-      email: formData.email,
-      name: `${formData.firstName} ${formData.lastName}`,
-      role: formData.role,
-      phone: formData.phone,
-      businessName: formData.businessName,
-      businessType: formData.businessType,
-      vehicleType: formData.vehicleType,
-      avatar: `https://ui-avatars.com/api/?name=${formData.firstName}+${formData.lastName}&background=1E40AF&color=fff`,
-      createdAt: new Date().toISOString()
-    };
+    try {
+      // Prepare user data for API
+      const userData = {
+        email: formData.email,
+        password: formData.password,
+        confirm_password: formData.confirmPassword,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        role: formData.role,
+        phone: formData.phone
+      };
 
-    // Save to localStorage
-    localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('authToken', 'mock-jwt-token-' + Date.now());
-    
-    if (onRegister) {
-      onRegister(userData);
+      // Call real API
+      const response = await apiService.register(userData);
+      
+      // Save to localStorage
+      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem('authToken', response.access_token);
+      
+      if (onRegister) {
+        onRegister(response.user);
+      }
+    } catch (error) {
+      // Handle registration errors
+      const errorMessage = error.message || 'Registration failed. Please try again.';
+      setErrors({
+        email: errorMessage,
+        password: errorMessage
+      });
     }
   };
 

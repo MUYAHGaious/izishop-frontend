@@ -104,7 +104,11 @@ export const ToastManager = () => {
 };
 
 // Helper function to show toast
-export const showToast = (message, type = 'success', duration = 3000) => {
+export const showToast = (options) => {
+  const { message, type = 'success', duration = 3000 } = typeof options === 'string' 
+    ? { message: options } 
+    : options;
+  
   const event = new CustomEvent('showToast', {
     detail: { message, type, duration }
   });

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import { Checkbox } from '../../../components/ui/Checkbox';
 import Icon from '../../../components/AppIcon';
-import apiService from '../../../services/api';
+import { showToast } from '../../../components/ui/Toast';
 
 const LoginForm = ({ onLogin, isLoading }) => {
   const [formData, setFormData] = useState({
@@ -24,24 +24,34 @@ const LoginForm = ({ onLogin, isLoading }) => {
     admin: { email: 'admin@izishopin.com', password: 'Admin123!' }
   };
 
-  const validateForm = () => {
+  // Enhanced validation functions
+  const validateEmail = (email) => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!email) return 'Email is required';
+    if (!emailRegex.test(email)) return 'Please enter a valid email address';
+    if (email.length > 254) return 'Email address is too long';
+    return null;
+  };
+
+  const validatePassword = (password) => {
+    if (!password) return 'Password is required';
+    if (password.length < 6) return 'Password must be at least 6 characters';
+    if (password.length > 128) return 'Password is too long';
+    return null;
+  };
+
+  const validateForm = useCallback(() => {
     const newErrors = {};
 
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
+    const emailError = validateEmail(formData.email);
+    if (emailError) newErrors.email = emailError;
 
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) newErrors.password = passwordError;
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [formData.email, formData.password]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -49,36 +59,95 @@ const LoginForm = ({ onLogin, isLoading }) => {
     if (!validateForm()) return;
 
     try {
-      // Call real API
-      const response = await apiService.login(formData.email, formData.password);
+      // Clear any previous errors
+      setErrors({});
       
-      // Save to localStorage
-      localStorage.setItem('user', JSON.stringify(response.user));
-      localStorage.setItem('authToken', response.access_token);
+      // Prepare credentials for auth context
+      const credentials = {
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password
+      };
       
+      console.log('Attempting login with credentials:', { email: credentials.email, password: '[REDACTED]' });
+      
+      // Pass credentials to parent component's handleLogin function
       if (onLogin) {
-        onLogin(response.user);
+        await onLogin(credentials);
+      } else {
+        console.error('No onLogin callback provided');
       }
     } catch (error) {
+      console.error('Login error:', error);
+      
+      let errorMessage = 'Invalid email or password. Please try again.';
+      
+      // Enhanced error parsing
+      if (error.message) {
+        if (error.message.includes('Invalid credentials') || 
+            error.message.includes('Unauthorized') ||
+            error.message.includes('401')) {
+          errorMessage = 'Invalid email or password. Please check your credentials.';
+        } else if (error.message.includes('Account not found')) {
+          errorMessage = 'No account found with this email address.';
+        } else if (error.message.includes('Account disabled') || 
+                   error.message.includes('Account suspended')) {
+          errorMessage = 'Your account has been disabled. Please contact support.';
+        } else if (error.message.includes('Too many attempts')) {
+          errorMessage = 'Too many login attempts. Please try again later.';
+        } else if (error.message.includes('Network') || 
+                   error.message.includes('fetch')) {
+          errorMessage = 'Network error. Please check your connection and try again.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      // Show error toast
+      showToast({
+        type: 'error',
+        message: errorMessage,
+        duration: 5000
+      });
+      
+      // Set form errors for visual feedback
       setErrors({
-        email: 'Invalid email or password.',
-        password: 'Invalid email or password.'
+        submit: errorMessage
       });
     }
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
+    let newValue = type === 'checkbox' ? checked : value;
+    
+    // Input sanitization
+    if (name === 'email') {
+      newValue = value.toLowerCase().trim();
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: newValue
     }));
     
-    // Clear error when user starts typing
-    if (errors[name]) {
+    // Real-time validation for email
+    if (name === 'email' && newValue) {
+      const emailError = validateEmail(newValue);
+      if (emailError) {
+        setErrors(prev => ({ ...prev, [name]: emailError }));
+      } else {
+        setErrors(prev => ({ ...prev, [name]: '' }));
+      }
+    } else if (errors[name]) {
+      // Clear error when user starts typing
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
-  };
+    
+    // Clear submit error when user makes changes
+    if (errors.submit) {
+      setErrors(prev => ({ ...prev, submit: '' }));
+    }
+  }, [errors]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -133,6 +202,16 @@ const LoginForm = ({ onLogin, isLoading }) => {
           Forgot password?
         </Link>
       </div>
+
+      {/* Display general error message */}
+      {errors.submit && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-start">
+            <Icon name="AlertCircle" size={16} className="text-red-600 mt-0.5 mr-2" />
+            <p className="text-sm text-red-700">{errors.submit}</p>
+          </div>
+        </div>
+      )}
 
       <Button
         type="submit"

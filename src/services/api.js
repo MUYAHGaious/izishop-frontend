@@ -91,6 +91,20 @@ class ApiService {
     return this.request('/auth/me');
   }
 
+  async adminLogin(email, password, adminCode) {
+    const response = await this.request('/auth/admin-login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, admin_code: adminCode })
+    });
+    
+    // Store the token in localStorage
+    if (response.access_token) {
+      localStorage.setItem('authToken', response.access_token);
+    }
+    
+    return response;
+  }
+
   async logout() {
     const response = await this.request('/auth/logout', {
       method: 'POST'
@@ -146,13 +160,74 @@ class ApiService {
     return this.request(`/shops/${shopId}`);
   }
 
-  async getAllShops(skip = 0, limit = 100, activeOnly = true) {
-    const params = new URLSearchParams({
-      skip: skip.toString(),
-      limit: limit.toString(),
-      active_only: activeOnly.toString()
+  async getAllShops(page = 1, limit = 20, search = '', category = '', sort = 'relevance', filters = {}) {
+    const params = new URLSearchParams();
+    
+    // Convert page to skip for backend
+    const skip = (page - 1) * limit;
+    params.append('skip', skip.toString());
+    params.append('limit', limit.toString());
+    
+    if (search) {
+      params.append('search', search);
+    }
+    if (category) {
+      params.append('category', category);
+    }
+    if (sort) {
+      params.append('sort', sort);
+    }
+    
+    // Add additional filters
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        if (Array.isArray(value)) {
+          value.forEach(v => params.append(key, v));
+        } else {
+          params.append(key, value.toString());
+        }
+      }
     });
+    
     return this.request(`/shops/?${params}`);
+  }
+
+  async getFeaturedShops() {
+    return this.request('/shops/featured');
+  }
+
+  async followShop(shopId) {
+    return this.request(`/shops/${shopId}/follow`, {
+      method: 'POST'
+    });
+  }
+
+  async unfollowShop(shopId) {
+    return this.request(`/shops/${shopId}/unfollow`, {
+      method: 'DELETE'
+    });
+  }
+
+  // Shop products and reviews
+  async getShopProducts(shopId, page = 1, limit = 20) {
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+    return this.request(`/shops/${shopId}/products?${params}`);
+  }
+
+  async getShopReviews(shopId, page = 1, limit = 20) {
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+    return this.request(`/shops/${shopId}/reviews?${params}`);
+  }
+
+  async addShopReview(shopId, reviewData) {
+    return this.request(`/shops/${shopId}/reviews`, {
+      method: 'POST',
+      body: JSON.stringify(reviewData)
+    });
   }
 
   async updateMyShop(shopData) {
@@ -177,11 +252,12 @@ class ApiService {
   }
 
   async getMyProducts(skip = 0, limit = 100, activeOnly = false) {
-    const params = new URLSearchParams({
-      skip: skip.toString(),
-      limit: limit.toString(),
-      active_only: activeOnly.toString()
-    });
+    const params = new URLSearchParams();
+    params.append('skip', skip.toString());
+    params.append('limit', limit.toString());
+    if (typeof activeOnly === 'boolean') {
+      params.append('active_only', activeOnly.toString());
+    }
     return this.request(`/products/my-products?${params}`);
   }
 

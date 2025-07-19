@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import { Checkbox } from '../../../components/ui/Checkbox';
 import Icon from '../../../components/AppIcon';
+import { showToast } from '../../../components/ui/Toast';
+import api from '../../../services/api';
 
 const RegisterForm = ({ onRegister, isLoading }) => {
   const { register } = useAuth();
@@ -212,47 +214,57 @@ const RegisterForm = ({ onRegister, isLoading }) => {
     if (!validateStep(currentStep)) return;
 
     try {
-      // Prepare user data for API
+      // Map frontend roles to backend roles
+      const roleMapping = {
+        'customer': 'CUSTOMER',
+        'shop_owner': 'SHOP_OWNER',
+        'casual_seller': 'CASUAL_SELLER',
+        'delivery_agent': 'DELIVERY_AGENT'
+      };
+      
+      // Prepare user data for API (only the fields the backend expects)
       const userData = {
-        email: formData.email,
+        email: formData.email.trim().toLowerCase(),
         password: formData.password,
         confirm_password: formData.confirmPassword,
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        role: formData.role.toUpperCase(),
-        phone: formData.phone
+        first_name: formData.firstName.trim(),
+        last_name: formData.lastName.trim(),
+        role: roleMapping[formData.role] || formData.role.toUpperCase()
       };
-
-      // Debug: Log the data being sent
-      console.log('Sending registration data:', userData);
-
-      // Add shop data if user is shop owner
-      if (formData.role === 'shop_owner') {
-        userData.shop = {
-          name: formData.shopName,
-          description: formData.shopDescription,
-          address: formData.shopAddress,
-          city: formData.shopCity,
-          phone: formData.shopPhone || formData.phone,
-          email: formData.shopEmail || formData.email
-        };
+      
+      // Add phone if provided (clean it to digits only)
+      if (formData.phone && formData.phone.trim()) {
+        const cleanPhone = formData.phone.replace(/[^\d]/g, '');
+        if (cleanPhone.length >= 9) {
+          userData.phone = cleanPhone;
+        }
       }
 
-      // Call register function from auth context
-      const response = await register(userData);
-      
-      // Show success message
-      setErrors({
-        submit: '',
-        success: 'Registration successful! Redirecting to dashboard...'
-      });
-      
-      // Add a small delay to prevent rapid state changes
-      setTimeout(() => {
-        if (onRegister) {
-          onRegister(response.user);
+      console.log('Sending registration data:', { ...userData, password: '[REDACTED]', confirm_password: '[REDACTED]' });
+
+      // Pass the data to the parent component's handleRegister function
+      // This will call the auth context register function and handle navigation
+      if (onRegister) {
+        console.log('Calling onRegister with userData...');
+        
+        // Include shop data if user is shop owner
+        const registrationData = { ...userData };
+        if (formData.role === 'shop_owner') {
+          registrationData.shopData = {
+            name: formData.shopName.trim(),
+            description: formData.shopDescription.trim(),
+            address: `${formData.shopAddress.trim()}, ${formData.shopCity.trim()}`,
+            phone: formData.shopPhone ? formData.shopPhone.replace(/[^\d]/g, '') : userData.phone || '',
+            email: formData.shopEmail ? formData.shopEmail.trim().toLowerCase() : userData.email
+          };
+          console.log('Including shop data for automatic creation:', registrationData.shopData);
         }
-      }, 1000);
+        
+        await onRegister(registrationData);
+        console.log('onRegister completed successfully');
+      } else {
+        console.error('No onRegister callback provided');
+      }
     } catch (error) {
       // Handle registration errors
       console.error('Registration error:', error);
@@ -430,6 +442,7 @@ const RegisterForm = ({ onRegister, isLoading }) => {
         value={formData.phone}
         onChange={handleInputChange}
         error={errors.phone}
+        description="Use international format (e.g., +237 6XX XXX XXX)"
         required
       />
 
@@ -585,6 +598,7 @@ const RegisterForm = ({ onRegister, isLoading }) => {
               placeholder="Shop phone number"
               value={formData.shopPhone}
               onChange={handleInputChange}
+              error={errors.shopPhone}
               description="Leave blank to use your personal phone"
             />
 
@@ -595,6 +609,7 @@ const RegisterForm = ({ onRegister, isLoading }) => {
               placeholder="Shop email address"
               value={formData.shopEmail}
               onChange={handleInputChange}
+              error={errors.shopEmail}
               description="Leave blank to use your personal email"
             />
           </div>
@@ -654,6 +669,8 @@ const RegisterForm = ({ onRegister, isLoading }) => {
             placeholder="National ID or passport number"
             value={formData.idDocument}
             onChange={handleInputChange}
+            error={errors.idDocument}
+            description="Optional: National ID or passport number for verification"
           />
         </>
       )}

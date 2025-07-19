@@ -3,6 +3,12 @@ import { BrowserRouter, Routes as RouterRoutes, Route, Navigate } from "react-ro
 import ScrollToTop from "components/ScrollToTop";
 import ErrorBoundary from "components/ErrorBoundary";
 import { useAuth } from "./contexts/AuthContext";
+import RouteGuard, { 
+  AdminRouteGuard, 
+  ShopOwnerRouteGuard, 
+  AuthenticatedRouteGuard, 
+  PublicRouteGuard 
+} from "./components/RouteGuard";
 // Add your imports here
 import ProductCatalog from "./pages/product-catalog";
 import ShoppingCartCheckout from "./pages/shopping-cart-checkout";
@@ -64,11 +70,11 @@ const PublicRoute = ({ children }) => {
   if (isAuthenticated()) {
     // Redirect to appropriate dashboard based on user role
     if (user?.role === 'SHOP_OWNER') {
-      return <Navigate to="/shop-owner-dashboard" replace />;
+      return <Navigate to="/shops-listing" replace />;
     } else if (user?.role === 'ADMIN') {
       return <Navigate to="/admin-dashboard" replace />;
     } else {
-      return <Navigate to="/customer-dashboard" replace />;
+      return <Navigate to="/product-catalog" replace />;
     }
   }
   
@@ -97,11 +103,7 @@ const AppRoutes = () => {
       />
       <Route 
         path="/admin-login" 
-        element={
-          <PublicRoute>
-            <AdminLogin />
-          </PublicRoute>
-        } 
+        element={<AdminLogin />}
       />
       
       {/* Admin setup - always accessible */}
@@ -111,17 +113,17 @@ const AppRoutes = () => {
       <Route 
         path="/shop-owner-dashboard" 
         element={
-          <ProtectedRoute requiredRole="SHOP_OWNER">
+          <ShopOwnerRouteGuard>
             <ShopOwnerDashboard />
-          </ProtectedRoute>
+          </ShopOwnerRouteGuard>
         } 
       />
       <Route 
         path="/admin-dashboard" 
         element={
-          <ProtectedRoute requiredRole="ADMIN">
+          <AdminRouteGuard>
             <AdminDashboard />
-          </ProtectedRoute>
+          </AdminRouteGuard>
         } 
       />
       <Route 
@@ -142,25 +144,25 @@ const AppRoutes = () => {
       <Route 
         path="/shopping-cart" 
         element={
-          <ProtectedRoute>
+          <AuthenticatedRouteGuard>
             <ShoppingCart />
-          </ProtectedRoute>
+          </AuthenticatedRouteGuard>
         } 
       />
       <Route 
         path="/shopping-cart-checkout" 
         element={
-          <ProtectedRoute>
+          <AuthenticatedRouteGuard>
             <ShoppingCartCheckout />
-          </ProtectedRoute>
+          </AuthenticatedRouteGuard>
         } 
       />
       <Route 
         path="/checkout" 
         element={
-          <ProtectedRoute>
+          <AuthenticatedRouteGuard>
             <Checkout />
-          </ProtectedRoute>
+          </AuthenticatedRouteGuard>
         } 
       />
       

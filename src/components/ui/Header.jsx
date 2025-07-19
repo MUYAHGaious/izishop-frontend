@@ -18,6 +18,14 @@ const Header = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
 
+  // Determine dashboard path for admin/shop owner
+  let dashboardPath = null;
+  if (user && (user.role === 'ADMIN' || user.role === 'admin')) {
+    dashboardPath = '/admin-dashboard';
+  } else if (user && (user.role === 'SHOP_OWNER' || user.role === 'shop_owner')) {
+    dashboardPath = '/shop-owner-dashboard';
+  }
+
   // Update cart count from localStorage
   useEffect(() => {
     const updateCartCount = () => {
@@ -103,6 +111,17 @@ const Header = () => {
 
         {/* Desktop Actions */}
         <div className="hidden lg:flex items-center space-x-4">
+          {/* Dashboard Button for Admin/Shop Owner */}
+          {dashboardPath && (
+            <Button
+              variant="default"
+              iconName="LayoutDashboard"
+              iconPosition="left"
+              onClick={() => navigate(dashboardPath)}
+            >
+              Dashboard
+            </Button>
+          )}
           <button
             onClick={() => setIsNotificationOpen(true)}
             className="relative p-2 text-text-secondary hover:text-text-primary transition-colors"
@@ -178,6 +197,21 @@ const Header = () => {
 
             {/* Mobile Actions */}
             <div className="pt-4 border-t border-border space-y-3">
+              {/* Dashboard Button for Admin/Shop Owner */}
+              {dashboardPath && (
+                <Button
+                  variant="default"
+                  fullWidth
+                  iconName="LayoutDashboard"
+                  iconPosition="left"
+                  onClick={() => {
+                    navigate(dashboardPath);
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  Dashboard
+                </Button>
+              )}
               <button
                 onClick={() => {
                   setIsNotificationOpen(true);

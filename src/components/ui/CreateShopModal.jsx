@@ -114,9 +114,9 @@ const CreateShopModal = ({ isOpen, onClose, onShopCreated }) => {
         onShopCreated(response);
       }
 
-      // Navigate to shop profile after a short delay
+      // Navigate to shops listing after a short delay
       setTimeout(() => {
-        navigate(`/my-shop-profile`);
+        navigate('/shops-listing');
         onClose();
       }, 1500);
 

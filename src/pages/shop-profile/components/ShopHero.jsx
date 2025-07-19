@@ -16,7 +16,7 @@ const ShopHero = ({ shop, onFollow, onContact }) => {
       {/* Banner Image */}
       <div className="relative h-48 md:h-64 lg:h-80 overflow-hidden">
         <Image
-          src={shop.bannerImage}
+          src={shop.bannerImage || '/api/placeholder/800/320'}
           alt={`${shop.name} banner`}
           className="w-full h-full object-cover"
         />
@@ -30,12 +30,12 @@ const ShopHero = ({ shop, onFollow, onContact }) => {
           <div className="relative">
             <div className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-2xl overflow-hidden border-4 border-white shadow-elevated bg-white">
               <Image
-                src={shop.logo}
+                src={shop.logo || '/api/placeholder/120/120'}
                 alt={`${shop.name} logo`}
                 className="w-full h-full object-cover"
               />
             </div>
-            {shop.isVerified && (
+            {shop.is_verified && (
               <div className="absolute -top-2 -right-2 w-8 h-8 bg-success rounded-full flex items-center justify-center border-2 border-white">
                 <Icon name="Check" size={16} color="white" />
               </div>

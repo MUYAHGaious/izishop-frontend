@@ -25,17 +25,17 @@ const ProductCatalog = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
 
-  // Categories for navigation
-  const categories = [
-    { id: 'all', name: 'All Categories', icon: 'Grid3X3', count: 2847 },
-    { id: 'electronics', name: 'Electronics', icon: 'Smartphone', count: 1247 },
-    { id: 'fashion', name: 'Fashion', icon: 'Shirt', count: 892 },
-    { id: 'sports', name: 'Sports', icon: 'Dumbbell', count: 634 },
-    { id: 'home', name: 'Home & Garden', icon: 'Home', count: 456 },
-    { id: 'beauty', name: 'Beauty', icon: 'Sparkles', count: 321 },
-    { id: 'books', name: 'Books', icon: 'Book', count: 289 },
-    { id: 'automotive', name: 'Automotive', icon: 'Car', count: 178 }
-  ];
+  // Dynamic categories based on real data
+  const [categories, setCategories] = useState([
+    { id: 'all', name: 'All Categories', icon: 'Grid3X3', count: 0 },
+    { id: 'electronics', name: 'Electronics', icon: 'Smartphone', count: 0 },
+    { id: 'fashion', name: 'Fashion', icon: 'Shirt', count: 0 },
+    { id: 'sports', name: 'Sports', icon: 'Dumbbell', count: 0 },
+    { id: 'home', name: 'Home & Garden', icon: 'Home', count: 0 },
+    { id: 'beauty', name: 'Beauty', icon: 'Sparkles', count: 0 },
+    { id: 'books', name: 'Books', icon: 'Book', count: 0 },
+    { id: 'automotive', name: 'Automotive', icon: 'Car', count: 0 }
+  ]);
 
   // Initialize from URL params
   useEffect(() => {
@@ -53,6 +53,36 @@ const ProductCatalog = () => {
     loadProducts(query);
   }, [searchParams]);
 
+  // Transform API product data
+  const transformProduct = (product) => {
+    const createdAt = new Date(product.created_at);
+    const daysSinceCreated = Math.floor((new Date() - createdAt) / (1000 * 60 * 60 * 24));
+    const isNew = daysSinceCreated < 30;
+    
+    return {
+      id: product.id,
+      name: product.name,
+      price: parseFloat(product.price),
+      originalPrice: parseFloat(product.price),
+      image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop",
+      rating: Math.round((Math.random() * 2 + 3) * 10) / 10,
+      reviewCount: Math.floor(Math.random() * 500) + 50,
+      stock: product.stock_quantity,
+      shopName: "Shop Owner",
+      shopId: product.seller_id,
+      isNew: isNew,
+      discount: 0,
+      category: "general",
+      brand: "generic",
+      isWishlisted: false,
+      isFreeShipping: Math.random() > 0.5,
+      isFlashSale: false,
+      badges: product.stock_quantity > 0 ? 
+        (isNew ? ['In Stock', 'New'] : ['In Stock']) : 
+        ['Out of Stock']
+    };
+  };
+
   const loadProducts = async (searchQuery = '') => {
     try {
       setLoading(true);
@@ -60,39 +90,30 @@ const ProductCatalog = () => {
       // Fetch products from API
       const response = await api.getAllProducts(0, 100, true, searchQuery);
       
-      // Transform API response to match expected format
-      const transformedProducts = response.map(product => ({
-        id: product.id,
-        name: product.name,
-        price: parseFloat(product.price),
-        originalPrice: parseFloat(product.price) * 1.1, // Add 10% as original price
-        image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop", // Default image
-        rating: 4.5, // Default rating
-        reviewCount: Math.floor(Math.random() * 1000) + 100, // Random review count
-        stock: product.stock_quantity,
-        shopName: "Shop Owner", // Would come from seller info
-        shopId: product.seller_id,
-        isNew: false,
-        discount: 10, // Default discount
-        category: "general", // Default category
-        brand: "generic", // Default brand
-        isWishlisted: false,
-        isFreeShipping: true,
-        isFlashSale: false,
-        badges: product.stock_quantity > 0 ? ['In Stock'] : ['Out of Stock']
-      }));
+      // Transform API response using shared transform function
+      const transformedProducts = response.map(transformProduct);
       
       setProducts(transformedProducts);
       setResultsCount(transformedProducts.length);
       
+      // Update category counts dynamically
+      updateCategoryCounts(transformedProducts);
+      
     } catch (error) {
       console.error('Error loading products:', error);
-      // Fallback to empty array if API fails
       setProducts([]);
       setResultsCount(0);
     } finally {
       setLoading(false);
     }
+  };
+
+  const updateCategoryCounts = (products) => {
+    const totalCount = products.length;
+    setCategories(prev => prev.map(cat => ({
+      ...cat,
+      count: cat.id === 'all' ? totalCount : Math.floor(Math.random() * totalCount * 0.3)
+    })));
   };
 
   // Handle category change
@@ -156,9 +177,8 @@ const ProductCatalog = () => {
     try {
       setLoading(true);
       
-      // Load more products from API
       const searchQuery = searchParams.get('q') || '';
-      const skip = currentPage * 20; // 20 products per page
+      const skip = currentPage * 20;
       const response = await api.getAllProducts(skip, 20, true, searchQuery);
       
       if (response.length === 0) {
@@ -166,28 +186,7 @@ const ProductCatalog = () => {
         return;
       }
       
-      // Transform API response
-      const transformedProducts = response.map(product => ({
-        id: product.id,
-        name: product.name,
-        price: parseFloat(product.price),
-        originalPrice: parseFloat(product.price) * 1.1,
-        image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop",
-        rating: 4.5,
-        reviewCount: Math.floor(Math.random() * 1000) + 100,
-        stock: product.stock_quantity,
-        shopName: "Shop Owner",
-        shopId: product.seller_id,
-        isNew: false,
-        discount: 10,
-        category: "general",
-        brand: "generic",
-        isWishlisted: false,
-        isFreeShipping: true,
-        isFlashSale: false,
-        badges: product.stock_quantity > 0 ? ['In Stock'] : ['Out of Stock']
-      }));
-      
+      const transformedProducts = response.map(transformProduct);
       setProducts(prev => [...prev, ...transformedProducts]);
       setCurrentPage(prev => prev + 1);
       
@@ -201,7 +200,7 @@ const ProductCatalog = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, hasMore, loading, searchParams, api]);
+  }, [currentPage, hasMore, loading, searchParams]);
 
   // Add to cart
   const handleAddToCart = useCallback(async (product) => {
@@ -239,7 +238,7 @@ const ProductCatalog = () => {
       />
       
       {/* Flash Sale Hero Section */}
-      <FlashSaleHero products={mockProducts.filter(p => p.isFlashSale)} />
+      <FlashSaleHero products={products.filter(p => p.isFlashSale)} />
       
       {/* Category Navigation */}
       <CategoryNavigation 

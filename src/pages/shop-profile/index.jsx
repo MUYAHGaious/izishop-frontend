@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import apiService from '../../services/api';
+import { useDataCache } from '../../contexts/DataCacheContext';
+import { useWebSocket } from '../../contexts/WebSocketContext';
+import api from '../../services/api';
 import Header from '../../components/ui/Header';
 import MobileBottomTab from '../../components/ui/MobileBottomTab';
 import Breadcrumbs from '../../components/ui/Breadcrumbs';
@@ -12,15 +14,18 @@ import ProductGrid from './components/ProductGrid';
 import ReviewsSection from './components/ReviewsSection';
 import AboutSection from './components/AboutSection';
 import FloatingContact from './components/FloatingContact';
+import { showToast } from '../../components/ui/Toast';
 
 const ShopProfile = () => {
   const [searchParams] = useSearchParams();
   const { slug, id } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated, isShopOwner, getShopBySlug, getShopById } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const { fetchWithCache, invalidateCache, isLoading } = useDataCache();
+  const { subscribeToProductUpdates, isConnected } = useWebSocket();
   
   const [activeTab, setActiveTab] = useState('products');
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [shopData, setShopData] = useState(null);
   const [products, setProducts] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -35,32 +40,51 @@ const ShopProfile = () => {
     loadShopData();
   }, [shopId, shopSlug, user]);
 
+  // Set up real-time updates for shop data
+  useEffect(() => {
+    if (!isConnected || !shopData?.id) return;
+
+    const unsubscribeProducts = subscribeToProductUpdates((updateData) => {
+      console.log('Product update received for shop:', updateData);
+      
+      if (updateData.shop_id === shopData.id) {
+        // Invalidate and refresh product data
+        invalidateCache(`shop-products-${shopData.id}`);
+        loadProducts(shopData.id);
+        
+        // If it's a new product, show notification
+        if (updateData.action === 'created') {
+          showToast(`New product added: ${updateData.product?.name}`, 'info');
+        }
+      }
+    });
+
+    return () => {
+      unsubscribeProducts();
+    };
+  }, [isConnected, shopData?.id, subscribeToProductUpdates, invalidateCache]);
+
   const loadShopData = async () => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       setError(null);
       
       let shop = null;
+      const currentShopId = shopId || id;
       
-      // Try to get shop from user's shops first (if authenticated and shop owner)
-      if (isAuthenticated() && isShopOwner()) {
-        if (shopSlug) {
-          shop = getShopBySlug(shopSlug);
-        } else if (shopId) {
-          shop = getShopById(shopId);
-        }
-      }
+      console.log('Loading shop data for:', { shopId: currentShopId, slug, id });
       
-      // If not found in user's shops, fetch from API
-      if (!shop) {
-        if (shopSlug) {
-          // For slug-based URLs, we need to search shops by slug
-          const response = await apiService.getShops({ search: shopSlug });
-          shop = response.shops.find(s => s.slug === shopSlug);
-        } else if (shopId) {
-          const response = await apiService.getShop(shopId);
-          shop = response.shop;
+      if (currentShopId) {
+        // Use caching for shop data
+        shop = await fetchWithCache(`shop-${currentShopId}`, () => api.getShop(currentShopId), { shopId: currentShopId });
+        console.log('Shop data loaded:', shop);
+      } else if (slug) {
+        // For slug-based URLs, search for shop by slug
+        const response = await fetchWithCache(`shop-slug-${slug}`, () => api.getAllShops(1, 100, slug), { slug });
+        if (response && response.shops) {
+          shop = response.shops.find(s => s.slug === slug || s.name.toLowerCase().includes(slug.toLowerCase()));
         }
+        console.log('Shop found by slug:', shop);
       }
       
       if (!shop) {
@@ -71,76 +95,121 @@ const ShopProfile = () => {
       setShopData(shop);
       setIsOwner(isAuthenticated() && user?.id === shop.owner_id);
       
-      // Load products and reviews
-      await Promise.all([
-        loadProducts(shop.id),
-        loadReviews(shop.id)
-      ]);
+      // Load products and reviews with caching (don't let these errors affect main shop data)
+      try {
+        await Promise.all([
+          loadProducts(shop.id),
+          loadReviews(shop.id)
+        ]);
+      } catch (productError) {
+        console.warn('Error loading products/reviews, but continuing with shop data:', productError);
+        // Set empty arrays as fallbacks
+        setProducts([]);
+        setReviews([]);
+      }
       
     } catch (error) {
       console.error('Error loading shop data:', error);
-      setError(error.message);
+      setError(error.message || 'Failed to load shop data');
+      showToast('Failed to load shop data', 'error');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   const loadProducts = async (shopId) => {
     try {
-      const response = await apiService.getShopProducts(shopId);
-      setProducts(response.products || []);
+      const response = await fetchWithCache(`shop-products-${shopId}`, () => api.getShopProducts(shopId), { shopId });
+      console.log('Products loaded for shop:', response);
+      setProducts(response.products || response || []);
     } catch (error) {
       console.error('Error loading products:', error);
+      setProducts([]);
     }
   };
 
   const loadReviews = async (shopId) => {
     try {
-      const response = await apiService.getShopReviews(shopId);
-      setReviews(response.reviews || []);
+      const response = await fetchWithCache(`shop-reviews-${shopId}`, () => api.getShopReviews(shopId), { shopId });
+      console.log('Reviews loaded for shop:', response);
+      setReviews(response.reviews || response || []);
     } catch (error) {
       console.error('Error loading reviews:', error);
+      setReviews([]);
     }
   };
 
   const handleFollow = async (isFollowing) => {
     if (!isAuthenticated()) {
+      showToast('Please login to follow shops', 'info');
       navigate('/authentication-login-register');
       return;
     }
     
     try {
-      await apiService.followShop(shopData.id);
-      // Refresh shop data to get updated follower count
+      if (isFollowing) {
+        await api.followShop(shopData.id);
+        showToast('Shop followed successfully!', 'success');
+      } else {
+        await api.unfollowShop(shopData.id);
+        showToast('Shop unfollowed successfully!', 'success');
+      }
+      
+      // Invalidate cache and refresh shop data
+      invalidateCache(`shop-${shopData.id}`);
       loadShopData();
     } catch (error) {
-      console.error('Error following shop:', error);
+      console.error('Error following/unfollowing shop:', error);
+      showToast('Failed to update follow status', 'error');
     }
   };
 
   const handleContact = (type) => {
     if (!shopData) return;
     
+    if (!isAuthenticated()) {
+      showToast('Please login to contact the shop', 'info');
+      navigate('/authentication-login-register');
+      return;
+    }
+    
     switch (type) {
       case 'chat':
-        // Open chat modal or redirect to chat
+        // Open chat interface (placeholder for future implementation)
+        showToast('Chat feature coming soon!', 'info');
+        console.log('Opening chat with shop:', shopData.name);
         break;
       case 'call':
         if (shopData.phone) {
           window.open(`tel:${shopData.phone}`);
+          showToast(`Calling ${shopData.name}...`, 'info');
+        } else {
+          showToast('Phone number not available', 'error');
         }
         break;
       case 'email':
         if (shopData.email) {
-          window.open(`mailto:${shopData.email}`);
+          window.open(`mailto:${shopData.email}?subject=Inquiry about ${shopData.name}`);
+          showToast(`Opening email to ${shopData.name}...`, 'info');
+        } else {
+          showToast('Email not available', 'error');
+        }
+        break;
+      case 'whatsapp':
+        if (shopData.phone) {
+          const message = encodeURIComponent(`Hello! I'm interested in your products at ${shopData.name}.`);
+          window.open(`https://wa.me/${shopData.phone.replace(/\D/g, '')}?text=${message}`);
+          showToast('Opening WhatsApp...', 'info');
+        } else {
+          showToast('WhatsApp contact not available', 'error');
         }
         break;
       default:
-        console.log('General contact');
+        showToast('Contact options: Call, Email, or Chat', 'info');
     }
   };
 
-  if (isLoading) {
+  if (loading || isLoading('shop-products')) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -316,7 +385,7 @@ const ShopProfile = () => {
             {/* Sidebar */}
             <div className="lg:col-span-1 space-y-6">
               <ShopStats stats={statsData} />
-              <ShopOwnerInfo owner={shopData.owner} />
+              <ShopOwnerInfo owner={shopData.owner || { name: 'Unknown', photo: '/default-avatar.png', email: '', phone: '', memberSince: '', bio: '', certifications: [] }} />
             </div>
           </div>
         </div>

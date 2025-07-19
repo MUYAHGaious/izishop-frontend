@@ -138,9 +138,9 @@ const AddProduct = () => {
       });
       setErrors({});
 
-      // Navigate to product management or dashboard
+      // Navigate to shop owner dashboard products tab
       setTimeout(() => {
-        navigate('/product-management');
+        navigate('/shop-owner-dashboard?tab=products');
       }, 1000);
 
     } catch (error) {

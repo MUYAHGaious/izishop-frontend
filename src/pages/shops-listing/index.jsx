@@ -10,11 +10,18 @@ import FilterPanel from './components/FilterPanel';
 import FeaturedShops from './components/FeaturedShops';
 import CreateShopModal from '../../components/ui/CreateShopModal';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDataCache } from '../../contexts/DataCacheContext';
+import { useWebSocket } from '../../contexts/WebSocketContext';
+import api from '../../services/api';
+import { showToast } from '../../components/ui/Toast';
 
 const ShopsListing = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const { fetchWithCache, invalidateCache, isLoading } = useDataCache();
+  const { subscribeToProductUpdates, isConnected } = useWebSocket();
+  
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
@@ -25,120 +32,41 @@ const ShopsListing = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [resultsCount, setResultsCount] = useState(0);
   const [isCreateShopOpen, setIsCreateShopOpen] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Mock shops data
-  const mockShops = [
-    {
-      id: 1,
-      name: "TechHub Electronics",
-      logo: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=200&h=200&fit=crop&crop=center",
-      banner: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=200&fit=crop&crop=center",
-      rating: 4.8,
-      reviewCount: 1247,
-      productCount: 156,
-      location: "Douala, Cameroon",
-      category: "electronics",
-      isVerified: true,
-      isPremium: true,
-      isOnline: true,
-      isFollowing: false,
-      description: "Premier electronics store with latest gadgets and competitive prices",
-      yearsActive: 5,
-      responseTime: "< 2 hours"
-    },
-    {
-      id: 2,
-      name: "SportZone Douala",
-      logo: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200&h=200&fit=crop&crop=center",
-      banner: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=200&fit=crop&crop=center",
-      rating: 4.6,
-      reviewCount: 892,
-      productCount: 234,
-      location: "Douala, Cameroon",
-      category: "sports",
-      isVerified: true,
-      isPremium: false,
-      isOnline: true,
-      isFollowing: true,
-      description: "Your one-stop shop for sports equipment and athletic wear",
-      yearsActive: 3,
-      responseTime: "< 1 hour"
-    },
-    {
-      id: 3,
-      name: "Fashion Boutique",
-      logo: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=200&h=200&fit=crop&crop=center",
-      banner: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=200&fit=crop&crop=center",
-      rating: 4.3,
-      reviewCount: 567,
-      productCount: 89,
-      location: "Yaoundé, Cameroon",
-      category: "fashion",
-      isVerified: false,
-      isPremium: true,
-      isOnline: false,
-      isFollowing: false,
-      description: "Trendy fashion and accessories for the modern African woman",
-      yearsActive: 2,
-      responseTime: "< 4 hours"
-    },
-    {
-      id: 4,
-      name: "Green Paradise",
-      logo: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=200&h=200&fit=crop&crop=center",
-      banner: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=200&fit=crop&crop=center",
-      rating: 4.4,
-      reviewCount: 324,
-      productCount: 145,
-      location: "Bamenda, Cameroon",
-      category: "home",
-      isVerified: true,
-      isPremium: false,
-      isOnline: true,
-      isFollowing: false,
-      description: "Beautiful plants and home garden supplies for your space",
-      yearsActive: 4,
-      responseTime: "< 3 hours"
-    },
-    {
-      id: 5,
-      name: "Auto Parts Pro",
-      logo: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=200&h=200&fit=crop&crop=center",
-      banner: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&h=200&fit=crop&crop=center",
-      rating: 4.7,
-      reviewCount: 678,
-      productCount: 298,
-      location: "Douala, Cameroon",
-      category: "automotive",
-      isVerified: true,
-      isPremium: true,
-      isOnline: true,
-      isFollowing: false,
-      description: "Quality auto parts and accessories for all vehicle makes",
-      yearsActive: 6,
-      responseTime: "< 2 hours"
-    },
-    {
-      id: 6,
-      name: "Book Haven",
-      logo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=center",
-      banner: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=200&fit=crop&crop=center",
-      rating: 4.5,
-      reviewCount: 234,
-      productCount: 567,
-      location: "Yaoundé, Cameroon",
-      category: "books",
-      isVerified: false,
-      isPremium: false,
-      isOnline: true,
-      isFollowing: true,
-      description: "Extensive collection of books, magazines, and educational materials",
-      yearsActive: 1,
-      responseTime: "< 6 hours"
+  // API functions for fetching shops data
+  const fetchShops = useCallback(async (params = {}) => {
+    try {
+      const { page = 1, limit = 20, search = '', category = '', sort = 'relevance', ...filters } = params;
+      console.log('Fetching shops with params:', { page, limit, search, category, sort, filters });
+      
+      const response = await api.getAllShops(page, limit, search, category, sort, filters);
+      console.log('API response for getAllShops:', response);
+      
+      return response;
+    } catch (error) {
+      console.error('Error fetching shops:', error);
+      console.error('Error details:', error.message, error.response?.data);
+      throw error;
     }
-  ];
+  }, []);
 
-  const featuredShops = mockShops.filter(shop => shop.isPremium || shop.isVerified).slice(0, 3);
+  const fetchFeaturedShops = useCallback(async () => {
+    try {
+      console.log('Fetching featured shops...');
+      const response = await api.getFeaturedShops();
+      console.log('API response for getFeaturedShops:', response);
+      return response;
+    } catch (error) {
+      console.error('Error fetching featured shops:', error);
+      console.error('Featured shops error details:', error.message, error.response?.data);
+      // Return empty array on error
+      return [];
+    }
+  }, []);
+
+  // Featured shops state
+  const [featuredShops, setFeaturedShops] = useState([]);
 
   const categories = [
     { id: 'all', label: 'All Categories' },
@@ -157,59 +85,276 @@ const ShopsListing = () => {
     { value: 'popularity', label: 'Most Popular' }
   ];
 
-  // Initialize from URL params
+  // Load initial data and set up real-time updates
   useEffect(() => {
-    const query = searchParams.get('q') || '';
-    const category = searchParams.get('category') || '';
-    const sort = searchParams.get('sort') || 'relevance';
-    
-    setSearchQuery(query);
-    if (category) {
-      setFilters(prev => ({ ...prev, categories: [category] }));
-    }
-    setSortBy(sort);
-    
-    // Simulate initial load
-    setTimeout(() => {
-      setShops(mockShops);
-      setResultsCount(mockShops.length);
-      setLoading(false);
-    }, 1000);
-  }, [searchParams]);
+    const loadInitialData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-  const handleSearch = (e) => {
+        // Get URL parameters
+        const query = searchParams.get('q') || '';
+        const category = searchParams.get('category') || '';
+        const sort = searchParams.get('sort') || 'relevance';
+        
+        setSearchQuery(query);
+        if (category) {
+          setFilters(prev => ({ ...prev, categories: [category] }));
+        }
+        setSortBy(sort);
+
+        // Load shops with caching
+        const shopsParams = {
+          page: 1,
+          limit: 20,
+          search: query,
+          category: category,
+          sort: sort,
+          ...filters
+        };
+
+        const [shopsData, featuredData] = await Promise.all([
+          fetchWithCache('shops', () => fetchShops(shopsParams), shopsParams),
+          fetchWithCache('featured-shops', fetchFeaturedShops, {})
+        ]);
+
+        console.log('Shops data received:', shopsData);
+        console.log('Featured data received:', featuredData);
+
+        if (shopsData) {
+          // Handle both possible response formats
+          const shops = shopsData.shops || shopsData || [];
+          const total = shopsData.total || shopsData.count || shops.length;
+          
+          console.log('Setting shops:', shops);
+          console.log('Total count:', total);
+          
+          setShops(shops);
+          setResultsCount(total);
+          setHasMore(shops.length >= 20);
+          setCurrentPage(1);
+        } else {
+          console.log('No shops data received');
+          setShops([]);
+          setResultsCount(0);
+        }
+
+        if (featuredData) {
+          console.log('Setting featured shops:', featuredData);
+          setFeaturedShops(featuredData);
+        } else {
+          console.log('No featured shops data received');
+          setFeaturedShops([]);
+        }
+
+      } catch (error) {
+        console.error('Error loading shops data:', error);
+        setError('Failed to load shops. Please try again.');
+        showToast('Failed to load shops', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadInitialData();
+  }, [searchParams, fetchWithCache, fetchShops, fetchFeaturedShops, filters]);
+
+  // Set up real-time updates for shops
+  useEffect(() => {
+    if (!isConnected) return;
+
+    const unsubscribeShops = subscribeToProductUpdates((updateData) => {
+      console.log('Shop-related update received:', updateData);
+      
+      // If a shop is updated, invalidate cache and refresh
+      if (updateData.type === 'shop_update') {
+        invalidateCache('shops');
+        invalidateCache('featured-shops');
+        
+        // Optionally refresh current view
+        const currentParams = {
+          page: 1,
+          limit: 20,
+          search: searchQuery,
+          category: searchParams.get('category') || '',
+          sort: sortBy,
+          ...filters
+        };
+        
+        fetchWithCache('shops', () => fetchShops(currentParams), currentParams, true)
+          .then(shopsData => {
+            if (shopsData) {
+              setShops(shopsData.shops || []);
+              setResultsCount(shopsData.total || 0);
+            }
+          })
+          .catch(console.error);
+      }
+    });
+
+    return unsubscribeShops;
+  }, [isConnected, subscribeToProductUpdates, invalidateCache, searchQuery, sortBy, filters, searchParams, fetchWithCache, fetchShops]);
+
+  const handleSearch = async (e) => {
     e.preventDefault();
-    const newParams = new URLSearchParams(searchParams);
-    if (searchQuery) {
-      newParams.set('q', searchQuery);
-    } else {
-      newParams.delete('q');
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Update URL params
+      const newParams = new URLSearchParams(searchParams);
+      if (searchQuery.trim()) {
+        newParams.set('q', searchQuery.trim());
+      } else {
+        newParams.delete('q');
+      }
+      setSearchParams(newParams);
+
+      // Fetch new search results
+      const shopsParams = {
+        page: 1,
+        limit: 20,
+        search: searchQuery.trim(),
+        category: searchParams.get('category') || '',
+        sort: sortBy,
+        ...filters
+      };
+
+      // Force refresh for new search
+      const shopsData = await fetchWithCache('shops', () => fetchShops(shopsParams), shopsParams, true);
+      
+      if (shopsData) {
+        setShops(shopsData.shops || []);
+        setResultsCount(shopsData.total || 0);
+        setHasMore((shopsData.shops?.length || 0) >= 20);
+        setCurrentPage(1);
+      }
+
+    } catch (error) {
+      console.error('Error searching shops:', error);
+      setError('Search failed. Please try again.');
+      showToast('Search failed', 'error');
+    } finally {
+      setLoading(false);
     }
-    setSearchParams(newParams);
   };
 
-  const handleFilterChange = useCallback((filterType, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [filterType]: value
-    }));
-  }, []);
+  const handleFilterChange = useCallback(async (filterType, value) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const newFilters = {
+        ...filters,
+        [filterType]: value
+      };
+      setFilters(newFilters);
 
-  const handleSortChange = useCallback((newSort) => {
-    setSortBy(newSort);
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set('sort', newSort);
-    setSearchParams(newParams);
-  }, [searchParams, setSearchParams]);
+      // Fetch filtered results
+      const shopsParams = {
+        page: 1,
+        limit: 20,
+        search: searchQuery,
+        category: searchParams.get('category') || '',
+        sort: sortBy,
+        ...newFilters
+      };
 
-  const handleFollowShop = useCallback((shopId, isFollowing) => {
-    setShops(prev => prev.map(shop => 
-      shop.id === shopId ? { ...shop, isFollowing } : shop
-    ));
-  }, []);
+      const shopsData = await fetchWithCache('shops', () => fetchShops(shopsParams), shopsParams, true);
+      
+      if (shopsData) {
+        setShops(shopsData.shops || []);
+        setResultsCount(shopsData.total || 0);
+        setHasMore((shopsData.shops?.length || 0) >= 20);
+        setCurrentPage(1);
+      }
+
+    } catch (error) {
+      console.error('Error filtering shops:', error);
+      setError('Filter failed. Please try again.');
+      showToast('Filter failed', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [filters, searchQuery, sortBy, searchParams, fetchWithCache, fetchShops]);
+
+  const handleSortChange = useCallback(async (newSort) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      setSortBy(newSort);
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set('sort', newSort);
+      setSearchParams(newParams);
+
+      // Fetch sorted results
+      const shopsParams = {
+        page: 1,
+        limit: 20,
+        search: searchQuery,
+        category: searchParams.get('category') || '',
+        sort: newSort,
+        ...filters
+      };
+
+      const shopsData = await fetchWithCache('shops', () => fetchShops(shopsParams), shopsParams, true);
+      
+      if (shopsData) {
+        setShops(shopsData.shops || []);
+        setResultsCount(shopsData.total || 0);
+        setHasMore((shopsData.shops?.length || 0) >= 20);
+        setCurrentPage(1);
+      }
+
+    } catch (error) {
+      console.error('Error sorting shops:', error);
+      setError('Sort failed. Please try again.');
+      showToast('Sort failed', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [searchParams, setSearchParams, searchQuery, filters, fetchWithCache, fetchShops]);
+
+  const handleFollowShop = useCallback(async (shopId, isFollowing) => {
+    if (!isAuthenticated()) {
+      showToast('Please login to follow shops', 'error');
+      navigate('/authentication-login-register');
+      return;
+    }
+
+    try {
+      // Optimistically update UI
+      setShops(prev => prev.map(shop => 
+        shop.id === shopId ? { ...shop, isFollowing } : shop
+      ));
+
+      // Make API call
+      if (isFollowing) {
+        await api.followShop(shopId);
+        showToast('Shop followed successfully', 'success');
+      } else {
+        await api.unfollowShop(shopId);
+        showToast('Shop unfollowed successfully', 'success');
+      }
+
+      // Invalidate cache to refresh data
+      invalidateCache('shops');
+
+    } catch (error) {
+      console.error('Error following/unfollowing shop:', error);
+      // Revert optimistic update on error
+      setShops(prev => prev.map(shop => 
+        shop.id === shopId ? { ...shop, isFollowing: !isFollowing } : shop
+      ));
+      showToast('Failed to update follow status', 'error');
+    }
+  }, [isAuthenticated, navigate, invalidateCache]);
 
   const handleVisitShop = useCallback((shopId) => {
-    navigate(`/shop-profile?id=${shopId}`);
+    console.log('Visiting shop:', shopId);
+    navigate(`/shops/${shopId}`);
   }, [navigate]);
 
   const handleQuickPreview = useCallback((shopId) => {
@@ -219,34 +364,67 @@ const ShopsListing = () => {
   const handleLoadMore = useCallback(async () => {
     if (!hasMore || loading) return;
     
-    setLoading(true);
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newShops = mockShops.map(shop => ({
-          ...shop,
-          id: shop.id + (currentPage * 6)
-        }));
+    try {
+      setLoading(true);
+      setError(null);
+
+      const nextPage = currentPage + 1;
+      const shopsParams = {
+        page: nextPage,
+        limit: 20,
+        search: searchQuery,
+        category: searchParams.get('category') || '',
+        sort: sortBy,
+        ...filters
+      };
+
+      const shopsData = await fetchWithCache('shops', () => fetchShops(shopsParams), shopsParams, true);
+      
+      if (shopsData && shopsData.shops) {
+        setShops(prev => [...prev, ...shopsData.shops]);
+        setCurrentPage(nextPage);
+        setHasMore(shopsData.shops.length >= 20);
         
-        setShops(prev => [...prev, ...newShops]);
-        setCurrentPage(prev => prev + 1);
-        
-        if (currentPage >= 3) {
-          setHasMore(false);
+        // Update total count if provided
+        if (shopsData.total) {
+          setResultsCount(shopsData.total);
         }
-        
-        setLoading(false);
-        resolve();
-      }, 1000);
-    });
-  }, [currentPage, hasMore, loading, mockShops]);
+      } else {
+        setHasMore(false);
+      }
+
+    } catch (error) {
+      console.error('Error loading more shops:', error);
+      setError('Failed to load more shops.');
+      showToast('Failed to load more shops', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, hasMore, loading, searchQuery, sortBy, filters, searchParams, fetchWithCache, fetchShops]);
 
   const handleCreateShop = useCallback(() => {
-    if (!isAuthenticated() || user?.role !== 'SHOP_OWNER') {
-      // Redirect to login/register page for both non-authenticated and non-shop-owner users
+    console.log('Create shop clicked. Auth status:', {
+      isAuthenticated: isAuthenticated(),
+      user: user,
+      role: user?.role,
+      token: !!localStorage.getItem('authToken')
+    });
+    
+    if (!isAuthenticated()) {
+      console.log('User not authenticated, redirecting to login');
+      showToast('Please login to create a shop', 'info');
       navigate('/authentication-login-register');
       return;
     }
     
+    if (user?.role !== 'SHOP_OWNER') {
+      console.log('User is not a shop owner:', user?.role);
+      showToast('Only shop owners can create shops', 'error');
+      navigate('/authentication-login-register');
+      return;
+    }
+    
+    console.log('Opening create shop modal');
     // Open create shop modal
     setIsCreateShopOpen(true);
   }, [isAuthenticated, user, navigate]);
@@ -275,6 +453,24 @@ const ShopsListing = () => {
       <Header />
       
       <main className="pt-16 pb-16 lg:pb-0">
+        {/* Error Banner */}
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4">
+            <div className="flex items-center">
+              <Icon name="AlertCircle" size={20} className="text-red-500 mr-3" />
+              <div className="flex-1">
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+              <button 
+                onClick={() => setError(null)}
+                className="text-red-500 hover:text-red-700"
+              >
+                <Icon name="X" size={16} />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Hero Section with Search */}
         <div className="bg-surface border-b border-border">
           <div className="container mx-auto px-4 py-8">
@@ -309,6 +505,12 @@ const ShopsListing = () => {
                 >
                   Create Shop
                 </Button>
+              </div>
+              
+              {/* Connection Status */}
+              <div className="flex items-center justify-center gap-2 text-xs text-text-secondary">
+                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                <span>{isConnected ? 'Live updates enabled' : 'Offline mode'}</span>
               </div>
             </div>
           </div>
@@ -413,7 +615,7 @@ const ShopsListing = () => {
               </div>
 
               {/* Loading Skeletons */}
-              {loading && (
+              {(loading || isLoading('shops')) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
                   {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div key={i} className="animate-pulse">
@@ -430,7 +632,7 @@ const ShopsListing = () => {
               )}
 
               {/* Load More Button */}
-              {hasMore && !loading && (
+              {hasMore && !loading && !isLoading('shops') && (
                 <div className="flex justify-center mt-8">
                   <Button
                     onClick={handleLoadMore}
@@ -444,7 +646,7 @@ const ShopsListing = () => {
               )}
 
               {/* No Results */}
-              {filteredShops.length === 0 && !loading && (
+              {filteredShops.length === 0 && !loading && !isLoading('shops') && (
                 <div className="text-center py-12">
                   <Icon name="Store" size={48} className="text-text-secondary mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-text-primary mb-2">
@@ -491,9 +693,25 @@ const ShopsListing = () => {
         isOpen={isCreateShopOpen}
         onClose={() => setIsCreateShopOpen(false)}
         onShopCreated={(newShop) => {
-          // Add new shop to the list
+          // Add new shop to the list optimistically
           setShops(prev => [newShop, ...prev]);
           setResultsCount(prev => prev + 1);
+          
+          // Invalidate cache to ensure fresh data on next load
+          invalidateCache('shops');
+          invalidateCache('featured-shops');
+          
+          // Show success message
+          showToast('Shop created successfully!', 'success');
+          
+          // Refresh featured shops if the new shop qualifies
+          fetchWithCache('featured-shops', fetchFeaturedShops, {}, true)
+            .then(featuredData => {
+              if (featuredData) {
+                setFeaturedShops(featuredData);
+              }
+            })
+            .catch(console.error);
         }}
       />
       

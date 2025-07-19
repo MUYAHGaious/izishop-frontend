@@ -9,6 +9,8 @@ import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import SocialAuthButtons from './components/SocialAuthButtons';
 import Icon from '../../components/AppIcon';
+import { showToast } from '../../components/ui/Toast';
+import api from '../../services/api';
 
 const brandBenefits = [
   {
@@ -39,7 +41,7 @@ const AuthenticationLoginRegister = () => {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [hasRedirected, setHasRedirected] = useState(false);
   const navigate = useNavigate();
-  const { user, login, register, isAuthenticated } = useAuth();
+  const { user, login, register, isAuthenticated, redirectAfterAuth } = useAuth();
 
   useEffect(() => {
     // Check if user is already authenticated and redirect once
@@ -53,55 +55,118 @@ const AuthenticationLoginRegister = () => {
   }, [isAuthenticated(), user?.role, hasRedirected]);
 
   const redirectToDashboard = (role) => {
-    // Use the exact role format from backend
-    switch (role) {
-      case 'CUSTOMER': 
-        navigate('/landing-page');
-        break;
-      case 'SHOP_OWNER': 
-        navigate('/shop-owner-dashboard');
-        break;
-      case 'CASUAL_SELLER': 
-        navigate('/product-catalog');
-        break;
-      case 'DELIVERY_AGENT': 
-        navigate('/landing-page');
-        break;
-      case 'ADMIN': 
-        navigate('/admin-dashboard');
-        break;
-      default:
-        navigate('/landing-page');
+    // Use the new return URL system for seamless navigation
+    const { redirectUrl, pendingCartState } = redirectAfterAuth();
+    
+    console.log('Redirecting after auth:', { redirectUrl, pendingCartState, role });
+    
+    // Navigate to the determined URL
+    navigate(redirectUrl);
+    
+    // If there's pending cart state, handle it
+    if (pendingCartState) {
+      // This will be handled by the destination page (e.g., product details page)
+      console.log('Pending cart state to restore:', pendingCartState);
     }
   };
 
-  const handleLogin = async (userData) => {
+  const handleLogin = async (credentials) => {
     setIsLoading(true);
     try {
-      const response = await login(userData);
+      console.log('handleLogin called with:', { email: credentials.email, password: '[REDACTED]' });
+      const response = await login(credentials);
+      console.log('Login successful, user role:', response.user.role);
       setShowSuccessMessage(true);
       setTimeout(() => {
         redirectToDashboard(response.user.role);
+        setIsLoading(false);
       }, 2000);
     } catch (error) {
       console.error('Login error:', error);
-    } finally {
       setIsLoading(false);
+      throw error; // Re-throw to allow form to handle the error
     }
   };
 
-  const handleRegister = async (userData) => {
+  const handleRegister = async (registrationData) => {
     setIsLoading(true);
     try {
+      console.log('handleRegister called with registrationData');
+      
+      // Extract shop data if present
+      const { shopData, ...userData } = registrationData;
+      
+      // First, create the user account
       const response = await register(userData);
-      setShowSuccessMessage(true);
-      setTimeout(() => {
-        redirectToDashboard(response.user.role);
-      }, 2000);
+      console.log('User registration successful, user role:', response.user.role);
+      
+      // If user is shop owner and shop data was provided, create the shop
+      if (response.user.role === 'SHOP_OWNER' && shopData) {
+        try {
+          console.log('Creating shop automatically after registration...');
+          
+          // Prepare shop data with required fields based on backend schema
+          const shopCreateData = {
+            name: shopData.name,
+            description: shopData.description,
+            address: shopData.address,
+            phone: shopData.phone || null,
+            email: shopData.email || null
+          };
+          
+          console.log('Shop creation data prepared:', shopCreateData);
+          console.log('Auth token available:', !!localStorage.getItem('authToken'));
+          
+          // Create shop using API service
+          const shopResponse = await api.createShop(shopCreateData);
+          console.log('Shop created successfully:', shopResponse);
+          
+          // Show success message for both user and shop creation
+          setShowSuccessMessage(true);
+          setTimeout(() => {
+            redirectToDashboard(response.user.role);
+            setIsLoading(false);
+          }, 2000);
+          
+        } catch (shopError) {
+          console.error('Shop creation failed after user registration:', shopError);
+          console.error('Shop creation error details:', {
+            message: shopError.message,
+            response: shopError.response?.data,
+            status: shopError.response?.status
+          });
+          
+          // User was created successfully, but shop creation failed
+          // Still redirect to dashboard but show a warning
+          setShowSuccessMessage(true);
+          setTimeout(() => {
+            redirectToDashboard(response.user.role);
+            setIsLoading(false);
+            
+            // Show a toast notification about shop creation failure
+            setTimeout(() => {
+              showToast({
+                type: 'error',
+                message: `Account created but shop creation failed: ${shopError.message || 'Unknown error'}. Please contact support.`,
+                duration: 8000
+              });
+            }, 2500);
+          }, 2000);
+        }
+      } else {
+        // Regular user (not shop owner) or no shop data
+        console.log('No shop creation needed for this user type');
+        setShowSuccessMessage(true);
+        setTimeout(() => {
+          redirectToDashboard(response.user.role);
+          setIsLoading(false);
+        }, 2000);
+      }
+      
     } catch (error) {
       console.error('Registration error:', error);
-    } finally {
       setIsLoading(false);
+      throw error; // Re-throw to allow form to handle the error
     }
   };
 

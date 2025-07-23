@@ -52,7 +52,7 @@ const AuthenticationLoginRegister = () => {
         redirectToDashboard(user.role);
       }, 100);
     }
-  }, [isAuthenticated(), user?.role, hasRedirected]);
+  }, [user, hasRedirected]);
 
   const redirectToDashboard = (role) => {
     // Use the new return URL system for seamless navigation
@@ -60,8 +60,36 @@ const AuthenticationLoginRegister = () => {
     
     console.log('Redirecting after auth:', { redirectUrl, pendingCartState, role });
     
+    // If redirectAfterAuth doesn't provide a URL (e.g., during registration), 
+    // use role-based redirection
+    let finalRedirectUrl = redirectUrl;
+    if (!finalRedirectUrl || finalRedirectUrl === '/product-catalog') {
+      // Role-based default redirection for registration
+      switch (role) {
+        case 'SHOP_OWNER':
+        case 'shop_owner':
+          finalRedirectUrl = '/shop-owner-dashboard';
+          break;
+        case 'ADMIN':
+        case 'admin':
+          finalRedirectUrl = '/admin-dashboard';
+          break;
+        case 'CUSTOMER':
+        case 'customer':
+        case 'CASUAL_SELLER':
+        case 'casual_seller':
+        case 'DELIVERY_AGENT':
+        case 'delivery_agent':
+        default:
+          finalRedirectUrl = '/product-catalog';
+          break;
+      }
+    }
+    
+    console.log('Final redirect URL:', finalRedirectUrl);
+    
     // Navigate to the determined URL
-    navigate(redirectUrl);
+    navigate(finalRedirectUrl);
     
     // If there's pending cart state, handle it
     if (pendingCartState) {
@@ -73,18 +101,26 @@ const AuthenticationLoginRegister = () => {
   const handleLogin = async (credentials) => {
     setIsLoading(true);
     try {
-      console.log('handleLogin called with:', { email: credentials.email, password: '[REDACTED]' });
+      console.log('=== AUTH PAGE handleLogin called ===');
+      console.log('Credentials:', { email: credentials.email, password: '[REDACTED]' });
       const response = await login(credentials);
       console.log('Login successful, user role:', response.user.role);
-      setShowSuccessMessage(true);
+      
+      // Force immediate redirect after successful login
       setTimeout(() => {
         redirectToDashboard(response.user.role);
-        setIsLoading(false);
-      }, 2000);
-    } catch (error) {
-      console.error('Login error:', error);
+      }, 500);
+      
       setIsLoading(false);
-      throw error; // Re-throw to allow form to handle the error
+    } catch (error) {
+      console.error('=== AUTH PAGE LOGIN ERROR ===');
+      console.error('Error in auth page handleLogin:', error);
+      console.error('Error message:', error?.message);
+      console.error('===============================');
+      setIsLoading(false);
+      // Re-throw the error so LoginForm can handle it
+      console.log('=== ABOUT TO RE-THROW ERROR TO LOGINFORM ===');
+      throw error;
     }
   };
 
@@ -101,7 +137,7 @@ const AuthenticationLoginRegister = () => {
       console.log('User registration successful, user role:', response.user.role);
       
       // If user is shop owner and shop data was provided, create the shop
-      if (response.user.role === 'SHOP_OWNER' && shopData) {
+      if ((response.user.role === 'SHOP_OWNER' || response.user.role === 'shop_owner') && shopData) {
         try {
           console.log('Creating shop automatically after registration...');
           
@@ -122,11 +158,8 @@ const AuthenticationLoginRegister = () => {
           console.log('Shop created successfully:', shopResponse);
           
           // Show success message for both user and shop creation
-          setShowSuccessMessage(true);
-          setTimeout(() => {
-            redirectToDashboard(response.user.role);
-            setIsLoading(false);
-          }, 2000);
+          redirectToDashboard(response.user.role);
+          setIsLoading(false);
           
         } catch (shopError) {
           console.error('Shop creation failed after user registration:', shopError);
@@ -138,29 +171,21 @@ const AuthenticationLoginRegister = () => {
           
           // User was created successfully, but shop creation failed
           // Still redirect to dashboard but show a warning
-          setShowSuccessMessage(true);
-          setTimeout(() => {
-            redirectToDashboard(response.user.role);
-            setIsLoading(false);
-            
-            // Show a toast notification about shop creation failure
-            setTimeout(() => {
-              showToast({
-                type: 'error',
-                message: `Account created but shop creation failed: ${shopError.message || 'Unknown error'}. Please contact support.`,
-                duration: 8000
-              });
-            }, 2500);
-          }, 2000);
+          redirectToDashboard(response.user.role);
+          setIsLoading(false);
+          
+          // Show a toast notification about shop creation failure immediately
+          showToast({
+            type: 'error',
+            message: `Account created but shop creation failed: ${shopError.message || 'Unknown error'}. Please contact support.`,
+            duration: 8000
+          });
         }
       } else {
         // Regular user (not shop owner) or no shop data
         console.log('No shop creation needed for this user type');
-        setShowSuccessMessage(true);
-        setTimeout(() => {
-          redirectToDashboard(response.user.role);
-          setIsLoading(false);
-        }, 2000);
+        redirectToDashboard(response.user.role);
+        setIsLoading(false);
       }
       
     } catch (error) {
@@ -212,7 +237,7 @@ const AuthenticationLoginRegister = () => {
             <p className="text-sm sm:text-base text-text-secondary mb-6">
               {activeTab === 'login' 
                 ? 'You have successfully signed in to your account.' 
-                : user?.role === 'shop_owner' 
+                : (user?.role === 'shop_owner' || user?.role === 'SHOP_OWNER')
                   ? 'Your account and shop have been created successfully. Welcome to IziShopin!'
                   : 'Your account has been created successfully. Welcome to IziShopin!'
               }
@@ -230,7 +255,7 @@ const AuthenticationLoginRegister = () => {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       <AuthBackground />
-      <GlassNavigation />
+      <GlassNavigation isAuthPage={true} />
       
       {/* Mobile-first layout */}
       <div className="relative z-10 min-h-screen pt-16 sm:pt-20">
@@ -265,15 +290,15 @@ const AuthenticationLoginRegister = () => {
         {/* Desktop Layout */}
         <div className="hidden lg:flex min-h-screen">
           {/* Left: Hero Section */}
-          <div className="w-1/2 relative overflow-hidden">
+          <div className="w-1/2 relative overflow-hidden rounded-t-lg lg:rounded-t-xl">
             <div className="absolute inset-0 w-full h-full">
               <img 
                 src="/auth-hero.jpg" 
                 alt="Shopping cart and online payment" 
-                className="w-full h-full object-cover object-center" 
+                className="w-full h-full object-cover object-center rounded-t-lg lg:rounded-t-xl" 
                 style={{ filter: 'brightness(0.7)' }}
               />
-              <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-blue-900/40 to-indigo-900/60" />
+              <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-blue-900/40 to-indigo-900/60 rounded-t-lg lg:rounded-t-xl" />
             </div>
 
             <div className="absolute inset-0 flex flex-col justify-center items-start p-12 text-white">
@@ -321,7 +346,11 @@ const AuthenticationLoginRegister = () => {
                 
                 {activeTab === 'login' ? (
                   <div className="space-y-6">
-                    <LoginForm onLogin={handleLogin} isLoading={isLoading} />
+                    <LoginForm 
+                      onLogin={handleLogin} 
+                      isLoading={isLoading} 
+                      onSwitchToRegister={() => setActiveTab('register')}
+                    />
                     <SocialAuthButtons onSocialLogin={handleSocialLogin} isLoading={isLoading} />
                     <div className="text-center">
                       <p className="text-sm text-text-secondary">
@@ -373,7 +402,11 @@ const AuthenticationLoginRegister = () => {
               
               {activeTab === 'login' ? (
                 <div className="space-y-4">
-                  <LoginForm onLogin={handleLogin} isLoading={isLoading} />
+                  <LoginForm 
+                    onLogin={handleLogin} 
+                    isLoading={isLoading} 
+                    onSwitchToRegister={() => setActiveTab('register')}
+                  />
                   <SocialAuthButtons onSocialLogin={handleSocialLogin} isLoading={isLoading} />
                   <div className="text-center">
                     <p className="text-sm text-text-secondary">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import MainHeader from '../../components/ui/MainHeader';
+import Header from '../../components/ui/Header';
 import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
 import ImageGallery from './components/ImageGallery';
@@ -206,7 +206,7 @@ const ProductDetail = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <MainHeader />
+        <Header />
         <div className="pt-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="animate-pulse space-y-8">
@@ -228,7 +228,7 @@ const ProductDetail = () => {
   if (!product) {
     return (
       <div className="min-h-screen bg-background">
-        <MainHeader />
+        <Header />
         <div className="pt-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="text-center">
@@ -248,7 +248,7 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <MainHeader />
+      <Header />
       
       <div className="pt-16 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

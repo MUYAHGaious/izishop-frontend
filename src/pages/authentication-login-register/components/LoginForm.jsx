@@ -1,28 +1,23 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
+import LoginEmailInput from '../../../components/ui/LoginEmailInput';
 import { Checkbox } from '../../../components/ui/Checkbox';
 import Icon from '../../../components/AppIcon';
 import { showToast } from '../../../components/ui/Toast';
 
-const LoginForm = ({ onLogin, isLoading }) => {
+const LoginForm = ({ onLogin, isLoading, onSwitchToRegister }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     rememberMe: false
   });
   const [errors, setErrors] = useState({});
+  const [loginError, setLoginError] = useState(''); // NEW: For specific login errors
   const [showPassword, setShowPassword] = useState(false);
 
-  // Mock credentials for different user types
-  const mockCredentials = {
-    customer: { email: 'customer@izishopin.com', password: 'Customer123!' },
-    shop_owner: { email: 'shop@izishopin.com', password: 'Shop123!' },
-    casual_seller: { email: 'seller@izishopin.com', password: 'Seller123!' },
-    delivery_agent: { email: 'delivery@izishopin.com', password: 'Delivery123!' },
-    admin: { email: 'admin@izishopin.com', password: 'Admin123!' }
-  };
+
 
   // Enhanced validation functions
   const validateEmail = (email) => {
@@ -59,9 +54,6 @@ const LoginForm = ({ onLogin, isLoading }) => {
     if (!validateForm()) return;
 
     try {
-      // Clear any previous errors
-      setErrors({});
-      
       // Prepare credentials for auth context
       const credentials = {
         email: formData.email.trim().toLowerCase(),
@@ -77,42 +69,39 @@ const LoginForm = ({ onLogin, isLoading }) => {
         console.error('No onLogin callback provided');
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.log('=== LOGINFORM RECEIVED ERROR ===');
+      console.error('=== LOGIN ERROR CAUGHT ===');
+      console.error('Error object:', error);
+      console.error('Error message:', error?.message);
+      console.error('========================');
       
-      let errorMessage = 'Invalid email or password. Please try again.';
+      let errorMessage = 'Incorrect email or password. Please check your credentials.';
       
-      // Enhanced error parsing
-      if (error.message) {
-        if (error.message.includes('Invalid credentials') || 
+      // Parse error message
+      if (error?.message) {
+        if (error.message.includes('Incorrect email or password') ||
+            error.message.includes('Invalid credentials') || 
             error.message.includes('Unauthorized') ||
             error.message.includes('401')) {
-          errorMessage = 'Invalid email or password. Please check your credentials.';
-        } else if (error.message.includes('Account not found')) {
-          errorMessage = 'No account found with this email address.';
-        } else if (error.message.includes('Account disabled') || 
-                   error.message.includes('Account suspended')) {
-          errorMessage = 'Your account has been disabled. Please contact support.';
-        } else if (error.message.includes('Too many attempts')) {
-          errorMessage = 'Too many login attempts. Please try again later.';
-        } else if (error.message.includes('Network') || 
-                   error.message.includes('fetch')) {
-          errorMessage = 'Network error. Please check your connection and try again.';
+          errorMessage = 'Incorrect email or password. Please check your credentials.';
         } else {
           errorMessage = error.message;
         }
       }
       
-      // Show error toast
-      showToast({
-        type: 'error',
-        message: errorMessage,
-        duration: 5000
-      });
+      console.log('Setting login error message:', errorMessage);
       
-      // Set form errors for visual feedback
-      setErrors({
-        submit: errorMessage
-      });
+      // Show toast notification
+      try {
+        showToast({
+          type: 'error',
+          message: errorMessage,
+          duration: 5000
+        });
+        console.log('Toast shown successfully');
+      } catch (toastError) {
+        console.error('Toast error:', toastError);
+      }
     }
   };
 
@@ -130,25 +119,18 @@ const LoginForm = ({ onLogin, isLoading }) => {
       [name]: newValue
     }));
     
-    // Real-time validation for email
-    if (name === 'email' && newValue) {
-      const emailError = validateEmail(newValue);
-      if (emailError) {
-        setErrors(prev => ({ ...prev, [name]: emailError }));
-      } else {
-        setErrors(prev => ({ ...prev, [name]: '' }));
-      }
-    } else if (errors[name]) {
-      // Clear error when user starts typing
+    // Clear errors when user starts typing (real-time validation handled by LoginEmailInput)
+    if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
     
-    // Clear submit error when user makes changes
-    if (errors.submit) {
-      setErrors(prev => ({ ...prev, submit: '' }));
+    // Clear login error when user starts typing in password field
+    if (name === 'password' && loginError) {
+      setLoginError('');
     }
-  }, [errors]);
+  }, []);
 
+  
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="text-center mb-6">
@@ -156,14 +138,15 @@ const LoginForm = ({ onLogin, isLoading }) => {
         <p className="text-text-secondary">Sign in to your IziShop account</p>
       </div>
 
-      <Input
+      <LoginEmailInput
         label="Email Address"
-        type="email"
         name="email"
         placeholder="Enter your email"
         value={formData.email}
         onChange={handleInputChange}
-        error={errors.email}
+        debounceDelay={600}
+        minLength={4}
+        onSwitchToRegister={onSwitchToRegister}
         required
       />
 
@@ -175,7 +158,7 @@ const LoginForm = ({ onLogin, isLoading }) => {
           placeholder="Enter your password"
           value={formData.password}
           onChange={handleInputChange}
-          error={errors.password}
+          error={loginError || errors.password}
           required
         />
         <button
@@ -203,15 +186,6 @@ const LoginForm = ({ onLogin, isLoading }) => {
         </Link>
       </div>
 
-      {/* Display general error message */}
-      {errors.submit && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-start">
-            <Icon name="AlertCircle" size={16} className="text-red-600 mt-0.5 mr-2" />
-            <p className="text-sm text-red-700">{errors.submit}</p>
-          </div>
-        </div>
-      )}
 
       <Button
         type="submit"
@@ -224,17 +198,6 @@ const LoginForm = ({ onLogin, isLoading }) => {
         Sign In
       </Button>
 
-      {/* Mock Credentials Helper */}
-      <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-        <p className="text-xs text-text-secondary mb-2">Demo Credentials:</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
-          <div>Customer: customer@izishopin.com</div>
-          <div>Shop: shop@izishopin.com</div>
-          <div>Seller: seller@izishopin.com</div>
-          <div>Delivery: delivery@izishopin.com</div>
-        </div>
-        <p className="text-xs text-text-secondary mt-1">Password for all: [Role]123!</p>
-      </div>
     </form>
   );
 };

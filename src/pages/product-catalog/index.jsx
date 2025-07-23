@@ -53,6 +53,29 @@ const ProductCatalog = () => {
     loadProducts(query);
   }, [searchParams]);
 
+  // Generate mock products when API is not available
+  const generateMockProducts = (searchQuery = '') => {
+    const mockProducts = [
+      { id: 1, name: 'Samsung Galaxy S24', price: 450000, stock_quantity: 10, seller_id: 1, created_at: new Date().toISOString() },
+      { id: 2, name: 'iPhone 15 Pro', price: 650000, stock_quantity: 5, seller_id: 2, created_at: new Date().toISOString() },
+      { id: 3, name: 'MacBook Air M2', price: 850000, stock_quantity: 3, seller_id: 1, created_at: new Date().toISOString() },
+      { id: 4, name: 'Sony WH-1000XM5', price: 180000, stock_quantity: 15, seller_id: 3, created_at: new Date().toISOString() },
+      { id: 5, name: 'Nike Air Max 270', price: 75000, stock_quantity: 20, seller_id: 2, created_at: new Date().toISOString() },
+      { id: 6, name: 'Dell XPS 13', price: 720000, stock_quantity: 8, seller_id: 1, created_at: new Date().toISOString() },
+      { id: 7, name: 'Apple Watch Series 9', price: 280000, stock_quantity: 12, seller_id: 3, created_at: new Date().toISOString() },
+      { id: 8, name: 'iPad Air', price: 420000, stock_quantity: 6, seller_id: 2, created_at: new Date().toISOString() }
+    ];
+
+    // Filter by search query if provided
+    if (searchQuery) {
+      return mockProducts.filter(product => 
+        product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    return mockProducts;
+  };
+
   // Transform API product data
   const transformProduct = (product) => {
     const createdAt = new Date(product.created_at);
@@ -87,8 +110,15 @@ const ProductCatalog = () => {
     try {
       setLoading(true);
       
-      // Fetch products from API
-      const response = await api.getAllProducts(0, 100, true, searchQuery);
+      // Fetch products from API with fallback
+      let response;
+      try {
+        response = await api.getAllProducts(0, 100, true, searchQuery);
+      } catch (apiError) {
+        console.warn('API not available, using mock data:', apiError);
+        // Fallback to mock data when API is not available
+        response = generateMockProducts(searchQuery);
+      }
       
       // Transform API response using shared transform function
       const transformedProducts = response.map(transformProduct);

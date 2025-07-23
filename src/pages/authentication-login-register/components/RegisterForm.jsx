@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
+import ValidatedInput from '../../../components/ui/ValidatedInput';
 import Select from '../../../components/ui/Select';
 import { Checkbox } from '../../../components/ui/Checkbox';
 import Icon from '../../../components/AppIcon';
@@ -423,25 +424,29 @@ const RegisterForm = ({ onRegister, isLoading }) => {
         />
       </div>
 
-      <Input
+      <ValidatedInput
         label="Email Address"
         type="email"
         name="email"
         placeholder="Enter your email"
         value={formData.email}
         onChange={handleInputChange}
-        error={errors.email}
+        validationType="email"
+        debounceDelay={600}
+        minLength={3}
         required
       />
 
-      <Input
+      <ValidatedInput
         label="Phone Number"
         type="tel"
         name="phone"
         placeholder="+237 6XX XXX XXX"
         value={formData.phone}
         onChange={handleInputChange}
-        error={errors.phone}
+        validationType="phone"
+        debounceDelay={600}
+        minLength={9}
         description="Use international format (e.g., +237 6XX XXX XXX)"
         required
       />
@@ -527,14 +532,16 @@ const RegisterForm = ({ onRegister, isLoading }) => {
 
       {formData.role === 'shop_owner' && (
         <>
-          <Input
+          <ValidatedInput
             label="Shop Name"
             type="text"
             name="shopName"
             placeholder="Enter your shop name"
             value={formData.shopName}
             onChange={handleInputChange}
-            error={errors.shopName}
+            validationType="shopName"
+            debounceDelay={600}
+            minLength={2}
             required
             description="This will be your shop's display name"
           />
@@ -591,36 +598,43 @@ const RegisterForm = ({ onRegister, isLoading }) => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
+            <ValidatedInput
               label="Shop Phone (Optional)"
               type="tel"
               name="shopPhone"
               placeholder="Shop phone number"
               value={formData.shopPhone}
               onChange={handleInputChange}
-              error={errors.shopPhone}
+              validationType="shopPhone"
+              debounceDelay={700}
+              minLength={9}
               description="Leave blank to use your personal phone"
             />
 
-            <Input
+            <ValidatedInput
               label="Shop Email (Optional)"
               type="email"
               name="shopEmail"
               placeholder="Shop email address"
               value={formData.shopEmail}
               onChange={handleInputChange}
-              error={errors.shopEmail}
+              validationType="email"
+              debounceDelay={700}
+              minLength={5}
               description="Leave blank to use your personal email"
             />
           </div>
 
-          <Input
+          <ValidatedInput
             label="Business License (Optional)"
             type="text"
             name="businessLicense"
             placeholder="Business license number"
             value={formData.businessLicense}
             onChange={handleInputChange}
+            validationType="businessLicense"
+            debounceDelay={800}
+            minLength={3}
             description="Helps build trust with customers"
           />
 

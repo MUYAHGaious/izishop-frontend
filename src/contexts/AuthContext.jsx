@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
+import { migrateTokenStorage, cleanupLegacyTokens } from '../utils/tokenMigration';
 
 const AuthContext = createContext();
 
@@ -30,50 +31,30 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       
-      // Check if user is already logged in
-      const token = localStorage.getItem('authToken');
+      // Simple session restoration without complex validation
+      const storedUser = localStorage.getItem('user');
+      const accessToken = localStorage.getItem('accessToken');
       const storedSessionId = localStorage.getItem('sessionId');
       const storedRole = localStorage.getItem('currentRole');
-      const storedSessionTime = localStorage.getItem('sessionStartTime');
       
-      if (token && storedSessionId && storedRole && storedSessionTime) {
-        // Verify session is still valid and role matches
+      if (storedUser && accessToken && storedSessionId && storedRole) {
         try {
-          const currentUser = await api.getCurrentUser();
-          
-          // Ensure the stored role matches the user's actual role
-          if (currentUser.role !== storedRole) {
-            console.warn('Role mismatch detected. Terminating session for security.');
-            await forceLogout('Role mismatch detected');
-            return;
-          }
-          
-          // Check session duration (optional: implement session timeout)
-          const sessionDuration = Date.now() - parseInt(storedSessionTime);
-          const maxSessionDuration = 8 * 60 * 60 * 1000; // 8 hours
-          
-          if (sessionDuration > maxSessionDuration) {
-            console.warn('Session expired due to duration.');
-            await forceLogout('Session expired');
-            return;
-          }
-          
+          const currentUser = JSON.parse(storedUser);
           setUser(currentUser);
           setSessionId(storedSessionId);
           setCurrentRole(storedRole);
-          setSessionStartTime(storedSessionTime);
-          
-        } catch (error) {
-          console.error('Failed to get current user:', error);
-          await forceLogout('Invalid session');
+          setSessionStartTime(Date.now().toString());
+        } catch (parseError) {
+          console.error('Failed to parse stored user data:', parseError);
+          // Clear corrupted data
+          localStorage.removeItem('user');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('sessionId');
+          localStorage.removeItem('currentRole');
         }
-      } else {
-        // Clear any partial auth data
-        await clearAuthData();
       }
     } catch (error) {
       console.error('Auth initialization error:', error);
-      await clearAuthData();
     } finally {
       setLoading(false);
     }
@@ -81,6 +62,8 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials, requestedRole = null) => {
     try {
+      console.log('=== AUTH CONTEXT LOGIN ===');
+      console.log('Login called with email:', credentials.email);
       setError(null);
       setLoading(true);
       
@@ -89,8 +72,19 @@ export const AuthProvider = ({ children }) => {
         await forceLogout('New login initiated');
       }
       
+      console.log('Calling API login...');
       const response = await api.login(credentials.email, credentials.password);
+      console.log('API login response received:', response);
       const newUser = response.user;
+      
+      // Store user data and tokens
+      localStorage.setItem('user', JSON.stringify(newUser));
+      if (response.access_token) {
+        localStorage.setItem('accessToken', response.access_token);
+      }
+      if (response.refresh_token) {
+        localStorage.setItem('refreshToken', response.refresh_token);
+      }
       
       // Validate role assignment
       if (requestedRole && newUser.role !== requestedRole) {
@@ -116,6 +110,10 @@ export const AuthProvider = ({ children }) => {
       
       return response;
     } catch (error) {
+      console.error('=== AUTH CONTEXT LOGIN ERROR ===');
+      console.error('Error in AuthContext login:', error);
+      console.error('Error message:', error?.message);
+      console.error('===============================');
       setError(error.message);
       await clearAuthData();
       throw error;
@@ -169,11 +167,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   const clearAuthData = async () => {
-    // Clear all authentication data
-    localStorage.removeItem('authToken');
+    // Clear all authentication data (including new token storage keys)
+    localStorage.removeItem('authToken'); // Legacy key
+    localStorage.removeItem('accessToken'); // New key
+    localStorage.removeItem('refreshToken'); // New key
     localStorage.removeItem('sessionId');
     localStorage.removeItem('currentRole');
     localStorage.removeItem('sessionStartTime');
+    localStorage.removeItem('adminSession');
+    localStorage.removeItem('user');
     
     setUser(null);
     setSessionId(null);
@@ -202,7 +204,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isAuthenticated = () => {
-    return !!user && !!sessionId && !!currentRole && !!localStorage.getItem('authToken');
+    // Simple check using localStorage only to avoid state dependency loops
+    const accessToken = localStorage.getItem('accessToken');
+    const storedUser = localStorage.getItem('user');
+    return !!(accessToken && storedUser);
   };
 
   const hasRole = (role) => {
@@ -422,7 +427,7 @@ export const AuthProvider = ({ children }) => {
     // Role-based default redirection
     switch (user?.role) {
       case 'SHOP_OWNER':
-        return { redirectUrl: '/shops-listing' };
+        return { redirectUrl: '/shop-owner-dashboard' };
       case 'ADMIN':
         return { redirectUrl: '/admin-dashboard' };
       case 'CUSTOMER':

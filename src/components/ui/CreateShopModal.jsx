@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '../AppIcon';
 import Button from './Button';
 import Input from './Input';
+import ValidatedInput from './ValidatedInput';
 import { showToast } from './Toast';
 import api from '../../services/api';
 
@@ -126,8 +127,8 @@ const CreateShopModal = ({ isOpen, onClose, onShopCreated }) => {
       // Handle different error types
       if (error.message.includes('Validation error')) {
         setErrors({ submit: error.message });
-      } else if (error.message.includes('already exists')) {
-        setErrors({ name: 'Shop name already exists' });
+      } else if (error.message.includes('already taken')) {
+        setErrors({ name: error.message });
       } else if (error.message.includes('already has a shop')) {
         setErrors({ submit: 'You already have a shop' });
       } else {
@@ -240,14 +241,16 @@ const CreateShopModal = ({ isOpen, onClose, onShopCreated }) => {
                       </p>
                     </div>
 
-                    <Input
+                    <ValidatedInput
                       label="Shop Name"
                       type="text"
                       name="name"
                       placeholder="Enter your shop name"
                       value={formData.name}
                       onChange={handleInputChange}
-                      error={errors.name}
+                      validationType="shopName"
+                      debounceDelay={500}
+                      minLength={2}
                       required
                       className="text-base"
                     />

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet';
-import MainHeader from '../../components/ui/MainHeader';
+import Header from '../../components/ui/Header';
+import ErrorBoundary from '../../components/ErrorBoundary';
 import HeroSection from './components/HeroSection';
 import ProductCategoriesGrid from './components/ProductCategoriesGrid';
 import StatisticsSection from './components/StatisticsSection';
@@ -31,25 +32,37 @@ const LandingPage = () => {
 
       <div className="min-h-screen bg-background">
         {/* Header */}
-        <MainHeader />
+        <ErrorBoundary>
+          <Header />
+        </ErrorBoundary>
 
         {/* Main Content */}
         <main className="pt-16">
           {/* Hero Section */}
-          <HeroSection />
+          <ErrorBoundary>
+            <HeroSection />
+          </ErrorBoundary>
 
           {/* Product Categories Grid */}
-          <ProductCategoriesGrid />
+          <ErrorBoundary>
+            <ProductCategoriesGrid />
+          </ErrorBoundary>
 
           {/* Statistics Section */}
-          <StatisticsSection />
+          <ErrorBoundary>
+            <StatisticsSection />
+          </ErrorBoundary>
 
           {/* Newsletter Section */}
-          <NewsletterSection />
+          <ErrorBoundary>
+            <NewsletterSection />
+          </ErrorBoundary>
         </main>
 
         {/* Footer */}
-        <Footer />
+        <ErrorBoundary>
+          <Footer />
+        </ErrorBoundary>
       </div>
     </>
   );

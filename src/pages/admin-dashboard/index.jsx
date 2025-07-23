@@ -8,11 +8,13 @@ import ShopManagement from './components/ShopManagement';
 import OrderManagement from './components/OrderManagement';
 import Analytics from './components/Analytics';
 import SystemSettings from './components/SystemSettings';
+import notificationService from '../../services/notificationService';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [notificationCount, setNotificationCount] = useState(0);
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuth();
 
@@ -23,14 +25,21 @@ const AdminDashboard = () => {
     }
   }, [user, isAuthenticated, navigate]);
 
-  // Mock real-time notifications
+  // Real notification service
   useEffect(() => {
-    const mockNotifications = [
-      { id: 1, type: 'order', message: 'New order #12345 requires approval', time: '2 min ago' },
-      { id: 2, type: 'user', message: 'New shop owner registration', time: '5 min ago' },
-      { id: 3, type: 'system', message: 'System backup completed', time: '1 hour ago' }
-    ];
-    setNotifications(mockNotifications);
+    // Subscribe to real notifications
+    const unsubscribe = notificationService.subscribe((data) => {
+      setNotifications(data.notifications);
+      setNotificationCount(data.count);
+    });
+
+    // Start real-time notifications
+    notificationService.startRealTimeNotifications();
+
+    return () => {
+      unsubscribe();
+      notificationService.stopNotifications();
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -74,8 +83,68 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Top Navigation Bar */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div className="flex items-center justify-between h-16 px-4 lg:px-6">
+          {/* Left Side - Logo and Title */}
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => navigate('/landing-page')}
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <Icon name="ArrowLeft" size={20} />
+              <span className="text-sm font-medium hidden sm:block">Back to Site</span>
+            </button>
+            <div className="hidden sm:block w-px h-6 bg-gray-300"></div>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <Icon name="Shield" size={16} color="white" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">Admin Dashboard</h1>
+              </div>
+            </div>
+          </div>
+
+          {/* Center - Quick Navigation */}
+          <div className="hidden lg:flex items-center space-x-1">
+            {tabs.slice(0, 4).map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Right Side - Actions */}
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <Icon name="Menu" size={20} />
+            </button>
+            
+            <button 
+              onClick={handleLogout}
+              className="hidden lg:flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              <Icon name="LogOut" size={16} />
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Mobile Header */}
-      <div className="lg:hidden bg-white border-b border-gray-200 sticky top-0 z-50">
+      <div className="lg:hidden bg-white border-b border-gray-200 sticky top-16 z-40" style={{display: 'none'}}>
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-3">
             <button
@@ -112,7 +181,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
+      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col lg:pt-16 lg:z-30">
         <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
           {/* Logo */}
           <div className="flex items-center h-16 px-6 border-b border-gray-200">

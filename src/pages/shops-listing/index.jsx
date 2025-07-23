@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import Header from '../../components/ui/Header';
+import ErrorBoundary from '../../components/ErrorBoundary';
 import MobileBottomTab from '../../components/ui/MobileBottomTab';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -18,9 +19,33 @@ import { showToast } from '../../components/ui/Toast';
 const ShopsListing = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
-  const { fetchWithCache, invalidateCache, isLoading } = useDataCache();
-  const { subscribeToProductUpdates, isConnected } = useWebSocket();
+  // Safe context usage with error handling
+  let user, isAuthenticated, fetchWithCache, invalidateCache, isLoading, subscribeToProductUpdates, isConnected;
+  
+  try {
+    const authContext = useAuth();
+    user = authContext.user;
+    isAuthenticated = authContext.isAuthenticated;
+    
+    const dataCacheContext = useDataCache();
+    fetchWithCache = dataCacheContext.fetchWithCache;
+    invalidateCache = dataCacheContext.invalidateCache;
+    isLoading = dataCacheContext.isLoading;
+    
+    const webSocketContext = useWebSocket();
+    subscribeToProductUpdates = webSocketContext.subscribeToProductUpdates;
+    isConnected = webSocketContext.isConnected;
+  } catch (error) {
+    console.error('Context initialization error:', error);
+    // Provide safe defaults
+    user = null;
+    isAuthenticated = () => false;
+    fetchWithCache = async () => [];
+    invalidateCache = () => {};
+    isLoading = () => false;
+    subscribeToProductUpdates = () => () => {};
+    isConnected = false;
+  }
   
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -450,7 +475,9 @@ const ShopsListing = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <ErrorBoundary>
+        <Header />
+      </ErrorBoundary>
       
       <main className="pt-16 pb-16 lg:pb-0">
         {/* Error Banner */}
@@ -517,11 +544,13 @@ const ShopsListing = () => {
         </div>
 
         {/* Featured Shops */}
-        <FeaturedShops 
-          shops={featuredShops}
-          onVisitShop={handleVisitShop}
-          onFollowShop={handleFollowShop}
-        />
+        <ErrorBoundary>
+          <FeaturedShops 
+            shops={featuredShops}
+            onVisitShop={handleVisitShop}
+            onFollowShop={handleFollowShop}
+          />
+        </ErrorBoundary>
 
         {/* Filter Chips */}
         <div className="border-b border-border bg-surface">
@@ -689,33 +718,37 @@ const ShopsListing = () => {
       </main>
       
       {/* Create Shop Modal */}
-      <CreateShopModal
-        isOpen={isCreateShopOpen}
-        onClose={() => setIsCreateShopOpen(false)}
-        onShopCreated={(newShop) => {
-          // Add new shop to the list optimistically
-          setShops(prev => [newShop, ...prev]);
-          setResultsCount(prev => prev + 1);
-          
-          // Invalidate cache to ensure fresh data on next load
-          invalidateCache('shops');
-          invalidateCache('featured-shops');
-          
-          // Show success message
-          showToast('Shop created successfully!', 'success');
-          
-          // Refresh featured shops if the new shop qualifies
-          fetchWithCache('featured-shops', fetchFeaturedShops, {}, true)
-            .then(featuredData => {
-              if (featuredData) {
-                setFeaturedShops(featuredData);
-              }
-            })
-            .catch(console.error);
-        }}
-      />
+      <ErrorBoundary>
+        <CreateShopModal
+          isOpen={isCreateShopOpen}
+          onClose={() => setIsCreateShopOpen(false)}
+          onShopCreated={(newShop) => {
+            // Add new shop to the list optimistically
+            setShops(prev => [newShop, ...prev]);
+            setResultsCount(prev => prev + 1);
+            
+            // Invalidate cache to ensure fresh data on next load
+            invalidateCache('shops');
+            invalidateCache('featured-shops');
+            
+            // Show success message
+            showToast('Shop created successfully!', 'success');
+            
+            // Refresh featured shops if the new shop qualifies
+            fetchWithCache('featured-shops', fetchFeaturedShops, {}, true)
+              .then(featuredData => {
+                if (featuredData) {
+                  setFeaturedShops(featuredData);
+                }
+              })
+              .catch(console.error);
+          }}
+        />
+      </ErrorBoundary>
       
-      <MobileBottomTab />
+      <ErrorBoundary>
+        <MobileBottomTab />
+      </ErrorBoundary>
     </div>
   );
 };

@@ -1,23 +1,202 @@
-// API service for IziShopin frontend (Mock implementation)
-// This will be replaced with actual backend API calls by the backend developer
+// Enhanced API service with JWT refresh token implementation
+// Best practices for authentication and error handling
 
 const API_BASE_URL = 'http://localhost:8000/api';
 
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL;
+    this.isRefreshing = false;
+    this.failedQueue = [];
+    this.setupInterceptors();
+  }
+
+  // Token management
+  getAccessToken() {
+    return localStorage.getItem('accessToken');
+  }
+
+  getRefreshToken() {
+    return localStorage.getItem('refreshToken');
+  }
+
+  setTokens(accessToken, refreshToken) {
+    if (accessToken) {
+      localStorage.setItem('accessToken', accessToken);
+    }
+    if (refreshToken) {
+      localStorage.setItem('refreshToken', refreshToken);
+    }
+  }
+
+  clearTokens() {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+  }
+
+  // Check if token is expired (with 30 second buffer)
+  isTokenExpired(token) {
+    if (!token) return true;
+    
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const currentTime = Date.now() / 1000;
+      return payload.exp < (currentTime + 30); // 30 second buffer
+    } catch (error) {
+      return true;
+    }
+  }
+
+  // Process failed requests after token refresh
+  processQueue(error, token = null) {
+    this.failedQueue.forEach(({ resolve, reject }) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(token);
+      }
+    });
+    
+    this.failedQueue = [];
+  }
+
+  // Refresh access token
+  async refreshAccessToken() {
+    const refreshToken = this.getRefreshToken();
+    
+    if (!refreshToken) {
+      throw new Error('No refresh token available');
+    }
+
+    try {
+      const response = await fetch(`${this.baseURL}/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refresh_token: refreshToken })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to refresh token');
+      }
+
+      const data = await response.json();
+      
+      if (data.access_token) {
+        this.setTokens(data.access_token, data.refresh_token || refreshToken);
+        return data.access_token;
+      }
+      
+      throw new Error('No access token in refresh response');
+    } catch (error) {
+      this.clearTokens();
+      // Redirect to login
+      window.location.href = '/authentication-login-register';
+      throw error;
+    }
+  }
+
+  // Setup request/response interceptors
+  setupInterceptors() {
+    // Override fetch to add automatic token refresh
+    const originalFetch = window.fetch;
+    
+    window.fetch = async (url, options = {}) => {
+      // Only intercept our API calls
+      if (!url.includes(this.baseURL)) {
+        return originalFetch(url, options);
+      }
+
+      let accessToken = this.getAccessToken();
+      
+      // Check if token needs refresh before making request
+      if (accessToken && this.isTokenExpired(accessToken)) {
+        if (this.isRefreshing) {
+          // Wait for refresh to complete
+          return new Promise((resolve, reject) => {
+            this.failedQueue.push({ resolve, reject });
+          }).then((token) => {
+            options.headers = {
+              ...options.headers,
+              'Authorization': `Bearer ${token}`
+            };
+            return originalFetch(url, options);
+          });
+        }
+
+        try {
+          this.isRefreshing = true;
+          accessToken = await this.refreshAccessToken();
+          this.processQueue(null, accessToken);
+        } catch (error) {
+          this.processQueue(error, null);
+          throw error;
+        } finally {
+          this.isRefreshing = false;
+        }
+      }
+
+      // Add auth header if token exists
+      if (accessToken) {
+        options.headers = {
+          ...options.headers,
+          'Authorization': `Bearer ${accessToken}`
+        };
+      }
+
+      const response = await originalFetch(url, options);
+
+      // Handle 401 responses
+      if (response.status === 401 && !url.includes('/auth/')) {
+        if (this.isRefreshing) {
+          return new Promise((resolve, reject) => {
+            this.failedQueue.push({ resolve, reject });
+          }).then((token) => {
+            options.headers = {
+              ...options.headers,
+              'Authorization': `Bearer ${token}`
+            };
+            return originalFetch(url, options);
+          });
+        }
+
+        try {
+          this.isRefreshing = true;
+          const newToken = await this.refreshAccessToken();
+          this.processQueue(null, newToken);
+          
+          // Retry original request with new token
+          options.headers = {
+            ...options.headers,
+            'Authorization': `Bearer ${newToken}`
+          };
+          return originalFetch(url, options);
+        } catch (error) {
+          this.processQueue(error, null);
+          this.clearTokens();
+          window.location.href = '/authentication-login-register';
+          throw error;
+        } finally {
+          this.isRefreshing = false;
+        }
+      }
+
+      return response;
+    };
   }
 
   // Helper method to get auth headers
   getAuthHeaders() {
-    const token = localStorage.getItem('authToken');
+    const token = this.getAccessToken();
     return {
       'Content-Type': 'application/json',
       ...(token && { 'Authorization': `Bearer ${token}` })
     };
   }
 
-  // Generic request method
+  // Generic request method with enhanced error handling
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
     const config = {
@@ -31,15 +210,22 @@ class ApiService {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         
-        // Handle FastAPI validation errors
+        // Handle different error types
+        if (response.status === 401) {
+          // This will be handled by the fetch interceptor
+          throw new Error('Unauthorized');
+        }
+        
+        if (response.status === 403) {
+          throw new Error('Access forbidden');
+        }
+        
         if (response.status === 422 && errorData) {
           if (errorData.errors && Array.isArray(errorData.errors)) {
-            // New format: structured error response
             const errorMessages = errorData.errors.map(err => `${err.field}: ${err.message}`).join(', ');
             throw new Error(`Validation error: ${errorMessages}`);
           } else if (errorData.detail) {
             if (Array.isArray(errorData.detail)) {
-              // Old format: FastAPI default format
               const errorMessages = errorData.detail.map(err => `${err.loc.join('.')}: ${err.msg}`).join(', ');
               throw new Error(`Validation error: ${errorMessages}`);
             } else if (typeof errorData.detail === 'string') {
@@ -48,26 +234,39 @@ class ApiService {
           }
         }
         
+        if (response.status === 429) {
+          throw new Error('Too many requests. Please try again later.');
+        }
+        
+        if (response.status >= 500) {
+          throw new Error('Server error. Please try again later.');
+        }
+        
         throw new Error(errorData.detail || errorData.message || `HTTP error! status: ${response.status}`);
       }
       
-      return await response.json();
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return await response.json();
+      }
+      
+      return await response.text();
     } catch (error) {
-      console.error('API request failed:', error);
+      console.error(`API request failed for ${endpoint}:`, error);
       throw error;
     }
   }
 
-  // Authentication methods
+  // Authentication methods with enhanced token handling
   async login(email, password) {
     const response = await this.request('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password })
     });
     
-    // Store the token in localStorage
+    // Store both access and refresh tokens
     if (response.access_token) {
-      localStorage.setItem('authToken', response.access_token);
+      this.setTokens(response.access_token, response.refresh_token);
     }
     
     return response;
@@ -79,9 +278,9 @@ class ApiService {
       body: JSON.stringify(userData)
     });
     
-    // Store the token in localStorage
+    // Store both access and refresh tokens
     if (response.access_token) {
-      localStorage.setItem('authToken', response.access_token);
+      this.setTokens(response.access_token, response.refresh_token);
     }
     
     return response;
@@ -97,23 +296,26 @@ class ApiService {
       body: JSON.stringify({ email, password, admin_code: adminCode })
     });
     
-    // Store the token in localStorage
+    // Store both access and refresh tokens
     if (response.access_token) {
-      localStorage.setItem('authToken', response.access_token);
+      this.setTokens(response.access_token, response.refresh_token);
     }
     
     return response;
   }
 
   async logout() {
-    const response = await this.request('/auth/logout', {
-      method: 'POST'
-    });
-    
-    // Clear the token from localStorage
-    localStorage.removeItem('authToken');
-    
-    return response;
+    try {
+      // Call logout endpoint to invalidate tokens on server
+      await this.request('/auth/logout', {
+        method: 'POST'
+      });
+    } catch (error) {
+      console.warn('Logout request failed:', error);
+    } finally {
+      // Always clear local tokens
+      this.clearTokens();
+    }
   }
 
   // Admin methods
@@ -163,22 +365,14 @@ class ApiService {
   async getAllShops(page = 1, limit = 20, search = '', category = '', sort = 'relevance', filters = {}) {
     const params = new URLSearchParams();
     
-    // Convert page to skip for backend
     const skip = (page - 1) * limit;
     params.append('skip', skip.toString());
     params.append('limit', limit.toString());
     
-    if (search) {
-      params.append('search', search);
-    }
-    if (category) {
-      params.append('category', category);
-    }
-    if (sort) {
-      params.append('sort', sort);
-    }
+    if (search) params.append('search', search);
+    if (category) params.append('category', category);
+    if (sort) params.append('sort', sort);
     
-    // Add additional filters
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== null && value !== undefined && value !== '') {
         if (Array.isArray(value)) {
@@ -302,7 +496,60 @@ class ApiService {
       body: JSON.stringify({ quantity_change: quantityChange })
     });
   }
+
+  // Real-time validation methods with retry logic
+  async checkEmailAvailability(email, options = {}) {
+    const encodedEmail = encodeURIComponent(email);
+    return this.request(`/auth/check-email/${encodedEmail}`, {
+      method: 'GET',
+      signal: options.signal
+    });
+  }
+
+  async checkShopNameAvailability(shopName, options = {}) {
+    const encodedName = encodeURIComponent(shopName);
+    return this.request(`/shops/check-name/${encodedName}`, {
+      method: 'GET',
+      signal: options.signal
+    });
+  }
+
+  async checkPhoneAvailability(phone, options = {}) {
+    const encodedPhone = encodeURIComponent(phone);
+    return this.request(`/auth/check-phone/${encodedPhone}`, {
+      method: 'GET',
+      signal: options.signal
+    });
+  }
+
+  async checkShopPhoneAvailability(phone, options = {}) {
+    const encodedPhone = encodeURIComponent(phone);
+    return this.request(`/shops/check-phone/${encodedPhone}`, {
+      method: 'GET',
+      signal: options.signal
+    });
+  }
+
+  async checkBusinessLicenseAvailability(license, options = {}) {
+    const encodedLicense = encodeURIComponent(license);
+    return this.request(`/shops/check-license/${encodedLicense}`, {
+      method: 'GET',
+      signal: options.signal
+    });
+  }
+
+  // Health check method
+  async healthCheck() {
+    try {
+      const response = await fetch(`${this.baseURL}/health`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return response.ok;
+    } catch (error) {
+      return false;
+    }
+  }
 }
 
 export default new ApiService();
-

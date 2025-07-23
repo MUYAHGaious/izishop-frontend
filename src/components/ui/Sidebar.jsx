@@ -25,7 +25,6 @@ const Sidebar = () => {
   ];
 
   const quickActions = [
-    { label: 'Back to Shop', path: '/product-catalog', icon: 'ArrowLeft' },
     { label: 'View Profile', path: '/shop-profile', icon: 'User' },
   ];
 

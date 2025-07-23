@@ -45,7 +45,7 @@ const Toast = ({ message, type = 'success', duration = 3000, onClose }) => {
 
   return (
     <div
-      className={`fixed top-20 right-4 z-[9999] max-w-sm w-full border rounded-lg p-4 shadow-lg transition-all duration-300 ${
+      className={`fixed top-20 right-4 z-[9999] max-w-sm w-full border rounded-xl p-4 shadow-lg transition-all duration-300 ${
         isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
       } ${getToastStyles()}`}
     >

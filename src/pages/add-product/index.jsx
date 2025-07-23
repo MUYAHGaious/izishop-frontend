@@ -138,9 +138,13 @@ const AddProduct = () => {
       });
       setErrors({});
 
-      // Navigate to shop owner dashboard products tab
+      // Navigate based on user role
       setTimeout(() => {
-        navigate('/shop-owner-dashboard?tab=products');
+        if (user?.role === 'SHOP_OWNER') {
+          navigate('/shop-owner-dashboard?tab=products');
+        } else {
+          navigate('/product-catalog'); // or wherever individual sellers should go
+        }
       }, 1000);
 
     } catch (error) {
@@ -174,15 +178,26 @@ const AddProduct = () => {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Add New Product</h1>
-                <p className="text-gray-600 mt-1">Create a new product for your shop</p>
+                <p className="text-gray-600 mt-1">
+                  {user?.role === 'SHOP_OWNER' 
+                    ? 'Create a new product for your shop' 
+                    : 'Create a new product to sell'
+                  }
+                </p>
               </div>
               <Button
                 variant="outline"
-                onClick={() => navigate('/shop-owner-dashboard')}
+                onClick={() => {
+                  if (user?.role === 'SHOP_OWNER') {
+                    navigate('/shop-owner-dashboard');
+                  } else {
+                    navigate('/product-catalog');
+                  }
+                }}
                 className="flex items-center gap-2"
               >
                 <Icon name="ArrowLeft" size={16} />
-                Back to Dashboard
+                {user?.role === 'SHOP_OWNER' ? 'Back to Dashboard' : 'Back to Products'}
               </Button>
             </div>
           </div>

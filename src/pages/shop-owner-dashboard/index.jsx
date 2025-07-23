@@ -11,12 +11,14 @@ import ShopAnalytics from './components/ShopAnalytics';
 import ShopSettings from './components/ShopSettings';
 import api from '../../services/api';
 import { showToast } from '../../components/ui/Toast';
+import notificationService from '../../services/notificationService';
 
 const ShopOwnerDashboard = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('overview');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [notificationCount, setNotificationCount] = useState(0);
   const [shopData, setShopData] = useState({
     name: 'Loading...',
     owner: 'Loading...',
@@ -76,6 +78,23 @@ const ShopOwnerDashboard = () => {
       navigate('/authentication-login-register');
     }
   }, [isAuthenticated, user, navigate]);
+
+  // Setup real notifications
+  useEffect(() => {
+    if (user && (user.role === 'SHOP_OWNER' || user.role === 'shop_owner')) {
+      const unsubscribe = notificationService.subscribe((data) => {
+        setNotifications(data.notifications);
+        setNotificationCount(data.count);
+      });
+
+      notificationService.startRealTimeNotifications();
+
+      return () => {
+        unsubscribe();
+        notificationService.stopNotifications();
+      };
+    }
+  }, [user]);
 
   // Load products from API
   const loadProducts = async () => {
@@ -454,13 +473,6 @@ const ShopOwnerDashboard = () => {
             <Icon name="Upload" size={16} />
             <span>Import</span>
           </button>
-          <button 
-            onClick={handleAddProduct}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-          >
-            <Icon name="Plus" size={16} />
-            <span>Add Product</span>
-          </button>
         </div>
       </div>
 
@@ -585,14 +597,7 @@ const ShopOwnerDashboard = () => {
         <div className="text-center py-12">
           <Icon name="Package" size={48} className="text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No products yet</h3>
-          <p className="text-gray-500 mb-4">Start by adding your first product to get started.</p>
-          <button 
-            onClick={handleAddProduct}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 mx-auto"
-          >
-            <Icon name="Plus" size={16} />
-            <span>Add Your First Product</span>
-          </button>
+          <p className="text-gray-500 mb-4">Your product catalog will appear here once you start selling.</p>
         </div>
       )}
 
@@ -787,8 +792,89 @@ const ShopOwnerDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Top Navigation Bar */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div className="flex items-center justify-between h-16 px-4 lg:px-6">
+          {/* Left Side - Logo and Title */}
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => navigate('/landing-page')}
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <Icon name="ArrowLeft" size={20} />
+              <span className="text-sm font-medium hidden sm:block">Back to Site</span>
+            </button>
+            <div className="hidden sm:block w-px h-6 bg-gray-300"></div>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                <Icon name="Store" size={16} color="white" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">Shop Dashboard</h1>
+                <p className="text-xs text-gray-500 hidden sm:block">{shopData.name}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Center - Quick Navigation */}
+          <div className="hidden lg:flex items-center space-x-1">
+            {tabs.slice(0, 4).map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-green-100 text-green-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Right Side - Actions */}
+          <div className="flex items-center space-x-3">
+            <button 
+              onClick={handleAddProduct}
+              className="hidden lg:flex items-center space-x-2 px-3 py-2 text-sm font-medium bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+            >
+              <Icon name="Plus" size={16} />
+              <span>Add Product</span>
+            </button>
+            
+            <button 
+              className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
+              onClick={() => setActiveTab('notifications')}
+            >
+              <Icon name="Bell" size={20} />
+              {notificationCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {notificationCount > 99 ? '99+' : notificationCount}
+                </span>
+              )}
+            </button>
+            
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <Icon name="Menu" size={20} />
+            </button>
+            
+            <button 
+              onClick={handleLogout}
+              className="hidden lg:flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              <Icon name="LogOut" size={16} />
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Mobile Header */}
-      <div className="lg:hidden bg-white border-b border-gray-200 sticky top-0 z-50">
+      <div className="lg:hidden bg-white border-b border-gray-200 sticky top-16 z-40" style={{display: 'none'}}>
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-3">
             <button
@@ -828,11 +914,14 @@ const ShopOwnerDashboard = () => {
             
             {/* Notifications */}
             <div className="relative">
-              <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative">
+              <button 
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative"
+                onClick={() => setActiveTab('notifications')}
+              >
                 <Icon name="Bell" size={20} className="text-gray-600" />
-                {notifications.length > 0 && (
+                {notificationCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {notifications.length}
+                    {notificationCount > 99 ? '99+' : notificationCount}
                   </span>
                 )}
               </button>
@@ -871,7 +960,7 @@ const ShopOwnerDashboard = () => {
       )}
 
       {/* Desktop Sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
+      <div className="hidden lg:fixed lg:inset-y-0 lg:top-16 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
           {/* Shop Info */}
           <div className="flex flex-col p-6 border-b border-gray-200">
@@ -899,6 +988,15 @@ const ShopOwnerDashboard = () => {
           
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2">
+            {/* Back to Site Button */}
+            <button
+              onClick={() => navigate('/landing-page')}
+              className="w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-b border-gray-200 mb-4 pb-4"
+            >
+              <Icon name="ArrowLeft" size={20} className="text-gray-500" />
+              <span className="ml-3">Back to Site</span>
+            </button>
+            
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -1038,11 +1136,14 @@ const ShopOwnerDashboard = () => {
               
               {/* Notifications */}
               <div className="relative">
-                <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative">
+                <button 
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative"
+                  onClick={() => setActiveTab('notifications')}
+                >
                   <Icon name="Bell" size={20} className="text-gray-600" />
-                  {notifications.length > 0 && (
+                  {notificationCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {notifications.length}
+                      {notificationCount > 99 ? '99+' : notificationCount}
                     </span>
                   )}
                 </button>

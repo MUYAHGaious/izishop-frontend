@@ -5,31 +5,14 @@ import Button from './Button';
 
 const UserMenu = ({ 
   user, 
-  isAuthenticated, 
-  onLogin, 
+  isAuthenticated = false, 
   onLogout, 
-  onRegister,
+  userInitials,
   className = "" 
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [mockUser, setMockUser] = useState(null);
-  const [mockIsAuthenticated, setMockIsAuthenticated] = useState(false);
   const menuRef = useRef(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    // Check for existing user in localStorage
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      const userData = JSON.parse(savedUser);
-      setMockUser(userData);
-      setMockIsAuthenticated(true);
-    }
-
-    // Use provided props if available
-    if (user) setMockUser(user);
-    if (typeof isAuthenticated === 'boolean') setMockIsAuthenticated(isAuthenticated);
-  }, [user, isAuthenticated]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -47,33 +30,10 @@ const UserMenu = ({
     };
   }, [isMenuOpen]);
 
-  const handleLogin = () => {
-    if (onLogin) {
-      onLogin();
-    } else {
-      navigate('/authentication-login-register');
-    }
-  };
-
-  const handleRegister = () => {
-    if (onRegister) {
-      onRegister();
-    } else {
-      navigate('/authentication-login-register');
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('authToken');
-    setMockUser(null);
-    setMockIsAuthenticated(false);
+  const handleLogout = async () => {
     setIsMenuOpen(false);
-    
     if (onLogout) {
-      onLogout();
-    } else {
-      navigate('/landing-page');
+      await onLogout();
     }
   };
 
@@ -81,9 +41,10 @@ const UserMenu = ({
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const getUserInitials = (name) => {
-    if (!name) return 'U';
-    return name
+  const getDisplayInitials = () => {
+    if (userInitials) return userInitials;
+    if (!user?.name) return 'U';
+    return user.name
       .split(' ')
       .map(word => word.charAt(0))
       .join('')
@@ -91,72 +52,80 @@ const UserMenu = ({
       .slice(0, 2);
   };
 
-  const menuItems = [
-    {
-      label: 'Profile',
-      icon: 'User',
-      path: '/profile',
-      description: 'Manage your account'
-    },
-    {
-      label: 'Orders',
-      icon: 'Package',
-      path: '/orders',
-      description: 'Track your purchases'
-    },
-    {
-      label: 'Wishlist',
-      icon: 'Heart',
-      path: '/wishlist',
-      description: 'Saved items'
-    },
-    {
-      label: 'Addresses',
-      icon: 'MapPin',
-      path: '/addresses',
-      description: 'Delivery addresses'
-    },
-    {
-      label: 'Payment Methods',
-      icon: 'CreditCard',
-      path: '/payment-methods',
-      description: 'Manage payments'
-    },
-    {
-      label: 'Settings',
-      icon: 'Settings',
-      path: '/settings',
-      description: 'Account preferences'
-    }
-  ];
+  // Role-based menu items
+  const getMenuItems = () => {
+    const baseItems = [
+      {
+        label: 'Profile',
+        icon: 'User',
+        path: '/profile',
+        description: 'Manage your account'
+      },
+      {
+        label: 'Orders',
+        icon: 'Package',
+        path: '/order-management',
+        description: 'Track your purchases'
+      },
+      {
+        label: 'Wishlist',
+        icon: 'Heart',
+        path: '/wishlist',
+        description: 'Saved items'
+      },
+      {
+        label: 'Settings',
+        icon: 'Settings',
+        path: '/settings',
+        description: 'Account preferences'
+      }
+    ];
 
-  const quickActions = [
-    {
-      label: 'Sell on IziShop',
-      icon: 'Store',
-      path: '/seller-dashboard',
-      description: 'Start selling',
-      highlight: true
-    },
-    {
-      label: 'Help & Support',
-      icon: 'HelpCircle',
-      path: '/support',
-      description: 'Get assistance'
+    // Add role-specific items
+    if (user?.role === 'CUSTOMER' || user?.role === 'CASUAL_SELLER') {
+      baseItems.splice(2, 0, {
+        label: 'Addresses',
+        icon: 'MapPin',
+        path: '/addresses',
+        description: 'Delivery addresses'
+      });
+      baseItems.splice(3, 0, {
+        label: 'Payment Methods',
+        icon: 'CreditCard',
+        path: '/payment-methods',
+        description: 'Manage payments'
+      });
     }
-  ];
 
-  if (!mockIsAuthenticated) {
-    return (
-      <div className={`flex items-center space-x-2 ${className}`}>
-        <Button variant="ghost" size="sm" onClick={handleLogin}>
-          Login
-        </Button>
-        <Button variant="default" size="sm" onClick={handleRegister}>
-          Sign Up
-        </Button>
-      </div>
-    );
+    return baseItems;
+  };
+
+  const getQuickActions = () => {
+    const actions = [
+      {
+        label: 'Help & Support',
+        icon: 'HelpCircle',
+        path: '/support',
+        description: 'Get assistance'
+      }
+    ];
+
+    // Add selling option for non-casual sellers
+    if (user?.role !== 'CASUAL_SELLER' && user?.role !== 'SHOP_OWNER') {
+      actions.unshift({
+        label: 'Become a Seller',
+        icon: 'Store',
+        path: '/become-seller',
+        description: 'Start selling',
+        highlight: true
+      });
+    }
+
+    return actions;
+  };
+
+  if (!isAuthenticated) {
+    return null; // Authentication is handled in parent component
   }
 
   return (
@@ -168,12 +137,12 @@ const UserMenu = ({
       >
         <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
           <span className="text-sm font-medium text-primary-foreground">
-            {getUserInitials(mockUser?.name)}
+            {getDisplayInitials()}
           </span>
         </div>
         <div className="hidden md:block text-left">
           <p className="text-sm font-medium text-foreground">
-            {mockUser?.name || 'User'}
+            {user?.name || 'User'}
           </p>
         </div>
         <Icon 
@@ -191,19 +160,19 @@ const UserMenu = ({
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
                 <span className="text-lg font-medium text-primary-foreground">
-                  {getUserInitials(mockUser?.name)}
+                  {getDisplayInitials()}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate">
-                  {mockUser?.name || 'User Name'}
+                  {user?.name || 'User Name'}
                 </p>
                 <p className="text-xs text-text-secondary truncate">
-                  {mockUser?.email || 'user@example.com'}
+                  {user?.email || 'user@example.com'}
                 </p>
-                {mockUser?.role && (
+                {user?.role && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary mt-1">
-                    {mockUser.role}
+                    {user.role.replace('_', ' ')}
                   </span>
                 )}
               </div>
@@ -212,7 +181,7 @@ const UserMenu = ({
 
           {/* Menu Items */}
           <div className="py-2">
-            {menuItems.map((item) => (
+            {getMenuItems().map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
@@ -230,7 +199,7 @@ const UserMenu = ({
 
           {/* Quick Actions */}
           <div className="py-2 border-t border-border">
-            {quickActions.map((action) => (
+            {getQuickActions().map((action) => (
               <Link
                 key={action.path}
                 to={action.path}

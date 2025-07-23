@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes as RouterRoutes, Route, Navigate } from "react-router-dom";
-import ScrollToTop from "components/ScrollToTop";
-import ErrorBoundary from "components/ErrorBoundary";
+import ScrollToTop from "./components/ScrollToTop";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { useAuth } from "./contexts/AuthContext";
 import RouteGuard, { 
   AdminRouteGuard, 
@@ -29,6 +29,11 @@ import NotFound from "./pages/NotFound";
 import AdminSetup from "./pages/admin-setup";
 import MyShopProfile from "./pages/my-shop-profile";
 import AddProduct from "./pages/add-product";
+import UserProfile from "./pages/user-profile";
+import PublicProfile from "./pages/public-profile";
+import Wishlist from "./pages/wishlist";
+import SellerDashboard from "./pages/seller-dashboard";
+import MyProducts from "./pages/my-products";
 
 // Protected Route Component
 const ProtectedRoute = ({ children, requiredRole = null }) => {
@@ -43,7 +48,11 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     </div>;
   }
   
-  if (!isAuthenticated()) {
+  // Simple authentication check
+  const accessToken = localStorage.getItem('accessToken');
+  const storedUser = localStorage.getItem('user');
+  
+  if (!accessToken || !storedUser) {
     return <Navigate to="/authentication-login-register" replace />;
   }
   
@@ -56,7 +65,7 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
 
 // Public Route Component (redirect to dashboard if already logged in)
 const PublicRoute = ({ children }) => {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, loading } = useAuth();
   
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">
@@ -67,8 +76,12 @@ const PublicRoute = ({ children }) => {
     </div>;
   }
   
-  if (isAuthenticated()) {
-    // Redirect to appropriate dashboard based on user role
+  // Simple authentication check
+  const accessToken = localStorage.getItem('accessToken');
+  const storedUser = localStorage.getItem('user');
+  
+  if (accessToken && storedUser) {
+    // Already logged in, redirect to appropriate page
     if (user?.role === 'SHOP_OWNER') {
       return <Navigate to="/shops-listing" replace />;
     } else if (user?.role === 'ADMIN') {
@@ -91,6 +104,7 @@ const AppRoutes = () => {
       <Route path="/shop/:slug" element={<ShopProfile />} />
       <Route path="/shops/:id" element={<ShopProfile />} />
       <Route path="/product-detail" element={<ProductDetail />} />
+      <Route path="/profile/:userId" element={<PublicProfile />} />
       
       {/* Auth routes - only show if not authenticated */}
       <Route 
@@ -110,6 +124,14 @@ const AppRoutes = () => {
       <Route path="/admin-setup" element={<AdminSetup />} />
       
       {/* Protected routes */}
+      <Route 
+        path="/user-profile" 
+        element={
+          <AuthenticatedRouteGuard>
+            <UserProfile />
+          </AuthenticatedRouteGuard>
+        } 
+      />
       <Route 
         path="/shop-owner-dashboard" 
         element={
@@ -192,6 +214,47 @@ const AppRoutes = () => {
           <ProtectedRoute requiredRole="SHOP_OWNER">
             <MyShopProfile />
           </ProtectedRoute>
+        } 
+      />
+      
+      {/* Customer routes */}
+      <Route 
+        path="/wishlist" 
+        element={
+          <AuthenticatedRouteGuard>
+            <Wishlist />
+          </AuthenticatedRouteGuard>
+        } 
+      />
+      
+      {/* Casual seller routes */}
+      <Route 
+        path="/seller-dashboard" 
+        element={
+          <AuthenticatedRouteGuard>
+            <SellerDashboard />
+          </AuthenticatedRouteGuard>
+        } 
+      />
+      <Route 
+        path="/my-products" 
+        element={
+          <AuthenticatedRouteGuard>
+            <MyProducts />
+          </AuthenticatedRouteGuard>
+        } 
+      />
+      <Route 
+        path="/sales" 
+        element={
+          <AuthenticatedRouteGuard>
+            <div className="min-h-screen bg-gray-50 p-8">
+              <div className="max-w-7xl mx-auto">
+                <h1 className="text-3xl font-bold text-gray-900 mb-8">Sales Analytics</h1>
+                <p className="text-gray-600">Sales reports and analytics will be available here.</p>
+              </div>
+            </div>
+          </AuthenticatedRouteGuard>
         } 
       />
       

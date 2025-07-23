@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import MainHeader from '../../components/ui/MainHeader';
+import Header from '../../components/ui/Header';
 import CartItem from './components/CartItem';
 import OrderSummary from './components/OrderSummary';
 import DeliveryOptions from './components/DeliveryOptions';
@@ -244,7 +244,7 @@ const ShoppingCart = () => {
           <meta name="description" content="Review your cart items and proceed to checkout on IziShop marketplace" />
         </Helmet>
         
-        <MainHeader />
+        <Header />
         
         <div className="pt-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -267,7 +267,7 @@ const ShoppingCart = () => {
         <meta name="description" content="Review your cart items and proceed to checkout on IziShop marketplace" />
       </Helmet>
       
-      <MainHeader />
+      <Header />
       
       <div className="pt-16 pb-20 lg:pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

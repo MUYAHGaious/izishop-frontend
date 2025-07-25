@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useShop } from '../../contexts/ShopContext';
 import useDashboardData from '../../hooks/useDashboardData';
 import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
@@ -9,6 +10,8 @@ import OrderManagement from './components/OrderManagement';
 import CustomerManagement from './components/CustomerManagement';
 import ShopAnalytics from './components/ShopAnalytics';
 import ShopSettings from './components/ShopSettings';
+import ProductsTab from './components/ProductsTab';
+import ShopSelector from '../../components/ui/ShopSelector';
 import api from '../../services/api';
 import { showToast } from '../../components/ui/Toast';
 import notificationService from '../../services/notificationService';
@@ -49,6 +52,7 @@ const ShopOwnerDashboard = () => {
   
   const [loading, setLoading] = useState(true);
   const { user, isAuthenticated, logout } = useAuth();
+  const { selectedShop, userShops, hasMultipleShops, selectShop } = useShop();
   const navigate = useNavigate();
   
   // Initialize the optimized dashboard data hook
@@ -133,11 +137,13 @@ const ShopOwnerDashboard = () => {
 
   // Optimized data fetching with WebSocket and caching
   useEffect(() => {
-    const loadDashboardData = async () => {
-      if (!isAuthenticated() || user?.role !== 'SHOP_OWNER') {
-        return;
-      }
+    if (!isAuthenticated() || user?.role !== 'SHOP_OWNER') {
+      return;
+    }
 
+    let isMounted = true;
+
+    const loadDashboardData = async () => {
       try {
         setLoading(true);
         clearError();
@@ -145,17 +151,28 @@ const ShopOwnerDashboard = () => {
         // Fetch initial data using cached approach
         const data = await fetchMultipleData(['shopData', 'productStats', 'products']);
         
+        if (!isMounted) return; // Prevent state updates if component unmounted
+        
         // Update shop data
         if (data.shopData) {
+          // Fetch real rating data
+          let ratingStats = { average_rating: 0, total_reviews: 0 };
+          try {
+            ratingStats = await api.getMyShopRatingStats();
+          } catch (error) {
+            console.warn('Failed to fetch rating stats:', error);
+          }
+          
           setShopData(prev => ({
             ...prev,
             name: data.shopData.name,
-            owner: user?.email || 'Shop Owner',
+            owner: user?.first_name || user?.email?.split('@')[0] || 'Shop Owner',
             status: data.shopData.is_active ? 'active' : 'inactive',
-            rating: 4.8,
+            rating: parseFloat(ratingStats.average_rating || 0).toFixed(1),
             totalProducts: data.productStats?.total_products || 0,
             totalOrders: 0,
-            monthlyRevenue: 0
+            monthlyRevenue: 0,
+            totalReviews: ratingStats.total_reviews || 0
           }));
         }
 
@@ -178,16 +195,22 @@ const ShopOwnerDashboard = () => {
         }
 
       } catch (error) {
-        console.error('Error loading dashboard data:', error);
-        showToast('Failed to load dashboard data', 'error');
+        if (isMounted) {
+          console.error('Error loading dashboard data:', error);
+          showToast('Failed to load dashboard data', 'error');
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     // Set up real-time updates
     const setupUpdates = () => {
       return setupRealTimeUpdates((updateType, updateData) => {
+        if (!isMounted) return;
+        
         console.log(`Real-time update received: ${updateType}`, updateData);
         
         // Handle different types of updates
@@ -202,8 +225,8 @@ const ShopOwnerDashboard = () => {
             break;
           case 'products':
             if (updateData.action === 'created' || updateData.action === 'updated') {
-              // Refresh products data
-              fetchData('products').then(setProducts).catch(console.error);
+              // Just invalidate cache, don't reload immediately to prevent loops
+              console.log('Product updated, cache will be refreshed on next request');
             }
             break;
           case 'orders':
@@ -218,18 +241,17 @@ const ShopOwnerDashboard = () => {
       });
     };
 
-    if (isAuthenticated() && user?.role === 'SHOP_OWNER') {
-      // Initial data load
-      loadDashboardData();
-      
-      // Set up real-time updates
-      const cleanupUpdates = setupUpdates();
-      
-      return () => {
-        if (cleanupUpdates) cleanupUpdates();
-      };
-    }
-  }, [isAuthenticated, user, fetchMultipleData, setupRealTimeUpdates, clearError]);
+    // Initial data load
+    loadDashboardData();
+    
+    // Set up real-time updates
+    const cleanupUpdates = setupUpdates();
+    
+    return () => {
+      isMounted = false;
+      if (cleanupUpdates) cleanupUpdates();
+    };
+  }, [isAuthenticated, user?.role, user?.id]);
 
   // Real-time clock with better formatting
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -435,21 +457,39 @@ const ShopOwnerDashboard = () => {
   ];
 
   const renderTabContent = () => {
-    switch (activeTab) {
-      case 'overview':
-        return <ShopOverview shopData={shopData} productStats={productStats} />;
-      case 'products':
-        return renderProductManagement();
-      case 'orders':
-        return <OrderManagement />;
-      case 'customers':
-        return <CustomerManagement />;
-      case 'analytics':
-        return <ShopAnalytics />;
-      case 'settings':
-        return <ShopSettings shopData={shopData} setShopData={setShopData} />;
-      default:
-        return <ShopOverview shopData={shopData} productStats={productStats} />;
+    try {
+      switch (activeTab) {
+        case 'overview':
+          return <ShopOverview shopData={shopData} productStats={productStats} />;
+        case 'products':
+          return <ProductsTab />;
+        case 'orders':
+          return <OrderManagement />;
+        case 'customers':
+          return <CustomerManagement />;
+        case 'analytics':
+          return <ShopAnalytics />;
+        case 'settings':
+          return <ShopSettings shopData={shopData} setShopData={setShopData} />;
+        default:
+          return <ShopOverview shopData={shopData} productStats={productStats} />;
+      }
+    } catch (error) {
+      console.error('Error rendering tab content:', error);
+      return (
+        <div className="p-6 text-center">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <h3 className="text-lg font-medium text-red-800 mb-2">Something went wrong</h3>
+            <p className="text-sm text-red-600 mb-4">We encountered an unexpected error while loading this section.</p>
+            <button 
+              onClick={() => setActiveTab('overview')}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+            >
+              Back to Overview
+            </button>
+          </div>
+        </div>
+      );
     }
   };
 
@@ -811,7 +851,10 @@ const ShopOwnerDashboard = () => {
               </div>
               <div>
                 <h1 className="text-lg font-bold text-gray-900">Shop Dashboard</h1>
-                <p className="text-xs text-gray-500 hidden sm:block">{shopData.name}</p>
+                <p className="text-xs text-gray-500 hidden sm:block">
+                  {selectedShop?.name || shopData.name}
+                  {hasMultipleShops && userShops.length > 0 && ` (${userShops.length} shops)`}
+                </p>
               </div>
             </div>
           </div>
@@ -835,13 +878,6 @@ const ShopOwnerDashboard = () => {
 
           {/* Right Side - Actions */}
           <div className="flex items-center space-x-3">
-            <button 
-              onClick={handleAddProduct}
-              className="hidden lg:flex items-center space-x-2 px-3 py-2 text-sm font-medium bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-            >
-              <Icon name="Plus" size={16} />
-              <span>Add Product</span>
-            </button>
             
             <button 
               className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
@@ -903,14 +939,6 @@ const ShopOwnerDashboard = () => {
               {currentTime.toLocaleTimeString()}
             </div>
             
-            {/* Quick Add Product */}
-            <button 
-              onClick={handleAddProduct}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              title="Add Product"
-            >
-              <Icon name="Plus" size={20} className="text-blue-600" />
-            </button>
             
             {/* Notifications */}
             <div className="relative">
@@ -964,15 +992,30 @@ const ShopOwnerDashboard = () => {
         <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
           {/* Shop Info */}
           <div className="flex flex-col p-6 border-b border-gray-200">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Icon name="Store" size={24} className="text-blue-600" />
+            {hasMultipleShops ? (
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Icon name="Store" size={24} className="text-blue-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h1 className="text-lg font-bold text-gray-900">Shop Owner Dashboard</h1>
+                    <p className="text-sm text-gray-500">Select a shop to manage</p>
+                  </div>
+                </div>
+                <ShopSelector onShopSelect={selectShop} showCreateOption={true} />
               </div>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-lg font-bold text-gray-900 truncate">{shopData.name}</h1>
-                <p className="text-sm text-gray-500">Shop Owner Dashboard</p>
+            ) : (
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Icon name="Store" size={24} className="text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-lg font-bold text-gray-900 truncate">{selectedShop?.name || shopData.name}</h1>
+                  <p className="text-sm text-gray-500">Shop Owner Dashboard</p>
+                </div>
               </div>
-            </div>
+            )}
             <div className="mt-4 flex items-center justify-between">
               <div className="flex items-center space-x-1">
                 <Icon name="Star" size={16} className="text-yellow-400 fill-current" />
@@ -987,7 +1030,7 @@ const ShopOwnerDashboard = () => {
           </div>
           
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
+          <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-2">
             {/* Back to Site Button */}
             <button
               onClick={() => navigate('/landing-page')}
@@ -1124,15 +1167,21 @@ const ShopOwnerDashboard = () => {
             </div>
             
             <div className="flex items-center space-x-4">
-              {/* Search */}
-              <div className="relative">
-                <Icon name="Search" size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search products, orders..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
+              {/* Shop Selector (Multiple Shops) or Search */}
+              {hasMultipleShops ? (
+                <div className="w-64">
+                  <ShopSelector onShopSelect={selectShop} showCreateOption={false} />
+                </div>
+              ) : (
+                <div className="relative">
+                  <Icon name="Search" size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search products, orders..."
+                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              )}
               
               {/* Notifications */}
               <div className="relative">
@@ -1149,14 +1198,6 @@ const ShopOwnerDashboard = () => {
                 </button>
               </div>
               
-              {/* Quick Actions */}
-              <button 
-                onClick={handleAddProduct}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-              >
-                <Icon name="Plus" size={16} />
-                <span>Add Product</span>
-              </button>
             </div>
           </div>
 

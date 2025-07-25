@@ -135,13 +135,23 @@ const ShoppingCart = () => {
 
   // Save cart items to localStorage whenever they change
   useEffect(() => {
+    const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+    
     if (cartItems.length > 0) {
       localStorage.setItem('cartItems', JSON.stringify(cartItems));
-      localStorage.setItem('cartItemCount', cartItems.reduce((sum, item) => sum + item.quantity, 0).toString());
+      localStorage.setItem('cartItemCount', totalItems.toString());
     } else {
       localStorage.removeItem('cartItems');
       localStorage.setItem('cartItemCount', '0');
     }
+    
+    // Dispatch cart update event
+    window.dispatchEvent(new CustomEvent('cartUpdated', {
+      detail: { 
+        itemCount: totalItems,
+        cartItems: cartItems
+      }
+    }));
   }, [cartItems]);
 
   // Save saved items to localStorage

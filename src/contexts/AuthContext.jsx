@@ -128,7 +128,20 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       
       const response = await api.register(userData);
-      setUser(response.user);
+      
+      if (response.user && response.access_token) {
+        // Store user data in localStorage and update state
+        localStorage.setItem('user', JSON.stringify(response.user));
+        setUser(response.user);
+        
+        // Store session data
+        const newSessionId = generateSessionId();
+        localStorage.setItem('sessionId', newSessionId);
+        setSessionId(newSessionId);
+        setCurrentRole(response.user.role);
+        
+        console.log('Registration successful, user authenticated:', response.user);
+      }
       
       return response;
     } catch (error) {
@@ -205,7 +218,7 @@ export const AuthProvider = ({ children }) => {
 
   const isAuthenticated = () => {
     // Simple check using localStorage only to avoid state dependency loops
-    const accessToken = localStorage.getItem('accessToken');
+    const accessToken = localStorage.getItem('accessToken') || localStorage.getItem('authToken');
     const storedUser = localStorage.getItem('user');
     return !!(accessToken && storedUser);
   };
@@ -343,6 +356,15 @@ export const AuthProvider = ({ children }) => {
       
       if (newUser.role !== 'ADMIN') {
         throw new Error('Access denied. This account is not authorized for admin access.');
+      }
+      
+      // Store user data and tokens (same as regular login)
+      localStorage.setItem('user', JSON.stringify(newUser));
+      if (response.access_token) {
+        localStorage.setItem('accessToken', response.access_token);
+      }
+      if (response.refresh_token) {
+        localStorage.setItem('refreshToken', response.refresh_token);
       }
       
       // Create secure admin session with shorter duration

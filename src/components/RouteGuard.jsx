@@ -29,7 +29,14 @@ const RouteGuard = ({
       }
 
       // Check if user is authenticated
-      if (!isAuthenticated()) {
+      console.log('RouteGuard: Checking authentication - isAuthenticated():', isAuthenticated(), 'user:', user);
+      
+      // More robust authentication check - also check localStorage directly for admin sessions
+      const hasToken = localStorage.getItem('accessToken');
+      const hasUser = localStorage.getItem('user');
+      const isAdminSession = localStorage.getItem('adminSession') === 'true';
+      
+      if (!isAuthenticated() && !(hasToken && hasUser)) {
         console.log('RouteGuard: User not authenticated, redirecting to login');
         
         // Store the current URL for return after authentication
@@ -42,6 +49,13 @@ const RouteGuard = ({
         });
         
         navigate(redirectTo);
+        return;
+      }
+      
+      // If we have tokens but user state is not set yet (timing issue), wait a bit
+      if (hasToken && hasUser && !user && isAdminSession) {
+        console.log('RouteGuard: Tokens exist but user state not loaded yet, waiting...');
+        setTimeout(() => checkAccess(), 500);
         return;
       }
 
@@ -101,7 +115,9 @@ const RouteGuard = ({
 
       // Additional security check for role switching prevention
       const storedRole = localStorage.getItem('currentRole');
-      if (user?.role !== storedRole) {
+      console.log('RouteGuard: Role check - user.role:', user?.role, 'storedRole:', storedRole);
+      
+      if (user?.role && storedRole && user.role !== storedRole) {
         console.log('RouteGuard: Role mismatch detected, forcing logout for security');
         await forceLogout('Role mismatch detected');
         navigate(redirectTo);

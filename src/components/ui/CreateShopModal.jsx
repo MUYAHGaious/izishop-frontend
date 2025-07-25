@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import Icon from '../AppIcon';
 import Button from './Button';
 import Input from './Input';
@@ -9,6 +10,7 @@ import api from '../../services/api';
 
 const CreateShopModal = ({ isOpen, onClose, onShopCreated }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -20,6 +22,49 @@ const CreateShopModal = ({ isOpen, onClose, onShopCreated }) => {
   const [errors, setErrors] = useState({});
   const [currentStep, setCurrentStep] = useState(1);
   const [success, setSuccess] = useState(false);
+  const [existingShops, setExistingShops] = useState([]);
+  const [showExistingShopsCheck, setShowExistingShopsCheck] = useState(false);
+  const [selectedExistingShop, setSelectedExistingShop] = useState(null);
+
+  // Check for existing shops when modal opens
+  useEffect(() => {
+    if (isOpen && user?.role === 'SHOP_OWNER') {
+      checkExistingShops();
+    }
+  }, [isOpen, user]);
+
+  const checkExistingShops = async () => {
+    try {
+      const shops = await api.getMyShops();
+      setExistingShops(shops);
+      
+      if (shops.length > 0) {
+        setShowExistingShopsCheck(true);
+        setCurrentStep(0); // Show existing shops step first
+      }
+    } catch (error) {
+      console.error('Failed to check existing shops:', error);
+    }
+  };
+
+  const handleContinueToCreateNew = () => {
+    setShowExistingShopsCheck(false);
+    setCurrentStep(1);
+  };
+
+  const handleSelectExistingShop = (shop) => {
+    setSelectedExistingShop(shop);
+    showToast({
+      type: 'info',
+      message: `Redirecting to ${shop.name}...`,
+      duration: 2000
+    });
+    
+    setTimeout(() => {
+      navigate(`/shop-profile/${shop.id}`);
+      onClose();
+    }, 1000);
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -156,6 +201,9 @@ const CreateShopModal = ({ isOpen, onClose, onShopCreated }) => {
     setErrors({});
     setCurrentStep(1);
     setSuccess(false);
+    setExistingShops([]);
+    setShowExistingShopsCheck(false);
+    setSelectedExistingShop(null);
   };
 
   const handleClose = () => {
@@ -179,9 +227,13 @@ const CreateShopModal = ({ isOpen, onClose, onShopCreated }) => {
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Create Your Shop</h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                {showExistingShopsCheck ? 'Your Existing Shops' : 'Create Your Shop'}
+              </h2>
               <p className="text-sm text-gray-500 mt-1">
-                Step {currentStep} of 2 - {success ? 'Success!' : currentStep === 1 ? 'Basic Info' : 'Contact Details'}
+                {success ? 'Success!' : 
+                 showExistingShopsCheck ? 'You already have shops. Would you like to view them or create a new one?' :
+                 currentStep === 1 ? 'Step 1 of 2 - Basic Info' : 'Step 2 of 2 - Contact Details'}
               </p>
             </div>
             <button
@@ -193,23 +245,93 @@ const CreateShopModal = ({ isOpen, onClose, onShopCreated }) => {
           </div>
 
           {/* Progress Bar */}
-          <div className="px-6 py-4">
-            <div className="flex items-center">
-              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-primary transition-all duration-300"
-                  style={{ width: success ? '100%' : `${(currentStep / 2) * 100}%` }}
-                />
+          {!showExistingShopsCheck && (
+            <div className="px-6 py-4">
+              <div className="flex items-center">
+                <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary transition-all duration-300"
+                    style={{ width: success ? '100%' : `${(currentStep / 2) * 100}%` }}
+                  />
+                </div>
+                <span className="ml-3 text-sm font-medium text-gray-600">
+                  {success ? '100%' : `${Math.round((currentStep / 2) * 100)}%`}
+                </span>
               </div>
-              <span className="ml-3 text-sm font-medium text-gray-600">
-                {success ? '100%' : `${Math.round((currentStep / 2) * 100)}%`}
-              </span>
             </div>
-          </div>
+          )}
 
           {/* Content */}
           <div className="px-6 pb-6">
-            {success ? (
+            {showExistingShopsCheck ? (
+              /* Existing Shops Check */
+              <div className="space-y-4">
+                <div className="text-center mb-6">
+                  <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Icon name="Store" size={24} className="text-orange-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">You Already Have Shops</h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    We found {existingShops.length} existing shop{existingShops.length > 1 ? 's' : ''} in your account
+                  </p>
+                </div>
+
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {existingShops.map((shop) => (
+                    <div key={shop.id} className="border border-gray-200 rounded-lg p-4 hover:border-primary/50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900 mb-1">{shop.name}</h4>
+                          <p className="text-sm text-gray-600 mb-2 line-clamp-2">{shop.description}</p>
+                          <div className="flex items-center space-x-3 text-xs text-gray-500">
+                            <span className={`px-2 py-1 rounded-full ${shop.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                              {shop.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                            <span>Created {new Date(shop.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleSelectExistingShop(shop)}
+                          className="ml-3 px-3 py-1 text-xs bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+                        >
+                          View Shop
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mt-4">
+                  <div className="flex items-start">
+                    <Icon name="Info" size={16} className="text-blue-600 mt-0.5 mr-2" />
+                    <div>
+                      <p className="text-sm text-blue-800">
+                        <strong>Multiple Shops:</strong> You can have multiple shops if you sell different types of products or serve different markets.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={handleContinueToCreateNew}
+                    className="flex-1 py-3 text-base"
+                  >
+                    <Icon name="Plus" size={16} className="mr-2" />
+                    Create New Shop
+                  </Button>
+                  <Button
+                    variant="default"
+                    onClick={handleClose}
+                    className="flex-1 py-3 text-base"
+                  >
+                    <Icon name="Store" size={16} className="mr-2" />
+                    Manage Existing Shops
+                  </Button>
+                </div>
+              </div>
+            ) : success ? (
               /* Success State */
               <div className="text-center py-8">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">

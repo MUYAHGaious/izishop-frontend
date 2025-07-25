@@ -22,6 +22,7 @@ const UserProfile = () => {
     following: 0
   });
   const [recentActivity, setRecentActivity] = useState([]);
+  const [userShops, setUserShops] = useState([]);
   const [profileData, setProfileData] = useState({
     firstName: '',
     lastName: '',
@@ -54,6 +55,11 @@ const UserProfile = () => {
       // Fetch real-time data
       fetchProfileStats();
       fetchRecentActivity();
+      
+      // Fetch user shops if shop owner
+      if (user.role === 'SHOP_OWNER' || user.role === 'shop_owner') {
+        fetchUserShops();
+      }
     }
   }, [user, isAuthenticated, navigate]);
 
@@ -84,6 +90,16 @@ const UserProfile = () => {
     } catch (error) {
       console.error('Failed to fetch recent activity:', error);
       setRecentActivity([]);
+    }
+  };
+
+  const fetchUserShops = async () => {
+    try {
+      const shops = await api.getMyShops();
+      setUserShops(shops || []);
+    } catch (error) {
+      console.error('Failed to fetch user shops:', error);
+      setUserShops([]);
     }
   };
 
@@ -523,6 +539,64 @@ const UserProfile = () => {
                   )}
                 </div>
               </div>
+
+              {/* My Shops Section - Only for Shop Owners */}
+              {(user?.role === 'SHOP_OWNER' || user?.role === 'shop_owner') && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Icon name="Store" size={20} className="mr-2 text-green-600" />
+                    My Shops ({userShops.length})
+                  </h2>
+                  
+                  <div className="space-y-4">
+                    {userShops.length > 0 ? (
+                      userShops.map((shop) => (
+                        <div key={shop.id} className="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg hover:border-green-300 transition-colors">
+                          <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <Icon name="Store" size={20} className="text-green-600" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-medium text-gray-900 mb-1">{shop.name}</h3>
+                            <p className="text-sm text-gray-600 mb-2">{shop.description}</p>
+                            <div className="flex items-center space-x-4 text-xs text-gray-500">
+                              <span className={`px-2 py-1 rounded-full ${shop.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                {shop.is_active ? 'Active' : 'Inactive'}
+                              </span>
+                              <span>Created {formatDate(shop.created_at)}</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-col space-y-2">
+                            <button
+                              onClick={() => navigate(`/shop-profile/${shop.id}`)}
+                              className="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200 transition-colors"
+                            >
+                              View Shop
+                            </button>
+                            <button
+                              onClick={() => navigate('/shop-owner-dashboard')}
+                              className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-md hover:bg-green-200 transition-colors"
+                            >
+                              Manage
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8">
+                        <Icon name="Store" size={48} className="mx-auto text-gray-300 mb-4" />
+                        <p className="text-gray-500 mb-2">No shops yet</p>
+                        <button
+                          onClick={() => navigate('/shops-listing')}
+                          className="inline-flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        >
+                          <Icon name="Plus" size={16} />
+                          <span>Create Your First Shop</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Recent Activity */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">

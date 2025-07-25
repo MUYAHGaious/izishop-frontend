@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
+import RatingDisplay from '../../../components/ui/RatingDisplay';
+import RatingDistribution from '../../../components/ui/RatingDistribution';
+import api from '../../../services/api';
 
 const ShopOverview = ({ shopData }) => {
   const [todayStats, setTodayStats] = useState({
@@ -8,6 +11,15 @@ const ShopOverview = ({ shopData }) => {
     visitors: 89,
     conversionRate: 3.2
   });
+
+  const [ratingStats, setRatingStats] = useState({
+    average_rating: 0,
+    total_reviews: 0,
+    rating_distribution: {}
+  });
+
+  const [recentRatings, setRecentRatings] = useState([]);
+  const [loadingRatings, setLoadingRatings] = useState(true);
 
   const [recentOrders, setRecentOrders] = useState([
     { id: 'ORD-001', customer: 'John Doe', amount: 125000, status: 'pending', time: '10 min ago' },
@@ -57,6 +69,37 @@ const ShopOverview = ({ shopData }) => {
     return 'text-green-600 bg-green-50';
   };
 
+  // Fetch rating data when component mounts
+  useEffect(() => {
+    const fetchRatingData = async () => {
+      if (!shopData?.name) return;
+      
+      try {
+        setLoadingRatings(true);
+        
+        // Fetch rating statistics
+        const stats = await api.getMyShopRatingStats();
+        setRatingStats(stats);
+        
+        // Fetch recent ratings (first 5)
+        if (stats.total_reviews > 0) {
+          const ratingsResponse = await api.getShopRatings(shopData.id || 'current-shop', {
+            page: 1,
+            page_size: 5,
+            sort_by: 'newest'
+          });
+          setRecentRatings(ratingsResponse.ratings || []);
+        }
+      } catch (error) {
+        console.warn('Failed to fetch rating data:', error);
+      } finally {
+        setLoadingRatings(false);
+      }
+    };
+
+    fetchRatingData();
+  }, [shopData?.name, shopData?.id]);
+
   return (
     <div className="p-4 lg:p-6 space-y-6">
       {/* Welcome Section */}
@@ -74,7 +117,7 @@ const ShopOverview = ({ shopData }) => {
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold">{shopData.rating}</p>
-            <p className="text-sm text-blue-100">Rating</p>
+            <p className="text-sm text-blue-100">Rating ({shopData.totalReviews || 0} reviews)</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold">{formatCurrency(shopData.monthlyRevenue)}</p>
@@ -177,7 +220,7 @@ const ShopOverview = ({ shopData }) => {
         </div>
       </div>
 
-      {/* Recent Orders & Low Stock */}
+      {/* Recent Orders & Ratings Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Orders */}
         <div className="bg-white rounded-xl p-6 border border-gray-200">
@@ -213,6 +256,80 @@ const ShopOverview = ({ shopData }) => {
           </div>
         </div>
 
+        {/* Ratings Overview */}
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Customer Reviews</h3>
+            <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+              View All
+            </button>
+          </div>
+          
+          {loadingRatings ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : ratingStats.total_reviews > 0 ? (
+            <div className="space-y-4">
+              {/* Rating Summary */}
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div>
+                  <div className="flex items-center space-x-2 mb-1">
+                    <span className="text-2xl font-bold text-gray-900">
+                      {parseFloat(ratingStats.average_rating || 0).toFixed(1)}
+                    </span>
+                    <RatingDisplay 
+                      rating={parseFloat(ratingStats.average_rating || 0)} 
+                      totalReviews={ratingStats.total_reviews}
+                      size="small"
+                      showNumber={false}
+                    />
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    {ratingStats.total_reviews} customer review{ratingStats.total_reviews !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+
+              {/* Recent Reviews */}
+              {recentRatings.slice(0, 3).map((rating) => (
+                <div key={rating.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Icon name="User" size={14} className="text-gray-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {rating.user_name || rating.user_first_name}
+                      </p>
+                      <RatingDisplay 
+                        rating={rating.rating} 
+                        size="small"
+                        showNumber={false}
+                        showTotal={false}
+                      />
+                    </div>
+                    {rating.review && (
+                      <p className="text-sm text-gray-600 line-clamp-2">
+                        {rating.review}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(rating.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Icon name="Star" size={32} className="text-gray-300 mx-auto mb-2" />
+              <p className="text-gray-500 text-sm mb-1">No reviews yet</p>
+              <p className="text-gray-400 text-xs">Encourage customers to leave reviews</p>
+            </div>
+          )}
+        </div>
+
         {/* Low Stock Alert */}
         <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
@@ -244,6 +361,71 @@ const ShopOverview = ({ shopData }) => {
           </div>
         </div>
       </div>
+
+      {/* Rating Distribution Section */}
+      {ratingStats.total_reviews > 0 && (
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">Customer Feedback Analysis</h3>
+            <div className="flex items-center space-x-2">
+              <RatingDisplay 
+                rating={parseFloat(ratingStats.average_rating || 0)} 
+                totalReviews={ratingStats.total_reviews}
+                size="medium"
+                className="text-gray-600"
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <RatingDistribution 
+                distribution={ratingStats.rating_distribution || {}}
+                totalReviews={ratingStats.total_reviews}
+              />
+            </div>
+            
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-gray-700">Recent Customer Feedback</h4>
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {recentRatings.map((rating) => (
+                  <div key={rating.id} className="p-3 border border-gray-200 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium text-gray-900">
+                          {rating.user_name || rating.user_first_name}
+                        </span>
+                        {rating.is_verified_purchase && (
+                          <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                            Verified Purchase
+                          </span>
+                        )}
+                      </div>
+                      <RatingDisplay 
+                        rating={rating.rating} 
+                        size="small"
+                        showNumber={false}
+                        showTotal={false}
+                      />
+                    </div>
+                    {rating.review && (
+                      <p className="text-sm text-gray-600 mb-2">
+                        {rating.review}
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>{new Date(rating.created_at).toLocaleDateString()}</span>
+                      {rating.helpful_count > 0 && (
+                        <span>{rating.helpful_count} found helpful</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Performance Chart Placeholder */}
       <div className="bg-white rounded-xl p-6 border border-gray-200">

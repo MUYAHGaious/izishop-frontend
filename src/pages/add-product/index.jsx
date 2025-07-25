@@ -138,14 +138,12 @@ const AddProduct = () => {
       });
       setErrors({});
 
-      // Navigate based on user role
-      setTimeout(() => {
-        if (user?.role === 'SHOP_OWNER') {
-          navigate('/shop-owner-dashboard?tab=products');
-        } else {
-          navigate('/product-catalog'); // or wherever individual sellers should go
-        }
-      }, 1000);
+      // Navigate based on user role immediately after success
+      if (user?.role === 'SHOP_OWNER') {
+        navigate('/shop-owner-dashboard?tab=products');
+      } else {
+        navigate('/product-catalog');
+      }
 
     } catch (error) {
       console.error('Product creation error:', error);
@@ -189,7 +187,7 @@ const AddProduct = () => {
                 variant="outline"
                 onClick={() => {
                   if (user?.role === 'SHOP_OWNER') {
-                    navigate('/shop-owner-dashboard');
+                    navigate('/shop-owner-dashboard?tab=products');
                   } else {
                     navigate('/product-catalog');
                   }
@@ -421,7 +419,13 @@ const AddProduct = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate('/shop-owner-dashboard')}
+                  onClick={() => {
+                    if (user?.role === 'SHOP_OWNER') {
+                      navigate('/shop-owner-dashboard?tab=products');
+                    } else {
+                      navigate('/product-catalog');
+                    }
+                  }}
                   className="flex-1"
                 >
                   Cancel

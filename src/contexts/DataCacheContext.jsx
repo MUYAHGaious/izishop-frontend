@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 
 const DataCacheContext = createContext();
 
@@ -13,6 +13,7 @@ export const useDataCache = () => {
 const DataCacheProvider = ({ children }) => {
   const [cache, setCache] = useState(new Map());
   const [loadingStates, setLoadingStates] = useState(new Map());
+  const [requestCounts, setRequestCounts] = useState(new Map());
 
   // Cache configuration
   const DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
@@ -94,6 +95,7 @@ const DataCacheProvider = ({ children }) => {
   const clearCache = useCallback(() => {
     setCache(new Map());
     setLoadingStates(new Map());
+    setRequestCounts(new Map());
     console.log('Cache cleared');
   }, []);
 
@@ -115,9 +117,25 @@ const DataCacheProvider = ({ children }) => {
     });
   }, []);
 
-  // Enhanced fetch function with caching
+  // Enhanced fetch function with caching and circuit breaker
   const fetchWithCache = useCallback(async (type, fetchFunction, params = {}, forceRefresh = false) => {
     const key = generateCacheKey(type, params);
+    
+    // Circuit breaker: prevent too many requests for the same key
+    const now = Date.now();
+    const requestWindow = 10000; // 10 seconds
+    const maxRequests = 5;
+    
+    const currentRequests = requestCounts.get(key) || [];
+    const recentRequests = currentRequests.filter(timestamp => now - timestamp < requestWindow);
+    
+    if (recentRequests.length >= maxRequests) {
+      console.warn(`Circuit breaker: Too many requests for ${key}, returning cached data`);
+      return getCachedData(type, params);
+    }
+    
+    // Update request count
+    setRequestCounts(prev => new Map(prev).set(key, [...recentRequests, now]));
     
     // Check if already loading
     if (isLoading(type, params)) {
@@ -147,7 +165,7 @@ const DataCacheProvider = ({ children }) => {
     } finally {
       setLoading(type, false, params);
     }
-  }, [getCachedData, setCachedData, isLoading, setLoading]);
+  }, [getCachedData, setCachedData, isLoading, setLoading, requestCounts]);
 
   // Preload data for better performance
   const preloadData = useCallback(async (type, fetchFunction, params = {}) => {
@@ -202,7 +220,7 @@ const DataCacheProvider = ({ children }) => {
     return stats;
   }, [cache]);
 
-  const value = {
+  const value = useMemo(() => ({
     // Core cache operations
     getCachedData,
     setCachedData,
@@ -225,7 +243,18 @@ const DataCacheProvider = ({ children }) => {
     
     // Cache configuration
     CACHE_CONFIG
-  };
+  }), [
+    getCachedData,
+    setCachedData,
+    invalidateCache,
+    clearCache,
+    isLoading,
+    setLoading,
+    fetchWithCache,
+    preloadData,
+    batchUpdateCache,
+    getCacheStats
+  ]);
 
   return (
     <DataCacheContext.Provider value={value}>

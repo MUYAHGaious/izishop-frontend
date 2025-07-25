@@ -60,7 +60,7 @@ const MobileBottomTab = () => {
               onClick={() => handleTabClick(item)}
               className={`flex flex-col items-center justify-center min-w-0 flex-1 px-2 py-2 rounded-lg transition-colors ${
                 active
-                  ? 'text-primary bg-primary/10' :'text-text-secondary hover:text-text-primary hover:bg-muted'
+                  ? 'text-primary bg-primary/10' : 'text-text-secondary hover:text-text-primary hover:bg-muted'
               }`}
             >
               <div className="relative">

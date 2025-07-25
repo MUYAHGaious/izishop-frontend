@@ -33,8 +33,14 @@ const WebSocketProvider = ({ children }) => {
     try {
       console.log('Connecting to WebSocket...');
       const token = localStorage.getItem('authToken');
-      const wsUrl = `${WS_URL}?token=${token}`;
       
+      // Don't connect if no valid token
+      if (!token || token === 'null' || token === 'undefined') {
+        console.log('No valid auth token, skipping WebSocket connection');
+        return;
+      }
+      
+      const wsUrl = `${WS_URL}?token=${token}`;
       const newSocket = new WebSocket(wsUrl);
 
       newSocket.onopen = () => {

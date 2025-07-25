@@ -95,7 +95,7 @@ const Header = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-surface border-b border-border z-header">
-      <div className="flex items-center justify-between h-16 px-4 lg:px-6">
+      <div className="flex items-center justify-between h-16 px-3 sm:px-4 lg:px-6">
         {/* Logo */}
         <Link to="/product-catalog" className="flex items-center space-x-2 flex-shrink-0">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -122,7 +122,7 @@ const Header = () => {
         </nav>
 
         {/* Search Bar */}
-        <div className="flex-1 max-w-md mx-4 lg:mx-8">
+        <div className="hidden sm:flex flex-1 max-w-md mx-2 sm:mx-4 lg:mx-8">
           <form onSubmit={handleSearch} className="relative">
             <Input
               type="search"
@@ -140,7 +140,7 @@ const Header = () => {
         </div>
 
         {/* Desktop Actions */}
-        <div className="hidden lg:flex items-center space-x-3">
+        <div className="hidden sm:flex items-center space-x-2 lg:space-x-3">
           <button
             onClick={() => setIsNotificationOpen(true)}
             className="relative p-2 text-text-secondary hover:text-text-primary transition-colors"
@@ -167,24 +167,121 @@ const Header = () => {
           
           {/* Account Button with Profile Picture */}
           {isAuthenticated() ? (
-            <button
-              onClick={() => navigate('/user-profile')}
-              className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
-                {userProfileImage ? (
-                  <img 
-                    src={userProfileImage} 
-                    alt="Profile" 
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="text-xs font-bold text-white">
-                    {user?.first_name?.[0]?.toUpperCase() || 'U'}
-                  </span>
-                )}
+            <div className="relative group">
+              <button className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
+                  {userProfileImage ? (
+                    <img 
+                      src={userProfileImage} 
+                      alt="Profile" 
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xs font-bold text-white">
+                      {user?.first_name?.[0]?.toUpperCase() || 'U'}
+                    </span>
+                  )}
+                </div>
+                <Icon name="ChevronDown" size={16} className="text-gray-500" />
+              </button>
+              
+              {/* Dropdown Menu */}
+              <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div className="py-2">
+                  {/* User Info */}
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <p className="text-sm font-medium text-gray-900">{user?.first_name} {user?.last_name}</p>
+                    <p className="text-xs text-gray-500">{user?.email}</p>
+                    <p className="text-xs text-blue-600 mt-1">{user?.role === 'SHOP_OWNER' ? 'Shop Owner' : user?.role === 'ADMIN' ? 'Administrator' : 'Customer'}</p>
+                  </div>
+                  
+                  {/* Quick Actions */}
+                  <div className="py-1">
+                    <button
+                      onClick={() => navigate('/user-profile')}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Icon name="User" size={16} className="mr-3 text-gray-500" />
+                      My Profile
+                    </button>
+                    
+                    {(user?.role === 'SHOP_OWNER' || user?.role === 'shop_owner') && (
+                      <>
+                        <button
+                          onClick={() => navigate('/shop-owner-dashboard')}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <Icon name="LayoutDashboard" size={16} className="mr-3 text-gray-500" />
+                          Shop Dashboard
+                        </button>
+                        <button
+                          onClick={() => navigate('/my-shop-profile')}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <Icon name="Store" size={16} className="mr-3 text-gray-500" />
+                          My Shop
+                        </button>
+                        <button
+                          onClick={() => navigate('/add-product')}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <Icon name="Plus" size={16} className="mr-3 text-gray-500" />
+                          Add Product
+                        </button>
+                      </>
+                    )}
+                    
+                    {user?.role === 'ADMIN' && (
+                      <button
+                        onClick={() => navigate('/admin-dashboard')}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <Icon name="Shield" size={16} className="mr-3 text-gray-500" />
+                        Admin Dashboard
+                      </button>
+                    )}
+                    
+                    <button
+                      onClick={() => navigate('/order-management')}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Icon name="Package" size={16} className="mr-3 text-gray-500" />
+                      My Orders
+                    </button>
+                    
+                    <button
+                      onClick={() => navigate('/wishlist')}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Icon name="Heart" size={16} className="mr-3 text-gray-500" />
+                      Wishlist
+                    </button>
+                    
+                    <div className="border-t border-gray-100 my-1"></div>
+                    
+                    <button
+                      onClick={() => setIsSettingsOpen(true)}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Icon name="Settings" size={16} className="mr-3 text-gray-500" />
+                      Settings
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('user');
+                        navigate('/authentication-login-register');
+                      }}
+                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <Icon name="LogOut" size={16} className="mr-3 text-red-500" />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
               </div>
-            </button>
+            </div>
           ) : (
             <Button 
               variant="ghost" 
@@ -196,41 +293,43 @@ const Header = () => {
             </Button>
           )}
           
-          <Button 
-            variant="default" 
-            iconName="Plus" 
-            size="sm"
-            onClick={() => {
-              if (isAuthenticated()) {
-                if (user?.role === 'SHOP_OWNER' || user?.role === 'shop_owner') {
-                  navigate('/shop-owner-dashboard');
-                } else {
-                  navigate('/shops-listing');
-                }
-              } else {
-                navigate('/authentication-login-register');
-              }
-            }}
-          >
-            Get Started
-          </Button>
+          {!isAuthenticated() && (
+            <Button 
+              variant="default" 
+              iconName="Plus" 
+              size="sm"
+              onClick={() => navigate('/authentication-login-register')}
+            >
+              Get Started
+            </Button>
+          )}
         </div>
 
-        {/* Mobile Menu Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleMenu}
-          className="lg:hidden"
-        >
-          <Icon name={isMenuOpen ? "X" : "Menu"} size={20} />
-        </Button>
+        {/* Mobile Search and Menu */}
+        <div className="flex items-center space-x-2 sm:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {/* Mobile search toggle */}}
+            className="p-2"
+          >
+            <Icon name="Search" size={18} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleMenu}
+            className="p-2"
+          >
+            <Icon name={isMenuOpen ? "X" : "Menu"} size={18} />
+          </Button>
+        </div>
       </div>
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="lg:hidden bg-surface border-t border-border animate-fade-in">
-          <div className="px-4 py-4 space-y-4">
+        <div className="sm:hidden bg-surface border-t border-border animate-fade-in">
+          <div className="px-3 py-4 space-y-3">
             {/* Mobile Navigation */}
             <nav className="space-y-2">
               {navigationItems.map((item) => (
@@ -285,30 +384,91 @@ const Header = () => {
                 )}
               </Link>
               
-              {/* Mobile Account Button with Profile Picture */}
+              {/* Mobile Account Section */}
               {isAuthenticated() ? (
-                <button
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    navigate('/user-profile');
-                  }}
-                  className="flex items-center space-x-3 px-3 py-3 rounded-md text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-muted transition-colors w-full"
-                >
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
-                    {userProfileImage ? (
-                      <img 
-                        src={userProfileImage} 
-                        alt="Profile" 
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-xs font-bold text-white">
-                        {user?.first_name?.[0]?.toUpperCase() || 'U'}
-                      </span>
-                    )}
+                <div className="border-t border-gray-200 pt-4">
+                  <div className="px-3 py-2 border-b border-gray-100 mb-2">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
+                        {userProfileImage ? (
+                          <img 
+                            src={userProfileImage} 
+                            alt="Profile" 
+                            className="w-full h-full rounded-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-xs font-bold text-white">
+                            {user?.first_name?.[0]?.toUpperCase() || 'U'}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{user?.first_name} {user?.last_name}</p>
+                        <p className="text-xs text-gray-500">{user?.role === 'SHOP_OWNER' ? 'Shop Owner' : user?.role === 'ADMIN' ? 'Administrator' : 'Customer'}</p>
+                      </div>
+                    </div>
                   </div>
-                  <span>Account</span>
-                </button>
+                  
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      navigate('/user-profile');
+                    }}
+                    className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-muted transition-colors w-full"
+                  >
+                    <Icon name="User" size={16} />
+                    <span>My Profile</span>
+                  </button>
+                  
+                  {(user?.role === 'SHOP_OWNER' || user?.role === 'shop_owner') && (
+                    <>
+                      <button
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          navigate('/shop-owner-dashboard');
+                        }}
+                        className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-muted transition-colors w-full"
+                      >
+                        <Icon name="LayoutDashboard" size={16} />
+                        <span>Shop Dashboard</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          navigate('/add-product');
+                        }}
+                        className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-muted transition-colors w-full"
+                      >
+                        <Icon name="Plus" size={16} />
+                        <span>Add Product</span>
+                      </button>
+                    </>
+                  )}
+                  
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      navigate('/order-management');
+                    }}
+                    className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-muted transition-colors w-full"
+                  >
+                    <Icon name="Package" size={16} />
+                    <span>My Orders</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      localStorage.removeItem('authToken');
+                      localStorage.removeItem('user');
+                      navigate('/authentication-login-register');
+                    }}
+                    className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:bg-red-50 transition-colors w-full"
+                  >
+                    <Icon name="LogOut" size={16} />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
               ) : (
                 <Button
                   variant="ghost"
@@ -324,26 +484,20 @@ const Header = () => {
                 </Button>
               )}
               
-              <Button
-                variant="default"
-                fullWidth
-                iconName="Plus"
-                iconPosition="left"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  if (isAuthenticated()) {
-                    if (user?.role === 'SHOP_OWNER' || user?.role === 'shop_owner') {
-                      navigate('/shop-owner-dashboard');
-                    } else {
-                      navigate('/shops-listing');
-                    }
-                  } else {
+              {!isAuthenticated() && (
+                <Button
+                  variant="default"
+                  fullWidth
+                  iconName="Plus"
+                  iconPosition="left"
+                  onClick={() => {
+                    setIsMenuOpen(false);
                     navigate('/authentication-login-register');
-                  }
-                }}
-              >
-                Get Started
-              </Button>
+                  }}
+                >
+                  Get Started
+                </Button>
+              )}
             </div>
           </div>
         </div>

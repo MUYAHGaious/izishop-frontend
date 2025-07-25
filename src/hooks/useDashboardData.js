@@ -17,7 +17,7 @@ export const useDashboardData = (dashboardType = 'shop-owner') => {
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  // Define data fetchers based on dashboard type
+  // Define data fetchers based on dashboard type - memoized to prevent infinite loops
   const getFetchers = useCallback(() => {
     const fetchers = {
       'shop-owner': {

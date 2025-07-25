@@ -112,10 +112,20 @@ const AdminLogin = () => {
         duration: 3000
       });
       
-      // Redirect to admin dashboard
+      // Redirect to admin dashboard with longer delay to ensure auth state is set
       setTimeout(() => {
-        navigate('/admin-dashboard');
-      }, 1500);
+        // Double-check authentication before navigating
+        const token = localStorage.getItem('accessToken');
+        const user = localStorage.getItem('user');
+        console.log('Pre-navigation check - token:', !!token, 'user:', !!user);
+        
+        if (token && user) {
+          navigate('/admin-dashboard');
+        } else {
+          console.error('Authentication state not properly set, retrying...');
+          setTimeout(() => navigate('/admin-dashboard'), 1000);
+        }
+      }, 2000);
       
     } catch (error) {
       console.error('Admin login error:', error);

@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
+import authService from '../services/authService';
+import rememberMeService from '../services/rememberMeService';
 import { migrateTokenStorage, cleanupLegacyTokens } from '../utils/tokenMigration';
 
 const AuthContext = createContext();
@@ -21,42 +23,254 @@ export const AuthProvider = ({ children }) => {
   const [sessionStartTime, setSessionStartTime] = useState(null);
   const [returnUrl, setReturnUrl] = useState(null);
   const [cartState, setCartState] = useState(null);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [authCheckComplete, setAuthCheckComplete] = useState(false);
 
   // Initialize auth state on mount
   useEffect(() => {
     initializeAuth();
+    
+    // Listen for auth service events
+    const handleTokenRefresh = () => {
+      console.log('Token refreshed successfully');
+    };
+
+    const handleAuthLogout = () => {
+      console.log('Auth service triggered logout');
+      forceLogout('Session expired');
+    };
+
+    // Add event listeners for auth service
+    window.addEventListener('tokenRefresh', handleTokenRefresh);
+    window.addEventListener('authLogout', handleAuthLogout);
+
+    return () => {
+      window.removeEventListener('tokenRefresh', handleTokenRefresh);
+      window.removeEventListener('authLogout', handleAuthLogout);
+    };
   }, []);
 
   const initializeAuth = async () => {
     try {
       setLoading(true);
+      console.log('AuthContext: Starting initialization...');
       
-      // Simple session restoration without complex validation
+      // Small delay to ensure localStorage is stable after page load
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // First check localStorage directly for faster initial load
       const storedUser = localStorage.getItem('user');
       const accessToken = localStorage.getItem('accessToken');
-      const storedSessionId = localStorage.getItem('sessionId');
-      const storedRole = localStorage.getItem('currentRole');
       
-      if (storedUser && accessToken && storedSessionId && storedRole) {
+      console.log('AuthContext: Storage check - accessToken:', !!accessToken, 'storedUser:', !!storedUser);
+      
+      // CRITICAL: Check if authService confirms authentication
+      const isAuthServiceAuthenticated = authService.isAuthenticated();
+      console.log('AuthContext: AuthService authentication status:', isAuthServiceAuthenticated);
+      
+      if (!accessToken || !storedUser || !isAuthServiceAuthenticated) {
+        console.log('AuthContext: No valid authentication found, checking backup...');
+        
+        // Try to recover from backup - ONLY if tokens are actually available
         try {
-          const currentUser = JSON.parse(storedUser);
-          setUser(currentUser);
-          setSessionId(storedSessionId);
-          setCurrentRole(storedRole);
-          setSessionStartTime(Date.now().toString());
-        } catch (parseError) {
-          console.error('Failed to parse stored user data:', parseError);
-          // Clear corrupted data
-          localStorage.removeItem('user');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('sessionId');
-          localStorage.removeItem('currentRole');
+          const authBackup = localStorage.getItem('authBackup');
+          if (authBackup) {
+            const backup = JSON.parse(authBackup);
+            const backupAge = Date.now() - backup.timestamp;
+            
+            // CRITICAL: Only use backup if we have valid tokens in storage AND authService confirms
+            const hasValidTokens = localStorage.getItem('accessToken') && localStorage.getItem('refreshToken');
+            const authServiceAuthenticated = authService.isAuthenticated();
+            
+            if (backupAge < 5 * 60 * 1000 && backup.user && hasValidTokens && authServiceAuthenticated) {
+              console.log('AuthContext: Recovering from backup authentication state with valid tokens');
+              setUser(backup.user);
+              setCurrentRole(backup.user.role);
+              localStorage.setItem('currentRole', backup.user.role);
+              
+              // Also create session since we have valid tokens
+              const sessionId = generateSecureSessionId();
+              setSessionId(sessionId);
+              localStorage.setItem('sessionId', sessionId);
+              setSessionStartTime(Date.now().toString());
+              
+              setLoading(false);
+              setIsInitializing(false);
+              setAuthCheckComplete(true);
+              return;
+            } else {
+              console.log('AuthContext: Backup invalid - no tokens or authService disagrees, clearing');
+              localStorage.removeItem('authBackup');
+            }
+          }
+        } catch (error) {
+          console.error('AuthContext: Failed to recover from backup:', error);
+          localStorage.removeItem('authBackup');
         }
+        
+        console.log('AuthContext: No valid backup found, user not authenticated');
+        
+        // Clear any invalid backup data
+        localStorage.removeItem('authBackup');
+        localStorage.removeItem('user');
+        localStorage.removeItem('sessionId');
+        localStorage.removeItem('currentRole');
+        
+        setLoading(false);
+        setIsInitializing(false);
+        setAuthCheckComplete(true);
+        return;
       }
+
+      if (!storedUser) {
+        console.log('AuthContext: No user data found, clearing tokens');
+        await authService.logout();
+        setLoading(false);
+        setIsInitializing(false);
+        return;
+      }
+
+      try {
+        // Parse user data first
+        const currentUser = JSON.parse(storedUser);
+        console.log('AuthContext: Parsed user data:', currentUser.email, 'role:', currentUser.role);
+        
+        // Set user immediately for faster UI response
+        setUser(currentUser);
+        
+        // Create backup authentication state for reload persistence - ONLY if authService confirms
+        const isAuthServiceValid = authService.isAuthenticated();
+        if (isAuthServiceValid) {
+          localStorage.setItem('authBackup', JSON.stringify({
+            user: currentUser,
+            timestamp: Date.now(),
+            accessToken: !!accessToken
+          }));
+        } else {
+          console.warn('AuthContext: AuthService does not confirm authentication, skipping backup creation');
+        }
+        
+        // Set session data - preserve existing session if valid
+        const storedSessionId = localStorage.getItem('sessionId');
+        const storedRole = localStorage.getItem('currentRole');
+        
+        // Only create new session if none exists
+        if (storedSessionId) {
+          setSessionId(storedSessionId);
+          console.log('AuthContext: Using existing session ID:', storedSessionId);
+        } else {
+          const newSessionId = Date.now().toString();
+          setSessionId(newSessionId);
+          localStorage.setItem('sessionId', newSessionId);
+          console.log('AuthContext: Created new session ID:', newSessionId);
+        }
+        
+        // Use stored role if available, otherwise use user role
+        const roleToUse = storedRole || currentUser.role;
+        setCurrentRole(roleToUse);
+        localStorage.setItem('currentRole', roleToUse);
+        console.log('AuthContext: Set current role:', roleToUse);
+        
+        setSessionStartTime(Date.now().toString());
+        
+        // Ensure authService has loaded tokens from storage
+        authService.loadTokensFromStorage();
+        
+        // Add a small delay to ensure tokens are properly loaded
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // Now check if auth service agrees this is authenticated
+        if (authService.isAuthenticated()) {
+          console.log('AuthContext: Auth service confirms authentication');
+          
+          // Check if token needs refresh
+          if (authService.isTokenExpired(accessToken, 60)) {
+            console.log('AuthContext: Token needs refresh, attempting refresh');
+            try {
+              await authService.refreshAccessToken();
+              console.log('AuthContext: Token refreshed successfully');
+              // Reload user data in case it changed
+              const updatedUser = JSON.parse(localStorage.getItem('user') || '{}');
+              if (updatedUser.id) {
+                setUser(updatedUser);
+              }
+            } catch (refreshError) {
+              console.warn('AuthContext: Token refresh failed:', refreshError);
+              await authService.logout();
+              setUser(null);
+              setSessionId(null);
+              setCurrentRole(null);
+              return; // Exit early
+            }
+          }
+          
+          // Start background token monitoring
+          console.log('AuthContext: Starting token monitoring');
+          authService.startTokenMonitoring();
+        } else {
+          console.log('AuthContext: Auth service says not authenticated');
+          
+          // Double-check: if we have tokens and user data, but authService says not authenticated,
+          // it might be a timing issue. Try refreshing the authService state.
+          const recheckAccessToken = localStorage.getItem('accessToken');
+          const recheckRefreshToken = localStorage.getItem('refreshToken');
+          
+          if (recheckAccessToken && recheckRefreshToken && currentUser.id) {
+            console.log('AuthContext: Tokens exist but authService disagrees, forcing reload');
+            authService.setTokens(recheckAccessToken, recheckRefreshToken);
+            
+            // Wait a bit and check again
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            if (authService.isAuthenticated()) {
+              console.log('AuthContext: Auth service now confirms authentication after reload');
+              authService.startTokenMonitoring();
+            } else {
+              console.log('AuthContext: Auth service still disagrees, clearing state');
+              await authService.logout();
+              setUser(null);
+              setSessionId(null);
+              setCurrentRole(null);
+            }
+          } else {
+            console.log('AuthContext: No valid tokens found, clearing state');
+            await authService.logout();
+            setUser(null);
+            setSessionId(null);
+            setCurrentRole(null);
+          }
+        }
+        
+      } catch (parseError) {
+        console.error('AuthContext: Failed to parse stored user data:', parseError);
+        // Clear corrupted data
+        await authService.logout();
+        setUser(null);
+        setSessionId(null);
+        setCurrentRole(null);
+      }
+      
     } catch (error) {
-      console.error('Auth initialization error:', error);
+      console.error('AuthContext: Initialization error:', error);
+      // Clear any invalid state but don't logout if it might be a network issue
+      setUser(null);
+      setSessionId(null);
+      setCurrentRole(null);
+      
+      // If there was an error, ensure we clear any stale localStorage data
+      const hasAccessToken = localStorage.getItem('accessToken');
+      const hasUser = localStorage.getItem('user');
+      
+      if (!hasAccessToken || !hasUser) {
+        console.log('AuthContext: Clearing tokens due to initialization error');
+        await authService.logout();
+      }
     } finally {
       setLoading(false);
+      setIsInitializing(false);
+      setAuthCheckComplete(true);
+      console.log('AuthContext: Initialization complete - loading:', false, 'isInitializing:', false);
+      console.log('AuthContext: Final state - user:', !!user, 'hasToken:', !!localStorage.getItem('accessToken'));
     }
   };
 
@@ -72,19 +286,17 @@ export const AuthProvider = ({ children }) => {
         await forceLogout('New login initiated');
       }
       
-      console.log('Calling API login...');
-      const response = await api.login(credentials.email, credentials.password);
-      console.log('API login response received:', response);
+      console.log('Calling auth service login...');
+      const response = await authService.login({
+        email: credentials.email,
+        password: credentials.password
+      });
+      console.log('Auth service login response received:', response);
       const newUser = response.user;
       
-      // Store user data and tokens
+      // Tokens are automatically managed by auth service
+      // Store user data
       localStorage.setItem('user', JSON.stringify(newUser));
-      if (response.access_token) {
-        localStorage.setItem('accessToken', response.access_token);
-      }
-      if (response.refresh_token) {
-        localStorage.setItem('refreshToken', response.refresh_token);
-      }
       
       // Validate role assignment
       if (requestedRole && newUser.role !== requestedRole) {
@@ -128,19 +340,50 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       
       const response = await api.register(userData);
+      console.log('Registration API response:', response);
+      console.log('User role from response:', response.user?.role);
+      console.log('Access token present:', !!response.access_token);
+      console.log('Refresh token present:', !!response.refresh_token);
       
-      if (response.user && response.access_token) {
-        // Store user data in localStorage and update state
+      if (response.user) {
+        // Store user data
         localStorage.setItem('user', JSON.stringify(response.user));
-        setUser(response.user);
         
-        // Store session data
-        const newSessionId = generateSessionId();
-        localStorage.setItem('sessionId', newSessionId);
-        setSessionId(newSessionId);
-        setCurrentRole(response.user.role);
-        
-        console.log('Registration successful, user authenticated:', response.user);
+        // If tokens are provided, auto-login the user
+        if (response.access_token) {
+          // Update auth service tokens
+          authService.accessToken = response.access_token;
+          authService.refreshToken = response.refresh_token;
+          authService.saveTokensToStorage();
+          
+          // Create secure session (same as login)
+          const newSessionId = generateSecureSessionId();
+          const sessionTime = Date.now().toString();
+          
+          // Store session data
+          localStorage.setItem('sessionId', newSessionId);
+          localStorage.setItem('currentRole', response.user.role);
+          localStorage.setItem('sessionStartTime', sessionTime);
+          
+          setUser(response.user);
+          setSessionId(newSessionId);
+          setCurrentRole(response.user.role);
+          setSessionStartTime(sessionTime);
+          
+          // Start background token monitoring
+          authService.startTokenMonitoring();
+          
+          console.log('Registration successful, user auto-logged in:', response.user);
+        } else {
+          // No tokens - user needs email verification or manual approval
+          console.log('Registration successful, but no tokens provided. User may need verification.');
+          
+          // Still set user data for display purposes
+          setUser(response.user);
+          setSessionId(null); // No session since not fully authenticated
+          setCurrentRole(response.user.role);
+          setSessionStartTime(null);
+        }
       }
       
       return response;
@@ -152,38 +395,46 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = async () => {
+  const logout = async (clearRememberMe = false) => {
     try {
       setError(null);
-      await api.logout();
+      // Use auth service logout which handles API call and token cleanup
+      await authService.logout();
+      
+      // Handle remember me during logout
+      rememberMeService.handleLogout(clearRememberMe);
+      
       await clearAuthData();
       console.log('User logged out successfully');
     } catch (error) {
       console.error('Logout error:', error);
       // Force logout even if API call fails
       await clearAuthData();
+      // Still handle remember me even if logout API fails
+      rememberMeService.handleLogout(clearRememberMe);
     }
   };
 
   const forceLogout = async (reason = 'Security logout') => {
     console.warn(`Force logout triggered: ${reason}`);
     try {
-      // Attempt to notify backend of forced logout
-      if (sessionId) {
-        await api.logout();
-      }
+      // Use auth service for secure logout
+      await authService.logout();
     } catch (error) {
       console.error('Error during forced logout:', error);
     } finally {
+      // For security logouts, always clear remember me
+      rememberMeService.handleLogout(true);
       await clearAuthData();
     }
   };
 
   const clearAuthData = async () => {
-    // Clear all authentication data (including new token storage keys)
+    // Clear auth service tokens first
+    authService.clearTokens();
+    
+    // Clear all authentication data (including legacy keys)
     localStorage.removeItem('authToken'); // Legacy key
-    localStorage.removeItem('accessToken'); // New key
-    localStorage.removeItem('refreshToken'); // New key
     localStorage.removeItem('sessionId');
     localStorage.removeItem('currentRole');
     localStorage.removeItem('sessionStartTime');
@@ -217,36 +468,150 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isAuthenticated = () => {
-    // Simple check using localStorage only to avoid state dependency loops
+    // During initialization, be more permissive to avoid logout loops
+    if (isInitializing || loading) {
+      const accessToken = localStorage.getItem('accessToken') || localStorage.getItem('authToken');
+      const storedUser = localStorage.getItem('user');
+      const authServiceAuth = authService.isAuthenticated();
+      console.log('AuthContext: isAuthenticated during init - token:', !!accessToken, 'user:', !!storedUser, 'authService:', authServiceAuth);
+      return !!(accessToken && storedUser && authServiceAuth);
+    }
+    
+    // After initialization, require ALL conditions: user state, tokens, and authService confirmation
+    const hasStateUser = !!user;
     const accessToken = localStorage.getItem('accessToken') || localStorage.getItem('authToken');
     const storedUser = localStorage.getItem('user');
-    return !!(accessToken && storedUser);
+    const hasStorageAuth = !!(accessToken && storedUser);
+    const authServiceAuth = authService.isAuthenticated();
+    
+    // All conditions must be true for authenticated state
+    const result = hasStateUser && hasStorageAuth && authServiceAuth;
+    console.log('AuthContext: isAuthenticated - stateUser:', hasStateUser, 'storageAuth:', hasStorageAuth, 'authService:', authServiceAuth, 'result:', result);
+    return result;
   };
 
   const hasRole = (role) => {
+    // During initialization or loading, check localStorage as fallback
+    if (isInitializing || loading || !user) {
+      const hasToken = localStorage.getItem('accessToken');
+      const hasStoredUser = localStorage.getItem('user');
+      const storedRole = localStorage.getItem('currentRole');
+      const authServiceAuth = authService.isAuthenticated();
+      
+      if (hasToken && hasStoredUser && authServiceAuth) {
+        try {
+          const storedUserData = JSON.parse(hasStoredUser);
+          const normalized = (r) => (r || '').toString().toUpperCase();
+          
+          // Check both user role and stored role, prioritizing user role
+          const userRoleMatches = normalized(storedUserData.role) === normalized(role);
+          const storedRoleMatches = storedRole ? normalized(storedRole) === normalized(role) : true;
+          
+          console.log('hasRole during init:', {
+            requestedRole: role,
+            storedUserRole: storedUserData.role,
+            storedRole: storedRole,
+            authServiceAuth,
+            userRoleMatches,
+            storedRoleMatches,
+            result: userRoleMatches && storedRoleMatches && authServiceAuth
+          });
+          
+          return userRoleMatches && storedRoleMatches && authServiceAuth;
+        } catch (error) {
+          console.error('hasRole: Error parsing stored user data:', error);
+          return false;
+        }
+      }
+      return false;
+    }
+    
+    // After init, require authentication, role match, and valid session
+    if (!isAuthenticated()) {
+      console.log('hasRole: User not authenticated');
+      return false;
+    }
+    
     // Accept both 'SHOP_OWNER' and 'shop_owner' as equivalent
     const normalized = (r) => (r || '').toString().toUpperCase();
-    return user && normalized(user.role) === normalized(role) && normalized(currentRole) === normalized(role) && sessionId;
+    const roleMatches = user && normalized(user.role) === normalized(role);
+    const currentRoleMatches = normalized(currentRole) === normalized(role);
+    
+    console.log('hasRole after init:', {
+      requestedRole: role,
+      userRole: user?.role,
+      currentRole,
+      sessionId: !!sessionId,
+      roleMatches,
+      currentRoleMatches,
+      result: roleMatches && currentRoleMatches
+    });
+    
+    return roleMatches && currentRoleMatches;
   };
 
   const validateSession = () => {
+    console.log('AuthContext: Validating session...');
+    console.log('AuthContext: isAuthenticated():', isAuthenticated());
+    console.log('AuthContext: user:', user);
+    console.log('AuthContext: currentRole:', currentRole);
+    console.log('AuthContext: sessionId:', sessionId);
+    console.log('AuthContext: isInitializing:', isInitializing);
+    console.log('AuthContext: loading:', loading);
+    
+    // Always allow validation to pass if we're still initializing or loading
+    if (isInitializing || loading) {
+      console.log('AuthContext: Session validation skipped - still initializing or loading');
+      return true;
+    }
+    
     if (!isAuthenticated()) {
+      console.log('AuthContext: Session validation failed - not authenticated');
       return false;
     }
+    
+    // If user is not loaded yet but we have tokens and user data in storage, allow it
+    if (!user) {
+      const hasToken = localStorage.getItem('accessToken');
+      const hasStoredUser = localStorage.getItem('user');
+      if (hasToken && hasStoredUser) {
+        console.log('AuthContext: User not loaded yet but tokens exist, allowing validation');
+        return true;
+      } else {
+        console.log('AuthContext: No user and no stored tokens, validation failed');
+        return false;
+      }
+    }
+    
     // Accept both 'SHOP_OWNER' and 'shop_owner' as equivalent
     const normalized = (r) => (r || '').toString().toUpperCase();
-    if (normalized(user.role) !== normalized(currentRole)) {
-      console.error('Role inconsistency detected');
-      forceLogout('Role inconsistency');
-      return false;
+    const userRole = normalized(user.role);
+    const currentRoleNorm = normalized(currentRole);
+    
+    console.log('AuthContext: Role comparison - user.role:', userRole, 'currentRole:', currentRoleNorm);
+    
+    if (userRole !== currentRoleNorm) {
+      // Only fail if both values are set and different
+      if (userRole && currentRoleNorm) {
+        console.error('AuthContext: Role inconsistency detected:', userRole, 'vs', currentRoleNorm);
+        forceLogout('Role inconsistency');
+        return false;
+      } else {
+        console.log('AuthContext: Role comparison skipped - one role is empty');
+      }
     }
-    // Verify session exists
+    
+    // Verify session exists - but be more lenient during initialization
     const storedSessionId = localStorage.getItem('sessionId');
-    if (storedSessionId !== sessionId) {
-      console.error('Session ID mismatch detected');
+    console.log('AuthContext: Session ID comparison - stored:', storedSessionId, 'current:', sessionId);
+    
+    if (storedSessionId && sessionId && storedSessionId !== sessionId) {
+      console.error('AuthContext: Session ID mismatch detected:', storedSessionId, 'vs', sessionId);
       forceLogout('Session ID mismatch');
       return false;
     }
+    
+    console.log('AuthContext: Session validation passed');
     return true;
   };
 
@@ -504,7 +869,11 @@ export const AuthProvider = ({ children }) => {
     createShop,
     
     // Clear error
-    clearError: () => setError(null)
+    clearError: () => setError(null),
+    
+    // Initialization state
+    isInitializing,
+    authCheckComplete
   };
 
   return (

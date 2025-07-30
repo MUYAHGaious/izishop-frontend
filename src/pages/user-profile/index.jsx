@@ -10,7 +10,7 @@ import { showToast } from '../../components/ui/Toast';
 import api from '../../services/api';
 
 const UserProfile = () => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, loading } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,16 +40,17 @@ const UserProfile = () => {
       return;
     }
 
-    if (user) {
+    const currentUser = getUserData();
+    if (currentUser) {
       setProfileData({
-        firstName: user.first_name || '',
-        lastName: user.last_name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        profileImage: localStorage.getItem(`profile_image_${user.id}`) || user.profile_image_url || null,
-        coverImage: localStorage.getItem(`cover_image_${user.id}`) || user.cover_image_url || null,
-        joinDate: user.created_at || null,
-        lastActive: user.last_login || null
+        firstName: currentUser.first_name || '',
+        lastName: currentUser.last_name || '',
+        email: currentUser.email || '',
+        phone: currentUser.phone || '',
+        profileImage: localStorage.getItem(`profile_image_${currentUser.id}`) || currentUser.profile_image_url || null,
+        coverImage: localStorage.getItem(`cover_image_${currentUser.id}`) || currentUser.cover_image_url || null,
+        joinDate: currentUser.created_at || null,
+        lastActive: currentUser.last_login || null
       });
       
       // Fetch real-time data
@@ -57,7 +58,7 @@ const UserProfile = () => {
       fetchRecentActivity();
       
       // Fetch user shops if shop owner
-      if (user.role === 'SHOP_OWNER' || user.role === 'shop_owner') {
+      if (currentUser.role === 'SHOP_OWNER' || currentUser.role === 'shop_owner') {
         fetchUserShops();
       }
     }
@@ -138,7 +139,7 @@ const UserProfile = () => {
         const imageUrl = e.target.result;
         
         // Save to localStorage with user-specific key
-        const storageKey = type === 'profile' ? `profile_image_${user.id}` : `cover_image_${user.id}`;
+        const storageKey = type === 'profile' ? `profile_image_${user?.id}` : `cover_image_${user?.id}`;
         localStorage.setItem(storageKey, imageUrl);
         
         if (type === 'profile') {
@@ -306,12 +307,54 @@ const UserProfile = () => {
     }
   };
 
-  if (!user) {
+  // Handle loading state and user data
+  const getUserData = () => {
+    if (user) return user;
+    
+    // Fallback to localStorage if context user isn't loaded yet
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        return JSON.parse(storedUser);
+      }
+    } catch (error) {
+      console.error('Failed to parse stored user data:', error);
+    }
+    
+    return null;
+  };
+
+  const currentUser = getUserData();
+
+  if (!currentUser && loading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="pt-16 flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading profile...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="pt-16 flex items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Profile Not Available</h2>
+            <p className="text-gray-600 mb-4">Unable to load user profile data.</p>
+            <button 
+              onClick={() => navigate('/authentication-login-register')}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            >
+              Login Again
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -401,7 +444,7 @@ const UserProfile = () => {
                   {profileData.firstName} {profileData.lastName}
                 </h1>
                 <p className="text-gray-600 mb-4">
-                  {user.role === 'SHOP_OWNER' ? 'Shop Owner' : user.role === 'ADMIN' ? 'Administrator' : 'Customer'}
+                  {user?.role === 'SHOP_OWNER' ? 'Shop Owner' : user?.role === 'ADMIN' ? 'Administrator' : 'Customer'}
                 </p>
                 
                 {/* Stats Row - Facebook Style */}
@@ -424,7 +467,7 @@ const UserProfile = () => {
                 </Button>
                 <Button
                   variant="ghost"
-                  onClick={() => navigate(`/profile/${user.id}`)}
+                  onClick={() => navigate(`/profile/${user?.id}`)}
                   iconName="Eye"
                   size="sm"
                 >
@@ -660,7 +703,7 @@ const UserProfile = () => {
                     <span className="text-sm font-medium text-gray-700">Orders</span>
                   </button>
                   
-                  {(user.role === 'SHOP_OWNER' || user.role === 'shop_owner') && (
+                  {(user?.role === 'SHOP_OWNER' || user?.role === 'shop_owner') && (
                     <button
                       onClick={() => navigate('/my-shop-profile')}
                       className="w-full flex items-center space-x-3 p-4 hover:bg-purple-50 rounded-lg transition-colors text-left active:scale-95"

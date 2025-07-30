@@ -3,22 +3,19 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../AppIcon';
 import Button from './Button';
 import Input from './Input';
-import NotificationOverlay from './NotificationOverlay';
+import NotificationBell from './NotificationBell';
 import SettingsOverlay from './SettingsOverlay';
 import { useAuth } from '../../contexts/AuthContext';
-import { useNotifications } from '../../contexts/NotificationContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [cartCount, setCartCount] = useState(0);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [userProfileImage, setUserProfileImage] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
-  const { unreadCount } = useNotifications();
 
   // Determine dashboard path for admin/shop owner with safe fallbacks
   let dashboardPath = null;
@@ -141,17 +138,10 @@ const Header = () => {
 
         {/* Desktop Actions */}
         <div className="hidden sm:flex items-center space-x-2 lg:space-x-3">
-          <button
-            onClick={() => setIsNotificationOpen(true)}
-            className="relative p-2 text-text-secondary hover:text-text-primary transition-colors"
-          >
-            <Icon name="Bell" size={20} />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center">
-                {unreadCount}
-              </span>
-            )}
-          </button>
+          {/* Only show notification bell for authenticated users */}
+          {isAuthenticated() && (
+            <NotificationBell variant="header" size={20} />
+          )}
           
           <Link
             to="/shopping-cart"
@@ -350,23 +340,20 @@ const Header = () => {
 
             {/* Mobile Actions */}
             <div className="pt-4 border-t border-border space-y-3">
-              <button
-                onClick={() => {
-                  setIsNotificationOpen(true);
-                  setIsMenuOpen(false);
-                }}
-                className="flex items-center justify-between px-3 py-3 rounded-md text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-muted transition-colors w-full"
-              >
-                <div className="flex items-center space-x-3">
-                  <Icon name="Bell" size={18} />
+              {/* Only show notification bell for authenticated users */}
+              {isAuthenticated() && (
+                <div className="flex items-center justify-between px-3 py-3 rounded-md text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-muted transition-colors w-full">
+                  <div className="flex items-center space-x-3">
+                    <NotificationBell 
+                      variant="mobile" 
+                      size={18} 
+                      onClick={() => setIsMenuOpen(false)}
+                      className="p-0"
+                    />
                   <span>Notifications</span>
                 </div>
-                {unreadCount > 0 && (
-                  <span className="bg-red-500 text-white text-xs font-medium rounded-full px-2 py-1">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
+              </div>
+              )}
               
               <Link
                 to="/shopping-cart"
@@ -503,12 +490,6 @@ const Header = () => {
         </div>
       )}
 
-      {/* Notification Overlay */}
-      <NotificationOverlay
-        isOpen={isNotificationOpen}
-        onClose={() => setIsNotificationOpen(false)}
-      />
-      
       {/* Settings Overlay */}
       <SettingsOverlay
         isOpen={isSettingsOpen}

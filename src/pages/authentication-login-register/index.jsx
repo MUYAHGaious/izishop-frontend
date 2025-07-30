@@ -10,6 +10,7 @@ import RegisterForm from './components/RegisterForm';
 import SocialAuthButtons from './components/SocialAuthButtons';
 import Icon from '../../components/AppIcon';
 import { showToast } from '../../components/ui/Toast';
+import LoadingScreen from '../../components/ui/LoadingScreen';
 import api from '../../services/api';
 
 const brandBenefits = [
@@ -40,21 +41,31 @@ const AuthenticationLoginRegister = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [hasRedirected, setHasRedirected] = useState(false);
+  const [autoLoginMessage, setAutoLoginMessage] = useState('');
   const navigate = useNavigate();
   const { user, login, register, isAuthenticated, redirectAfterAuth } = useAuth();
 
   useEffect(() => {
     // Check if user is already authenticated and redirect once
     if (isAuthenticated() && user?.role && !hasRedirected) {
+      console.log('Auth state detected, redirecting user:', user.role);
       setHasRedirected(true);
       // Small delay to prevent rapid redirects
       setTimeout(() => {
         redirectToDashboard(user.role);
       }, 100);
     }
-  }, [user, hasRedirected]);
+  }, [user, hasRedirected, isAuthenticated]);
 
   const redirectToDashboard = (role) => {
+    console.log('=== REDIRECT TO DASHBOARD DEBUG ===');
+    console.log('Role received:', role);
+    console.log('Current auth state:', {
+      isAuthenticated: isAuthenticated(),
+      accessToken: !!localStorage.getItem('accessToken'),
+      user: localStorage.getItem('user')
+    });
+    
     // Use the new return URL system for seamless navigation
     const { redirectUrl, pendingCartState } = redirectAfterAuth();
     
@@ -76,10 +87,14 @@ const AuthenticationLoginRegister = () => {
           break;
         case 'CUSTOMER':
         case 'customer':
-        case 'CASUAL_SELLER':
-        case 'casual_seller':
+          finalRedirectUrl = '/customer-dashboard';
+          break;
         case 'DELIVERY_AGENT':
         case 'delivery_agent':
+          finalRedirectUrl = '/delivery-agent-dashboard';
+          break;
+        case 'CASUAL_SELLER':
+        case 'casual_seller':
         default:
           finalRedirectUrl = '/product-catalog';
           break;
@@ -87,9 +102,12 @@ const AuthenticationLoginRegister = () => {
     }
     
     console.log('Final redirect URL:', finalRedirectUrl);
+    console.log('About to navigate to:', finalRedirectUrl);
     
     // Navigate to the determined URL
     navigate(finalRedirectUrl);
+    
+    console.log('Navigate called, current location should change to:', finalRedirectUrl);
     
     // If there's pending cart state, handle it
     if (pendingCartState) {
@@ -136,6 +154,13 @@ const AuthenticationLoginRegister = () => {
       const response = await register(userData);
       console.log('User registration successful, user role:', response.user.role);
       
+      // Check if user is authenticated after registration
+      const isNowAuthenticated = isAuthenticated();
+      console.log('User authenticated after registration:', isNowAuthenticated);
+      console.log('Response includes access_token:', !!response.access_token);
+      console.log('Response includes user:', !!response.user);
+      console.log('User role:', response.user?.role);
+      
       // If user is shop owner and shop data was provided, create the shop
       if ((response.user.role === 'SHOP_OWNER' || response.user.role === 'shop_owner') && shopData) {
         try {
@@ -158,7 +183,37 @@ const AuthenticationLoginRegister = () => {
           console.log('Shop created successfully:', shopResponse);
           
           // Show success message for both user and shop creation
-          redirectToDashboard(response.user.role);
+          if (isAuthenticated()) {
+            console.log('Shop owner is authenticated, redirecting to dashboard');
+            redirectToDashboard(response.user.role);
+          } else {
+            console.log('Shop owner registered but not authenticated, attempting automatic login');
+            try {
+              setAutoLoginMessage('Setting up your shop...');
+              await new Promise(resolve => setTimeout(resolve, 500));
+              
+              setAutoLoginMessage('Logging you in...');
+              const loginResponse = await login({
+                email: userData.email,
+                password: userData.password
+              });
+              console.log('Automatic login successful after shop creation:', loginResponse);
+              
+              setAutoLoginMessage('Redirecting to dashboard...');
+              // Double-check authentication and force redirect if needed
+              setTimeout(() => {
+                if (isAuthenticated()) {
+                  redirectToDashboard(response.user.role);
+                } else {
+                  setAutoLoginMessage('');
+                }
+              }, 500);
+            } catch (loginError) {
+              console.warn('Automatic login failed after shop creation:', loginError);
+              showToast.success('Registration and shop creation successful! Please log in to access your dashboard.');
+              setActiveTab('login');
+            }
+          }
           setIsLoading(false);
           
         } catch (shopError) {
@@ -169,22 +224,151 @@ const AuthenticationLoginRegister = () => {
             status: shopError.response?.status
           });
           
-          // User was created successfully, but shop creation failed
-          // Still redirect to dashboard but show a warning
-          redirectToDashboard(response.user.role);
-          setIsLoading(false);
+          // Show specific validation error to user
+          let errorMessage = 'Failed to create shop. ';
+          if (shopError.response?.status === 422) {
+            const validationErrors = shopError.response?.data?.detail?.errors || [];
+            if (validationErrors.length > 0) {
+              errorMessage += validationErrors.join('. ');
+            } else if (shopError.response?.data?.detail) {
+              errorMessage += shopError.response.data.detail;
+            }
+          } else {
+            errorMessage += shopError.message || 'Please try again.';
+          }
           
-          // Show a toast notification about shop creation failure immediately
           showToast({
             type: 'error',
-            message: `Account created but shop creation failed: ${shopError.message || 'Unknown error'}. Please contact support.`,
-            duration: 8000
+            message: errorMessage,
+            duration: 5000
           });
+          
+          // For validation errors, don't auto-login, let user fix the error
+          if (shopError.response?.status === 422) {
+            console.log('Shop creation validation error, staying on registration to let user fix it');
+            setIsLoading(false);
+            setAutoLoginMessage('');
+            // User data is still in the form, they can correct the shop name and retry
+            return;
+          }
+          
+          // For other errors, user was created successfully but shop creation failed
+          // Still redirect to dashboard but show a warning
+          if (isAuthenticated()) {
+            redirectToDashboard(response.user.role);
+          } else {
+            // Try automatic login for shop owners for non-validation errors
+            try {
+              console.log('Attempting automatic login for shop owner after shop creation error');
+              
+              setAutoLoginMessage('Setting up your account...');
+              await new Promise(resolve => setTimeout(resolve, 500));
+              
+              setAutoLoginMessage('Logging you in...');
+              const loginResponse = await login({
+                email: userData.email,
+                password: userData.password
+              });
+              console.log('Automatic login successful after shop error:', loginResponse);
+              
+              setAutoLoginMessage('Redirecting to dashboard...');
+              setTimeout(() => {
+                if (isAuthenticated()) {
+                  redirectToDashboard(response.user.role);
+                } else {
+                  setAutoLoginMessage('');
+                }
+              }, 500);
+            } catch (loginError) {
+              console.warn('Automatic login failed after shop creation failure:', loginError);
+              showToast({
+                type: 'warning',
+                message: 'Registration successful! Please log in to access your dashboard.',
+                duration: 4000
+              });
+              setActiveTab('login');
+            }
+          }
+          setIsLoading(false);
         }
       } else {
         // Regular user (not shop owner) or no shop data
         console.log('No shop creation needed for this user type');
-        redirectToDashboard(response.user.role);
+        
+        // Force redirect if user is authenticated
+        if (isAuthenticated()) {
+          console.log('User is authenticated, redirecting to dashboard');
+          redirectToDashboard(response.user.role);
+        } else {
+          // User registered but not authenticated
+          console.log('User registered but not authenticated');
+          
+          // For delivery agents and customers, try to log them in automatically
+          if (response.user.role === 'DELIVERY_AGENT' || response.user.role === 'CUSTOMER') {
+            try {
+              console.log('=== DELIVERY AGENT REGISTRATION DEBUG ===');
+              console.log('User role:', response.user.role);
+              console.log('User created:', response.user);
+              console.log('Tokens in response:', { 
+                access_token: !!response.access_token, 
+                refresh_token: !!response.refresh_token 
+              });
+              
+              setAutoLoginMessage('Setting up your account...');
+              await new Promise(resolve => setTimeout(resolve, 500));
+              
+              setAutoLoginMessage('Logging you in...');
+              const loginResponse = await login({
+                email: userData.email,
+                password: userData.password
+              });
+              console.log('Automatic login response:', loginResponse);
+              console.log('Auth state after login:', {
+                isAuthenticated: isAuthenticated(),
+                accessToken: !!localStorage.getItem('accessToken'),
+                user: localStorage.getItem('user')
+              });
+              
+              setAutoLoginMessage('Redirecting to dashboard...');
+              // Immediate redirect attempt
+              console.log('Attempting immediate redirect...');
+              redirectToDashboard(response.user.role);
+              
+              // Backup check after delay
+              setTimeout(() => {
+                console.log('Backup redirect check - Auth state:', {
+                  isAuthenticated: isAuthenticated(),
+                  accessToken: !!localStorage.getItem('accessToken'),
+                  currentPath: window.location.pathname
+                });
+                
+                if (isAuthenticated()) {
+                  console.log('User is authenticated, forcing redirect...');
+                  redirectToDashboard(response.user.role);
+                } else {
+                  console.warn('User not authenticated after automatic login, showing manual login');
+                  setAutoLoginMessage('');
+                  showToast.success('Registration successful! Please log in to access your dashboard.');
+                  setActiveTab('login');
+                }
+              }, 1000);
+            } catch (loginError) {
+              console.error('=== AUTOMATIC LOGIN FAILED ===');
+              console.error('Login error:', loginError);
+              console.error('Error details:', {
+                message: loginError.message,
+                stack: loginError.stack
+              });
+              setAutoLoginMessage('');
+              showToast.success('Registration successful! Please log in to access your dashboard.');
+              setActiveTab('login');
+            }
+          } else {
+            // For other roles, show verification message
+            showToast.success('Registration successful! Please check your email for verification.');
+            setActiveTab('login');
+          }
+        }
         setIsLoading(false);
       }
       
@@ -220,6 +404,17 @@ const AuthenticationLoginRegister = () => {
       setIsLoading(false);
     }
   };
+
+  // Show auto-login loading message using LoadingScreen component
+  if (autoLoginMessage) {
+    return (
+      <LoadingScreen 
+        message={autoLoginMessage}
+        variant="auth"
+        showProgress={false}
+      />
+    );
+  }
 
   if (showSuccessMessage) {
     return (

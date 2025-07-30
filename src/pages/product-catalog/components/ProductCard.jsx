@@ -74,7 +74,7 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist }) => {
       <div className="relative aspect-square overflow-hidden bg-muted">
         <Link to={`/product-detail-modal?id=${product.id}`}>
           <Image
-            src={product.image}
+            src={product.image_urls?.[0] || product.image || '/assets/images/no_image.png'}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />

@@ -12,7 +12,7 @@ const OrderReviewForm = ({ onNext, onBack, formData, setFormData }) => {
       price: 850000,
       quantity: 1,
       seller: "TechStore Cameroun",
-      condition: "Neuf"
+      condition: "New"
     },
     {
       id: 2,
@@ -21,7 +21,7 @@ const OrderReviewForm = ({ onNext, onBack, formData, setFormData }) => {
       price: 125000,
       quantity: 2,
       seller: "AudioWorld CM",
-      condition: "Neuf"
+      condition: "New"
     },
     {
       id: 3,
@@ -30,7 +30,7 @@ const OrderReviewForm = ({ onNext, onBack, formData, setFormData }) => {
       price: 450000,
       quantity: 1,
       seller: "SecondHand Tech",
-      condition: "Très bon état"
+      condition: "Very good condition"
     }
   ];
 
@@ -64,7 +64,7 @@ const OrderReviewForm = ({ onNext, onBack, formData, setFormData }) => {
         {/* Order Items */}
         <div className="lg:col-span-2">
           <div className="bg-surface rounded-lg border border-border p-6 elevation-1">
-            <h2 className="text-xl font-semibold text-foreground mb-6">Récapitulatif de Commande</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-6">Order Summary</h2>
             
             <div className="space-y-4">
               {cartItems.map((item) => (
@@ -92,7 +92,7 @@ const OrderReviewForm = ({ onNext, onBack, formData, setFormData }) => {
                     
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <span className="text-sm text-muted-foreground">Quantité:</span>
+                        <span className="text-sm text-muted-foreground">Quantity:</span>
                         <div className="flex items-center space-x-2">
                           <Button
                             variant="outline"
@@ -136,7 +136,7 @@ const OrderReviewForm = ({ onNext, onBack, formData, setFormData }) => {
         {/* Order Summary */}
         <div className="lg:col-span-1">
           <div className="bg-surface rounded-lg border border-border p-6 elevation-1 sticky top-4">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Résumé</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Summary</h3>
             
             {/* Delivery Info */}
             <div className="mb-4 p-3 bg-muted/50 rounded-lg border border-border">
@@ -150,7 +150,7 @@ const OrderReviewForm = ({ onNext, onBack, formData, setFormData }) => {
                 {formData.deliveryOptionDetails?.timeframe}
               </p>
               <p className="text-xs text-muted-foreground">
-                Livraison estimée: {formData.deliveryOptionDetails?.estimatedDate}
+                Estimated delivery: {formData.deliveryOptionDetails?.estimatedDate}
               </p>
             </div>
 
@@ -158,7 +158,7 @@ const OrderReviewForm = ({ onNext, onBack, formData, setFormData }) => {
             <div className="mb-4 p-3 bg-muted/50 rounded-lg border border-border">
               <div className="flex items-center space-x-2 mb-2">
                 <Icon name="MapPin" size={16} className="text-primary" />
-                <span className="text-sm font-medium text-foreground">Livraison à</span>
+                <span className="text-sm font-medium text-foreground">Deliver to</span>
               </div>
               <p className="text-xs text-muted-foreground">
                 {formData.fullName}
@@ -171,14 +171,14 @@ const OrderReviewForm = ({ onNext, onBack, formData, setFormData }) => {
             {/* Price Breakdown */}
             <div className="space-y-3 mb-4">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Sous-total ({cartItems.length} articles)</span>
+                <span className="text-muted-foreground">Subtotal ({cartItems.length} items)</span>
                 <span className="text-foreground">{formatCurrency(subtotal)}</span>
               </div>
               
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Livraison</span>
+                <span className="text-muted-foreground">Delivery</span>
                 <span className={deliveryCost === 0 ? 'text-success' : 'text-foreground'}>
-                  {deliveryCost === 0 ? 'Gratuit' : formatCurrency(deliveryCost)}
+                  {deliveryCost === 0 ? 'Free' : formatCurrency(deliveryCost)}
                 </span>
               </div>
               
@@ -198,7 +198,7 @@ const OrderReviewForm = ({ onNext, onBack, formData, setFormData }) => {
             {/* Security Badge */}
             <div className="flex items-center space-x-2 mb-4 p-2 bg-success/10 rounded-lg border border-success/20">
               <Icon name="Shield" size={16} className="text-success" />
-              <span className="text-xs text-success font-medium">Paiement sécurisé avec escrow</span>
+              <span className="text-xs text-success font-medium">Secure payment with escrow</span>
             </div>
           </div>
         </div>
@@ -211,7 +211,7 @@ const OrderReviewForm = ({ onNext, onBack, formData, setFormData }) => {
           iconName="ArrowLeft"
           iconPosition="left"
         >
-          Retour
+          Back
         </Button>
         
         <Button
@@ -221,7 +221,7 @@ const OrderReviewForm = ({ onNext, onBack, formData, setFormData }) => {
           iconPosition="right"
           className="min-w-32"
         >
-          Paiement
+          Payment
         </Button>
       </div>
     </div>

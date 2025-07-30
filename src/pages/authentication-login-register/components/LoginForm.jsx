@@ -6,6 +6,7 @@ import LoginEmailInput from '../../../components/ui/LoginEmailInput';
 import { Checkbox } from '../../../components/ui/Checkbox';
 import Icon from '../../../components/AppIcon';
 import { showToast } from '../../../components/ui/Toast';
+import rememberMeService from '../../../services/rememberMeService';
 
 const LoginForm = ({ onLogin, isLoading, onSwitchToRegister }) => {
   const [formData, setFormData] = useState({
@@ -16,8 +17,51 @@ const LoginForm = ({ onLogin, isLoading, onSwitchToRegister }) => {
   const [errors, setErrors] = useState({});
   const [loginError, setLoginError] = useState(''); // NEW: For specific login errors
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoadingRemembered, setIsLoadingRemembered] = useState(false);
 
+  // Load remembered credentials on component mount
+  useEffect(() => {
+    const loadRememberedCredentials = async () => {
+      try {
+        setIsLoadingRemembered(true);
+        
+        // Validate secure usage
+        if (!rememberMeService.validateSecureUsage()) {
+          console.warn('Remember me service validation failed');
+          return;
+        }
 
+        // Get remembered credentials
+        const rememberedCredentials = rememberMeService.getRememberedCredentials();
+        
+        if (rememberedCredentials) {
+          console.log('Found remembered credentials for:', rememberedCredentials.email);
+          
+          setFormData(prev => ({
+            ...prev,
+            email: rememberedCredentials.email,
+            rememberMe: true
+          }));
+          
+          // Show toast to inform user
+          showToast({
+            type: 'info',
+            message: `Welcome back, ${rememberedCredentials.email}`,
+            duration: 3000
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load remembered credentials:', error);
+      } finally {
+        setIsLoadingRemembered(false);
+      }
+    };
+
+    loadRememberedCredentials();
+    
+    // Cleanup expired tokens
+    rememberMeService.cleanupExpiredTokens();
+  }, []);
 
   // Enhanced validation functions
   const validateEmail = (email) => {
@@ -64,7 +108,24 @@ const LoginForm = ({ onLogin, isLoading, onSwitchToRegister }) => {
       
       // Pass credentials to parent component's handleLogin function
       if (onLogin) {
-        await onLogin(credentials);
+        const loginResponse = await onLogin(credentials);
+        
+        // Handle remember me after successful login
+        if (loginResponse && loginResponse.access_token) {
+          rememberMeService.handleSuccessfulLogin(
+            credentials.email, 
+            formData.rememberMe,
+            loginResponse.access_token
+          );
+          
+          if (formData.rememberMe) {
+            showToast({
+              type: 'success',
+              message: 'Login credentials saved securely',
+              duration: 3000
+            });
+          }
+        }
       } else {
         console.error('No onLogin callback provided');
       }
@@ -171,12 +232,21 @@ const LoginForm = ({ onLogin, isLoading, onSwitchToRegister }) => {
       </div>
 
       <div className="flex items-center justify-between">
-        <Checkbox
-          label="Remember me"
-          name="rememberMe"
-          checked={formData.rememberMe}
-          onChange={handleInputChange}
-        />
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            label="Remember me"
+            name="rememberMe"
+            checked={formData.rememberMe}
+            onChange={handleInputChange}
+            disabled={isLoadingRemembered}
+          />
+          {formData.rememberMe && (
+            <div className="flex items-center text-xs text-text-secondary">
+              <Icon name="Shield" size={12} className="mr-1" />
+              Secure
+            </div>
+          )}
+        </div>
         
         <Link
           to="/forgot-password"

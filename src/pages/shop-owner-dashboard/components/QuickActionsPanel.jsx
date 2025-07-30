@@ -1,8 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 
 const QuickActionsPanel = () => {
+  const navigate = useNavigate();
+  
   const quickActions = [
     {
       id: 'add-product',
@@ -10,7 +13,7 @@ const QuickActionsPanel = () => {
       description: 'List a new item in your shop',
       icon: 'Plus',
       color: 'primary',
-      action: () => window.location.href = '/product-management',
+      action: () => navigate('/add-product'),
       badge: null
     },
     {
@@ -19,7 +22,11 @@ const QuickActionsPanel = () => {
       description: 'Handle pending customer orders',
       icon: 'Package',
       color: 'warning',
-      action: () => window.location.href = '/order-management',
+      action: () => {
+        // Switch to orders tab in current dashboard
+        const event = new CustomEvent('switchDashboardTab', { detail: 'orders' });
+        window.dispatchEvent(event);
+      },
       badge: '5'
     },
     {
@@ -28,7 +35,7 @@ const QuickActionsPanel = () => {
       description: 'Respond to customer inquiries',
       icon: 'MessageCircle',
       color: 'secondary',
-      action: () => console.log('Open customer messages'),
+      action: () => navigate('/chat-interface-modal'),
       badge: '3'
     },
     {
@@ -37,7 +44,7 @@ const QuickActionsPanel = () => {
       description: 'Review stock levels and alerts',
       icon: 'Package2',
       color: 'success',
-      action: () => console.log('Open inventory management'),
+      action: () => navigate('/my-products'),
       badge: null
     },
     {
@@ -46,7 +53,11 @@ const QuickActionsPanel = () => {
       description: 'Generate performance reports',
       icon: 'BarChart3',
       color: 'accent',
-      action: () => console.log('Generate sales report'),
+      action: () => {
+        // Switch to analytics tab in current dashboard
+        const event = new CustomEvent('switchDashboardTab', { detail: 'analytics' });
+        window.dispatchEvent(event);
+      },
       badge: null
     },
     {
@@ -55,7 +66,7 @@ const QuickActionsPanel = () => {
       description: 'Update shop information',
       icon: 'Settings',
       color: 'muted',
-      action: () => console.log('Open shop settings'),
+      action: () => navigate('/my-shop-profile'),
       badge: null
     }
   ];

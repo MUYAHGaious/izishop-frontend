@@ -14,6 +14,7 @@ import ProductGrid from './components/ProductGrid';
 import ReviewsSection from './components/ReviewsSection';
 import AboutSection from './components/AboutSection';
 import FloatingContact from './components/FloatingContact';
+import ShopSuspensionWarning from './components/ShopSuspensionWarning';
 import { showToast } from '../../components/ui/Toast';
 
 const ShopProfile = () => {
@@ -300,6 +301,9 @@ const ShopProfile = () => {
       <Header />
       
       <main className="pt-16 lg:pt-20 pb-20 lg:pb-8">
+        {/* Shop Suspension Warning */}
+        <ShopSuspensionWarning shop={shopData} isOwner={isOwner} />
+        
         {/* Shop Hero Section */}
         <ShopHero 
           shop={shopData} 

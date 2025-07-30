@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
+import api from '../../../services/api';
+import { showToast } from '../../../components/ui/Toast';
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
@@ -10,10 +12,54 @@ const OrderManagement = () => {
   const [selectedOrders, setSelectedOrders] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [ordersPerPage] = useState(10);
+  const [loading, setLoading] = useState(true);
+  const [orderStats, setOrderStats] = useState({
+    total: 0,
+    pending: 0,
+    processing: 0,
+    shipped: 0,
+    delivered: 0,
+    cancelled: 0
+  });
 
-  // Mock order data
-  useEffect(() => {
-    const mockOrders = [
+  // Load real order data
+  const loadOrders = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch orders from API
+      const ordersResponse = await api.getShopOwnerOrders({
+        page: 1,
+        page_size: 100, // Get all orders for filtering
+        include_stats: true
+      });
+      
+      if (ordersResponse && ordersResponse.orders) {
+        setOrders(ordersResponse.orders);
+        setFilteredOrders(ordersResponse.orders);
+        
+        // Calculate stats
+        const stats = ordersResponse.orders.reduce((acc, order) => {
+          acc.total++;
+          acc[order.status] = (acc[order.status] || 0) + 1;
+          return acc;
+        }, {
+          total: 0,
+          pending: 0,
+          processing: 0,
+          shipped: 0,
+          delivered: 0,
+          cancelled: 0
+        });
+        
+        setOrderStats(stats);
+      }
+    } catch (error) {
+      console.error('Failed to load orders:', error);
+      showToast.error('Failed to load orders. Please try again.');
+      
+      // Fallback to mock data if API fails
+      const mockOrders = [
       {
         id: 'ORD-001',
         customer: 'John Doe',
@@ -101,9 +147,43 @@ const OrderManagement = () => {
         notes: 'Customer requested cancellation',
         priority: 'low'
       }
-    ];
-    setOrders(mockOrders);
-    setFilteredOrders(mockOrders);
+      ];
+      
+      setOrders(mockOrders);
+      setFilteredOrders(mockOrders);
+      
+      // Calculate stats for mock data
+      const mockStats = mockOrders.reduce((acc, order) => {
+        acc.total++;
+        acc[order.status] = (acc[order.status] || 0) + 1;
+        return acc;
+      }, {
+        total: 0,
+        pending: 0,
+        processing: 0,
+        shipped: 0,
+        delivered: 0,
+        cancelled: 0
+      });
+      
+      setOrderStats(mockStats);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load orders on component mount
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  // Auto-refresh orders every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadOrders();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   // Filter orders
@@ -206,14 +286,79 @@ const OrderManagement = () => {
     });
   };
 
-  const handleOrderAction = (action, orderId) => {
-    console.log(`${action} order ${orderId}`);
-    // Implement order actions here
+  const handleOrderAction = async (action, orderId) => {
+    try {
+      let newStatus;
+      switch (action) {
+        case 'process':
+          newStatus = 'processing';
+          break;
+        case 'ship':
+          newStatus = 'shipped';
+          break;
+        case 'deliver':
+          newStatus = 'delivered';
+          break;
+        case 'cancel':
+          newStatus = 'cancelled';
+          break;
+        default:
+          console.log(`${action} order ${orderId}`);
+          return;
+      }
+
+      // Update order status via API
+      await api.updateOrderStatus(orderId, newStatus);
+      showToast.success(`Order ${orderId} updated to ${newStatus}`);
+      
+      // Refresh orders list
+      await loadOrders();
+    } catch (error) {
+      console.error('Failed to update order:', error);
+      showToast.error('Failed to update order status. Please try again.');
+    }
   };
 
-  const handleBulkAction = (action) => {
-    console.log(`${action} orders:`, selectedOrders);
-    // Implement bulk actions here
+  const handleBulkAction = async (action) => {
+    if (selectedOrders.length === 0) {
+      showToast.error('Please select orders to perform bulk action');
+      return;
+    }
+
+    try {
+      let newStatus;
+      switch (action) {
+        case 'process':
+          newStatus = 'processing';
+          break;
+        case 'ship':
+          newStatus = 'shipped';
+          break;
+        case 'print':
+          // Handle print action differently
+          console.log('Printing labels for orders:', selectedOrders);
+          showToast.success(`Print labels for ${selectedOrders.length} orders`);
+          return;
+        default:
+          console.log(`${action} orders:`, selectedOrders);
+          return;
+      }
+
+      // Update multiple orders
+      const updatePromises = selectedOrders.map(orderId => 
+        api.updateOrderStatus(orderId, newStatus)
+      );
+      
+      await Promise.all(updatePromises);
+      showToast.success(`${selectedOrders.length} orders updated to ${newStatus}`);
+      
+      // Clear selection and refresh
+      setSelectedOrders([]);
+      await loadOrders();
+    } catch (error) {
+      console.error('Failed to perform bulk action:', error);
+      showToast.error('Failed to update orders. Please try again.');
+    }
   };
 
   const toggleOrderSelection = (orderId) => {
@@ -259,43 +404,35 @@ const OrderManagement = () => {
             <Icon name="ShoppingBag" size={20} className="text-blue-600" />
             <span className="text-sm text-gray-600">Total</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{orders.length}</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{orderStats.total}</p>
         </div>
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <div className="flex items-center space-x-2">
             <Icon name="Clock" size={20} className="text-yellow-600" />
             <span className="text-sm text-gray-600">Pending</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
-            {orders.filter(o => o.status === 'pending').length}
-          </p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{orderStats.pending}</p>
         </div>
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <div className="flex items-center space-x-2">
             <Icon name="Package" size={20} className="text-blue-600" />
             <span className="text-sm text-gray-600">Processing</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
-            {orders.filter(o => o.status === 'processing').length}
-          </p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{orderStats.processing}</p>
         </div>
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <div className="flex items-center space-x-2">
             <Icon name="Truck" size={20} className="text-purple-600" />
             <span className="text-sm text-gray-600">Shipped</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
-            {orders.filter(o => o.status === 'shipped').length}
-          </p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{orderStats.shipped}</p>
         </div>
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <div className="flex items-center space-x-2">
             <Icon name="CheckCircle" size={20} className="text-green-600" />
             <span className="text-sm text-gray-600">Delivered</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
-            {orders.filter(o => o.status === 'delivered').length}
-          </p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{orderStats.delivered}</p>
         </div>
       </div>
 

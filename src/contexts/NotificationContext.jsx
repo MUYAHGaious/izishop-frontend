@@ -1,26 +1,53 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import notificationService from '../services/notificationService';
 
+// Error boundary for notification context
+class NotificationErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('NotificationContext Error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // Return children with safe defaults
+      console.warn('NotificationContext crashed, providing fallback');
+      return this.props.children;
+    }
+
+    return this.props.children;
+  }
+}
+
 const NotificationContext = createContext();
 
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
   if (!context) {
     // Return safe defaults if context not available
+    console.warn('useNotifications called outside of NotificationProvider, returning defaults');
     return {
       notifications: [],
       unreadCount: 0,
       isLoading: false,
       error: null,
       permissionGranted: false,
-      addNotification: () => {},
-      markAsRead: () => {},
-      markAllAsRead: () => {},
-      deleteNotification: () => {},
-      clearAll: () => {},
+      addNotification: () => Promise.resolve(),
+      markAsRead: () => Promise.resolve(),
+      markAllAsRead: () => Promise.resolve(),
+      deleteNotification: () => Promise.resolve(),
+      clearAll: () => Promise.resolve(),
       clearError: () => {},
-      requestPermission: () => {},
-      loadUserNotifications: () => {},
+      requestPermission: () => Promise.resolve(false),
+      loadUserNotifications: () => Promise.resolve(),
       getFilteredNotifications: () => []
     };
   }
@@ -35,6 +62,13 @@ export const NotificationProvider = ({ children }) => {
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Mark component as mounted
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   // Get auth state from localStorage to avoid circular dependency
   useEffect(() => {
@@ -50,32 +84,75 @@ export const NotificationProvider = ({ children }) => {
           setIsAuthenticated(false);
         }
       } catch (error) {
-        console.error('Error checking auth state:', error);
+        console.error('Error checking auth state in NotificationContext:', error);
         setUser(null);
         setIsAuthenticated(false);
+        setError('Failed to check authentication state');
       }
     };
 
-    checkAuthState();
+    // Delay initial check to prevent race conditions
+    setTimeout(checkAuthState, 100);
+    
     // Listen for auth changes
     window.addEventListener('storage', checkAuthState);
     return () => window.removeEventListener('storage', checkAuthState);
   }, []);
 
-  // Initialize notification service when user authenticates (disabled for now)
+  // Initialize notification service when user authenticates
   useEffect(() => {
-    // Temporarily disable notification initialization to prevent loops
-    console.log('Notification initialization disabled');
-  }, []);
+    if (isAuthenticated && user) {
+      try {
+        console.log('Initializing notifications for user:', user.email);
+        // Start notification polling for authenticated users
+        notificationService.startRealTimeNotifications();
+      } catch (error) {
+        console.error('Error initializing notification service:', error);
+        setError('Failed to initialize notifications');
+      }
+    } else {
+      console.log('User not authenticated, skipping notification initialization');
+      try {
+        notificationService.stopNotifications();
+      } catch (error) {
+        console.error('Error stopping notification service:', error);
+      }
+    }
+  }, [isAuthenticated, user]);
 
   // Subscribe to notification service updates
   useEffect(() => {
-    const unsubscribe = notificationService.subscribe(({ notifications, unreadCount }) => {
-      setNotifications(notifications);
-      setUnreadCount(unreadCount);
-    });
+    let unsubscribe;
+    try {
+      unsubscribe = notificationService.subscribe(({ notifications, unreadCount, count }) => {
+        try {
+          const newNotifications = notifications || [];
+          const newUnreadCount = unreadCount || 0;
+          
+          // Update state
+          setNotifications(newNotifications);
+          setUnreadCount(newUnreadCount);
+          
+          // Log updates for debugging
+          console.log(`🔔 Notification state updated: ${newNotifications.length} total, ${newUnreadCount} unread`);
+          
+        } catch (error) {
+          console.error('Error updating notification state:', error);
+          setError('Failed to update notifications');
+        }
+      });
+    } catch (error) {
+      console.error('Error subscribing to notification service:', error);
+      setError('Failed to subscribe to notifications');
+    }
 
-    return unsubscribe;
+    return () => {
+      try {
+        if (unsubscribe) unsubscribe();
+      } catch (error) {
+        console.error('Error unsubscribing from notification service:', error);
+      }
+    };
   }, []);
 
   const initializeNotifications = async () => {
@@ -179,30 +256,56 @@ export const NotificationProvider = ({ children }) => {
   };
 
   // Trigger a test notification (for development/testing)
-  const triggerTestNotification = () => {
-    const testNotifications = [
-      {
-        type: 'order',
-        title: 'Test Order Notification',
-        message: 'This is a test order notification to verify real-time updates',
-        icon: 'Package'
-      },
-      {
-        type: 'payment',
-        title: 'Test Payment Notification', 
-        message: 'Test payment confirmation notification',
-        icon: 'CreditCard'
-      },
-      {
-        type: 'system',
-        title: 'Test System Notification',
-        message: 'This is a test system notification',
-        icon: 'Settings'
+  const triggerTestNotification = (type = 'test') => {
+    if (notificationService && typeof notificationService.simulateNewNotification === 'function') {
+      return notificationService.simulateNewNotification(type);
+    } else {
+      // Fallback for direct context usage
+      const testNotifications = [
+        {
+          type: 'ORDER',
+          title: 'Test Order Notification',
+          message: 'This is a test order notification to verify real-time updates',
+          icon: 'Package',
+          priority: 'high'
+        },
+        {
+          type: 'PAYMENT',
+          title: 'Test Payment Notification', 
+          message: 'Test payment confirmation notification',
+          icon: 'CreditCard',
+          priority: 'medium'
+        },
+        {
+          type: 'SYSTEM',
+          title: 'Test System Notification',
+          message: 'This is a test system notification',
+          icon: 'Settings',
+          priority: 'low'
+        }
+      ];
+      
+      const randomNotification = testNotifications[Math.floor(Math.random() * testNotifications.length)];
+      addNotification(randomNotification);
+      return randomNotification;
+    }
+  };
+
+  // Force refresh notifications
+  const forceRefresh = async () => {
+    try {
+      setIsLoading(true);
+      if (notificationService && typeof notificationService.forceRefresh === 'function') {
+        await notificationService.forceRefresh();
+      } else {
+        await notificationService.fetchNotifications();
       }
-    ];
-    
-    const randomNotification = testNotifications[Math.floor(Math.random() * testNotifications.length)];
-    addNotification(randomNotification);
+    } catch (error) {
+      console.error('Failed to force refresh notifications:', error);
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Request permission for browser notifications
@@ -269,6 +372,7 @@ export const NotificationProvider = ({ children }) => {
     deleteNotification,
     clearAll,
     refresh,
+    forceRefresh,
     addNotification,
     triggerTestNotification,
     requestPermission,
@@ -284,10 +388,17 @@ export const NotificationProvider = ({ children }) => {
     notificationService
   };
 
+  // Don't render until component is mounted
+  if (!mounted) {
+    return children;
+  }
+
   return (
-    <NotificationContext.Provider value={value}>
-      {children}
-    </NotificationContext.Provider>
+    <NotificationErrorBoundary>
+      <NotificationContext.Provider value={value}>
+        {children}
+      </NotificationContext.Provider>
+    </NotificationErrorBoundary>
   );
 };
 

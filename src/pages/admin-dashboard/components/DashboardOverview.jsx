@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
+import Button from '../../../components/ui/Button';
 import api from '../../../services/api';
+import SystemReportModal from './SystemReportModal';
+import RecentActivitiesModal from './RecentActivitiesModal';
 
-const DashboardOverview = () => {
+const DashboardOverview = ({ onTabChange }) => {
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeShops: 0,
@@ -18,12 +21,21 @@ const DashboardOverview = () => {
     usersToday: 0
   });
 
+  const [trends, setTrends] = useState({});
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showActivitiesModal, setShowActivitiesModal] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
+    
+    // Set up auto-refresh every 30 seconds
+    const interval = setInterval(fetchDashboardData, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const fetchDashboardData = async () => {
@@ -52,6 +64,8 @@ const DashboardOverview = () => {
         usersToday: overviewData.users_today
       });
 
+      setTrends(overviewData.trends || {});
+      setLastUpdated(overviewData.last_updated);
       setRecentActivity(activityData.activities || []);
     } catch (err) {
       setError(err.message || 'Failed to fetch dashboard data');
@@ -62,10 +76,10 @@ const DashboardOverview = () => {
   };
 
   const quickActions = [
-    { id: 1, title: 'Approve Shops', description: `${stats.pendingApprovals || 0} pending approvals`, icon: 'CheckCircle', color: 'bg-green-500', action: 'approve-shops' },
-    { id: 2, title: 'Review Orders', description: `${stats.totalOrders || 0} total orders`, icon: 'AlertTriangle', color: 'bg-yellow-500', action: 'review-orders' },
-    { id: 3, title: 'User Support', description: `${stats.totalUsers || 0} users`, icon: 'MessageCircle', color: 'bg-blue-500', action: 'user-support' },
-    { id: 4, title: 'System Reports', description: 'Generate reports', icon: 'FileText', color: 'bg-purple-500', action: 'system-reports' }
+    { id: 1, title: 'Review Orders', description: `${stats.totalOrders || 0} total orders`, icon: 'ShoppingBag', color: 'bg-yellow-500', action: 'review-orders' },
+    { id: 2, title: 'User Management', description: `${stats.totalUsers || 0} total users`, icon: 'Users', color: 'bg-blue-500', action: 'user-management' },
+    { id: 3, title: 'Analytics', description: 'View detailed analytics', icon: 'BarChart3', color: 'bg-indigo-500', action: 'analytics' },
+    { id: 4, title: 'System Health', description: `${stats.systemHealth || 0}% healthy`, icon: 'Activity', color: 'bg-green-500', action: 'system-health' }
   ];
 
   const formatCurrency = (amount) => {
@@ -78,6 +92,69 @@ const DashboardOverview = () => {
 
   const formatNumber = (num) => {
     return new Intl.NumberFormat().format(num);
+  };
+
+  const renderTrendIndicator = (trendKey) => {
+    const trend = trends[trendKey];
+    if (!trend) return null;
+
+    const isUp = trend.direction === 'up';
+    const isDown = trend.direction === 'down';
+    const isNeutral = trend.direction === 'neutral';
+
+    return (
+      <div className="mt-4 flex items-center text-sm">
+        <Icon 
+          name={isUp ? "TrendingUp" : isDown ? "TrendingDown" : "Minus"} 
+          size={16} 
+          className={`mr-1 ${
+            isUp ? 'text-green-500' : 
+            isDown ? 'text-red-500' : 
+            'text-gray-500'
+          }`} 
+        />
+        <span className={`font-medium ${
+          isUp ? 'text-green-500' : 
+          isDown ? 'text-red-500' : 
+          'text-gray-500'
+        }`}>
+          {isNeutral ? '0' : `${isUp ? '+' : '-'}${trend.percentage}`}%
+        </span>
+        <span className="text-gray-500 ml-1">
+          {trendKey === 'users_today' ? 'from yesterday' : 'from last month'}
+        </span>
+      </div>
+    );
+  };
+
+  const formatLastUpdated = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+
+  const handleQuickAction = (action) => {
+    switch (action) {
+      case 'review-orders':
+        if (onTabChange) onTabChange('orders');
+        break;
+      case 'user-management':
+        if (onTabChange) onTabChange('users');
+        break;
+      case 'analytics':
+        if (onTabChange) onTabChange('analytics');
+        break;
+      case 'system-health':
+        // Could open a system health modal or scroll to system health section
+        setShowReportModal(true);
+        break;
+      default:
+        console.log(`Action ${action} not implemented yet`);
+    }
   };
 
   const getActivityIcon = (type) => {
@@ -139,16 +216,32 @@ const DashboardOverview = () => {
     <div className="p-4 lg:p-6 space-y-6">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
-        <h2 className="text-2xl font-bold mb-2">Welcome back, Admin!</h2>
-        <p className="text-blue-100">Here's what's happening with your platform today.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold mb-2">Welcome back, Admin!</h2>
+            <p className="text-blue-100">Here's what's happening with your platform today.</p>
+          </div>
+          <Button
+            onClick={() => setShowReportModal(true)}
+            variant="secondary"
+            iconName="FileText"
+            className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+          >
+            Generate Report
+          </Button>
+        </div>
         <div className="mt-4 flex items-center space-x-4 text-sm">
           <div className="flex items-center space-x-1">
-            <Icon name="Clock" size={16} />
-            <span>Last login: Today, 9:30 AM</span>
+            <Icon name="RefreshCw" size={16} />
+            <span>Last updated: {lastUpdated ? formatLastUpdated(lastUpdated) : 'Loading...'}</span>
           </div>
           <div className="flex items-center space-x-1">
             <Icon name="Activity" size={16} />
             <span>System Status: {stats.systemHealth > 90 ? 'Healthy' : 'Needs Attention'}</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <span>Live Data</span>
           </div>
         </div>
       </div>
@@ -166,11 +259,7 @@ const DashboardOverview = () => {
               <Icon name="Users" size={24} className="text-blue-600" />
             </div>
           </div>
-          <div className="mt-4 flex items-center text-sm">
-            <Icon name="TrendingUp" size={16} className="text-green-500 mr-1" />
-            <span className="text-green-500 font-medium">+12.5%</span>
-            <span className="text-gray-500 ml-1">from last month</span>
-          </div>
+          {renderTrendIndicator('total_users')}
         </div>
 
         {/* Active Shops */}
@@ -184,11 +273,7 @@ const DashboardOverview = () => {
               <Icon name="Store" size={24} className="text-purple-600" />
             </div>
           </div>
-          <div className="mt-4 flex items-center text-sm">
-            <Icon name="TrendingUp" size={16} className="text-green-500 mr-1" />
-            <span className="text-green-500 font-medium">+8.2%</span>
-            <span className="text-gray-500 ml-1">from last month</span>
-          </div>
+          {renderTrendIndicator('shop_owners')}
         </div>
 
         {/* Total Orders */}
@@ -202,11 +287,7 @@ const DashboardOverview = () => {
               <Icon name="ShoppingBag" size={24} className="text-green-600" />
             </div>
           </div>
-          <div className="mt-4 flex items-center text-sm">
-            <Icon name="TrendingUp" size={16} className="text-green-500 mr-1" />
-            <span className="text-green-500 font-medium">+23.1%</span>
-            <span className="text-gray-500 ml-1">from last month</span>
-          </div>
+          {renderTrendIndicator('orders')}
         </div>
 
         {/* Monthly Revenue */}
@@ -220,30 +301,9 @@ const DashboardOverview = () => {
               <Icon name="DollarSign" size={24} className="text-yellow-600" />
             </div>
           </div>
-          <div className="mt-4 flex items-center text-sm">
-            <Icon name="TrendingUp" size={16} className="text-green-500 mr-1" />
-            <span className="text-green-500 font-medium">+18.7%</span>
-            <span className="text-gray-500 ml-1">from last month</span>
-          </div>
+          {renderTrendIndicator('revenue')}
         </div>
 
-        {/* Pending Approvals */}
-        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Pending Approvals</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.pendingApprovals}</p>
-            </div>
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <Icon name="Clock" size={24} className="text-orange-600" />
-            </div>
-          </div>
-          <div className="mt-4">
-            <button className="text-sm text-orange-600 hover:text-orange-700 font-medium">
-              Review Now →
-            </button>
-          </div>
-        </div>
 
         {/* System Health */}
         <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
@@ -277,10 +337,7 @@ const DashboardOverview = () => {
               <Icon name="UserPlus" size={24} className="text-blue-600" />
             </div>
           </div>
-          <div className="mt-4 flex items-center text-sm">
-            <Icon name="Calendar" size={16} className="text-blue-500 mr-1" />
-            <span className="text-blue-500 font-medium">Today</span>
-          </div>
+          {renderTrendIndicator('users_today')}
         </div>
 
         {/* New Users This Month */}
@@ -308,15 +365,22 @@ const DashboardOverview = () => {
           {quickActions.map((action) => (
             <button
               key={action.id}
-              className="p-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all text-left group"
+              onClick={() => handleQuickAction(action.action)}
+              className="p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md hover:bg-blue-50 transition-all text-left group active:scale-95"
             >
               <div className="flex items-center space-x-3">
                 <div className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
                   <Icon name={action.icon} size={20} className="text-white" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">{action.title}</p>
-                  <p className="text-sm text-gray-500">{action.description}</p>
+                  <p className="font-medium text-gray-900 group-hover:text-blue-700">{action.title}</p>
+                  <p className="text-sm text-gray-500 group-hover:text-blue-600">{action.description}</p>
+                </div>
+              </div>
+              <div className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center text-xs text-blue-600">
+                  <span>Click to navigate</span>
+                  <Icon name="ArrowRight" size={12} className="ml-1" />
                 </div>
               </div>
             </button>
@@ -328,8 +392,12 @@ const DashboardOverview = () => {
       <div className="bg-white rounded-xl p-6 border border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
-          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-            View All
+          <button 
+            onClick={() => setShowActivitiesModal(true)}
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-1 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+          >
+            <span>View All</span>
+            <Icon name="ExternalLink" size={14} />
           </button>
         </div>
         <div className="space-y-4">
@@ -349,6 +417,18 @@ const DashboardOverview = () => {
           ))}
         </div>
       </div>
+
+      {/* System Report Modal */}
+      <SystemReportModal 
+        isOpen={showReportModal} 
+        onClose={() => setShowReportModal(false)} 
+      />
+
+      {/* Recent Activities Modal */}
+      <RecentActivitiesModal 
+        isOpen={showActivitiesModal} 
+        onClose={() => setShowActivitiesModal(false)} 
+      />
     </div>
   );
 };

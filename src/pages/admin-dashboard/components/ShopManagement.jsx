@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
+import api from '../../../services/api';
+import ShopSuspensionModal from './ShopSuspensionModal';
 
 const ShopManagement = () => {
   const [shops, setShops] = useState([]);
@@ -10,129 +12,65 @@ const ShopManagement = () => {
   const [selectedShops, setSelectedShops] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [shopsPerPage] = useState(8);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [stats, setStats] = useState({
+    total_shops: 0,
+    active_shops: 0,
+    suspended_shops: 0,
+    total_revenue: 0
+  });
+  const [showSuspensionModal, setShowSuspensionModal] = useState(false);
+  const [selectedShop, setSelectedShop] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
-  // Mock shop data
+  // Fetch real shop data
   useEffect(() => {
-    const mockShops = [
-      { 
-        id: 1, 
-        name: 'Tech Store Pro', 
-        owner: 'John Doe', 
-        email: 'john@techstore.com',
-        category: 'Electronics', 
-        status: 'active', 
-        joinDate: '2024-01-15',
-        products: 145,
-        orders: 234,
-        revenue: 5600000,
-        rating: 4.8,
-        location: 'Douala, Cameroon'
-      },
-      { 
-        id: 2, 
-        name: 'Fashion Hub', 
-        owner: 'Jane Smith', 
-        email: 'jane@fashionhub.com',
-        category: 'Fashion', 
-        status: 'pending', 
-        joinDate: '2024-07-15',
-        products: 67,
-        orders: 12,
-        revenue: 890000,
-        rating: 4.2,
-        location: 'Yaoundé, Cameroon'
-      },
-      { 
-        id: 3, 
-        name: 'Home & Garden', 
-        owner: 'Mike Johnson', 
-        email: 'mike@homeandgarden.com',
-        category: 'Home & Garden', 
-        status: 'active', 
-        joinDate: '2024-03-10',
-        products: 89,
-        orders: 156,
-        revenue: 3200000,
-        rating: 4.6,
-        location: 'Bamenda, Cameroon'
-      },
-      { 
-        id: 4, 
-        name: 'Sports Central', 
-        owner: 'Sarah Wilson', 
-        email: 'sarah@sportscentral.com',
-        category: 'Sports', 
-        status: 'suspended', 
-        joinDate: '2024-02-20',
-        products: 78,
-        orders: 89,
-        revenue: 1800000,
-        rating: 3.9,
-        location: 'Garoua, Cameroon'
-      },
-      { 
-        id: 5, 
-        name: 'Book World', 
-        owner: 'David Brown', 
-        email: 'david@bookworld.com',
-        category: 'Books', 
-        status: 'active', 
-        joinDate: '2024-04-05',
-        products: 234,
-        orders: 345,
-        revenue: 2100000,
-        rating: 4.7,
-        location: 'Douala, Cameroon'
-      },
-      { 
-        id: 6, 
-        name: 'Beauty Corner', 
-        owner: 'Lisa Garcia', 
-        email: 'lisa@beautycorner.com',
-        category: 'Beauty', 
-        status: 'active', 
-        joinDate: '2024-05-12',
-        products: 156,
-        orders: 278,
-        revenue: 4200000,
-        rating: 4.9,
-        location: 'Yaoundé, Cameroon'
-      }
-    ];
-    setShops(mockShops);
-    setFilteredShops(mockShops);
+    fetchShops();
+    
+    // Set up auto-refresh every 30 seconds
+    const interval = setInterval(fetchShops, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
+
+  const fetchShops = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const data = await api.getDashboardShops();
+      
+      setStats(data.statistics);
+      setShops(data.shops);
+      setFilteredShops(data.shops);
+    } catch (err) {
+      setError(err.message || 'Failed to fetch shops data');
+      console.error('Shops data fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter shops
   useEffect(() => {
     let filtered = shops.filter(shop => {
       const matchesSearch = shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           shop.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           shop.email.toLowerCase().includes(searchTerm.toLowerCase());
+                           shop.owner_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           shop.owner_email.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = selectedStatus === 'all' || shop.status === selectedStatus;
-      const matchesCategory = selectedCategory === 'all' || shop.category === selectedCategory;
       
-      return matchesSearch && matchesStatus && matchesCategory;
+      return matchesSearch && matchesStatus;
     });
     
     setFilteredShops(filtered);
     setCurrentPage(1);
-  }, [searchTerm, selectedStatus, selectedCategory, shops]);
+  }, [searchTerm, selectedStatus, shops]);
 
-  const categories = [
-    { value: 'all', label: 'All Categories' },
-    { value: 'Electronics', label: 'Electronics' },
-    { value: 'Fashion', label: 'Fashion' },
-    { value: 'Home & Garden', label: 'Home & Garden' },
-    { value: 'Sports', label: 'Sports' },
-    { value: 'Books', label: 'Books' },
-    { value: 'Beauty', label: 'Beauty' }
-  ];
 
   const statuses = [
     { value: 'all', label: 'All Status' },
     { value: 'active', label: 'Active' },
-    { value: 'pending', label: 'Pending' },
     { value: 'suspended', label: 'Suspended' }
   ];
 
@@ -153,9 +91,84 @@ const ShopManagement = () => {
     }).format(amount);
   };
 
-  const handleShopAction = (action, shopId) => {
-    console.log(`${action} shop ${shopId}`);
-    // Implement shop actions here
+  const handleShopAction = async (action, shopId) => {
+    const shop = shops.find(s => s.id === shopId);
+    
+    switch (action) {
+      case 'view':
+        // TODO: Implement view shop details modal
+        console.log(`Viewing shop ${shopId}`);
+        break;
+        
+      case 'suspend':
+        // Open suspension modal
+        setSelectedShop(shop);
+        setShowSuspensionModal(true);
+        break;
+        
+      case 'unsuspend':
+        await handleUnsuspendShop(shopId);
+        break;
+        
+      default:
+        console.log(`Unknown action: ${action}`);
+    }
+  };
+
+  const handleSuspendShop = async (reason, notifyOwner) => {
+    if (!selectedShop) return;
+    
+    try {
+      setActionLoading(true);
+      
+      await api.suspendShop(selectedShop.id, reason, notifyOwner);
+      
+      // Update local state optimistically
+      setShops(prev => prev.map(shop => 
+        shop.id === selectedShop.id ? { ...shop, status: 'suspended' } : shop
+      ));
+      setFilteredShops(prev => prev.map(shop => 
+        shop.id === selectedShop.id ? { ...shop, status: 'suspended' } : shop
+      ));
+      
+      // Close modal
+      setShowSuspensionModal(false);
+      setSelectedShop(null);
+      
+      // Refresh data
+      setTimeout(fetchShops, 1000);
+      
+    } catch (error) {
+      console.error('Error suspending shop:', error);
+      setError('Failed to suspend shop. Please try again.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleUnsuspendShop = async (shopId) => {
+    try {
+      setActionLoading(true);
+      
+      await api.unsuspendShop(shopId);
+      
+      // Update local state optimistically
+      setShops(prev => prev.map(shop => 
+        shop.id === shopId ? { ...shop, status: 'active' } : shop
+      ));
+      setFilteredShops(prev => prev.map(shop => 
+        shop.id === shopId ? { ...shop, status: 'active' } : shop
+      ));
+      
+      // Refresh data
+      setTimeout(fetchShops, 1000);
+      
+    } catch (error) {
+      console.error('Error unsuspending shop:', error);
+      setError('Failed to reactivate shop. Please try again.');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleBulkAction = (action) => {
@@ -179,6 +192,41 @@ const ShopManagement = () => {
 
   const totalPages = Math.ceil(filteredShops.length / shopsPerPage);
 
+  if (loading) {
+    return (
+      <div className="p-4 lg:p-6 space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading shops data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 lg:p-6 space-y-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <Icon name="AlertCircle" size={20} className="text-red-600 mr-2" />
+            <div>
+              <h3 className="text-red-800 font-medium">Error loading shops</h3>
+              <p className="text-red-600 text-sm mt-1">{error}</p>
+            </div>
+          </div>
+          <button
+            onClick={fetchShops}
+            className="mt-3 bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 lg:p-6 space-y-6">
       {/* Header */}
@@ -187,38 +235,23 @@ const ShopManagement = () => {
           <h2 className="text-2xl font-bold text-gray-900">Shop Management</h2>
           <p className="text-gray-600">Monitor and manage all shops on the platform</p>
         </div>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
-          <Icon name="Plus" size={16} />
-          <span>Add Shop</span>
-        </button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <div className="flex items-center space-x-2">
             <Icon name="Store" size={20} className="text-purple-600" />
             <span className="text-sm text-gray-600">Total Shops</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{shops.length}</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total_shops}</p>
         </div>
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <div className="flex items-center space-x-2">
             <Icon name="CheckCircle" size={20} className="text-green-600" />
-            <span className="text-sm text-gray-600">Active</span>
+            <span className="text-sm text-gray-600">Active Shops</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
-            {shops.filter(s => s.status === 'active').length}
-          </p>
-        </div>
-        <div className="bg-white rounded-lg p-4 border border-gray-200">
-          <div className="flex items-center space-x-2">
-            <Icon name="Clock" size={20} className="text-yellow-600" />
-            <span className="text-sm text-gray-600">Pending</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
-            {shops.filter(s => s.status === 'pending').length}
-          </p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{stats.active_shops}</p>
         </div>
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <div className="flex items-center space-x-2">
@@ -226,7 +259,7 @@ const ShopManagement = () => {
             <span className="text-sm text-gray-600">Total Revenue</span>
           </div>
           <p className="text-lg font-bold text-gray-900 mt-1">
-            {formatCurrency(shops.reduce((sum, shop) => sum + shop.revenue, 0))}
+            {formatCurrency(stats.total_revenue)}
           </p>
         </div>
       </div>
@@ -247,17 +280,6 @@ const ShopManagement = () => {
               />
             </div>
           </div>
-          
-          {/* Category Filter */}
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            {categories.map(category => (
-              <option key={category.value} value={category.value}>{category.label}</option>
-            ))}
-          </select>
           
           {/* Status Filter */}
           <select
@@ -321,8 +343,8 @@ const ShopManagement = () => {
               </div>
               <div className="mt-3">
                 <h3 className="font-semibold text-gray-900 truncate">{shop.name}</h3>
-                <p className="text-sm text-gray-500 truncate">{shop.owner}</p>
-                <p className="text-xs text-gray-400 truncate">{shop.email}</p>
+                <p className="text-sm text-gray-500 truncate">{shop.owner_name}</p>
+                <p className="text-xs text-gray-400 truncate">{shop.owner_email}</p>
               </div>
             </div>
 
@@ -331,11 +353,11 @@ const ShopManagement = () => {
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <p className="text-xs text-gray-500">Products</p>
-                  <p className="font-semibold text-gray-900">{shop.products}</p>
+                  <p className="font-semibold text-gray-900">{shop.products_count}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Orders</p>
-                  <p className="font-semibold text-gray-900">{shop.orders}</p>
+                  <p className="font-semibold text-gray-900">{shop.orders_count}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Revenue</p>
@@ -345,21 +367,23 @@ const ShopManagement = () => {
                   <p className="text-xs text-gray-500">Rating</p>
                   <div className="flex items-center space-x-1">
                     <Icon name="Star" size={12} className="text-yellow-400 fill-current" />
-                    <span className="font-semibold text-gray-900 text-sm">{shop.rating}</span>
+                    <span className="font-semibold text-gray-900 text-sm">{shop.average_rating.toFixed(1)}</span>
                   </div>
                 </div>
               </div>
 
               <div className="mb-4">
-                <p className="text-xs text-gray-500">Category</p>
-                <span className="inline-block px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-medium">
-                  {shop.category}
-                </span>
+                <p className="text-xs text-gray-500">Address</p>
+                <p className="text-sm text-gray-900">{shop.address || 'No address provided'}</p>
               </div>
 
               <div className="mb-4">
-                <p className="text-xs text-gray-500">Location</p>
-                <p className="text-sm text-gray-900">{shop.location}</p>
+                <p className="text-xs text-gray-500">Verification Status</p>
+                <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                  shop.is_verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {shop.is_verified ? 'Verified' : 'Unverified'}
+                </span>
               </div>
 
               {/* Actions */}
@@ -371,29 +395,22 @@ const ShopManagement = () => {
                   <Icon name="Eye" size={14} />
                   <span>View</span>
                 </button>
-                <button
-                  onClick={() => handleShopAction('edit', shop.id)}
-                  className="flex items-center space-x-1 text-gray-600 hover:text-gray-700 text-sm"
-                >
-                  <Icon name="Edit" size={14} />
-                  <span>Edit</span>
-                </button>
-                {shop.status === 'pending' && (
-                  <button
-                    onClick={() => handleShopAction('approve', shop.id)}
-                    className="flex items-center space-x-1 text-green-600 hover:text-green-700 text-sm"
-                  >
-                    <Icon name="CheckCircle" size={14} />
-                    <span>Approve</span>
-                  </button>
-                )}
-                {shop.status === 'active' && (
+                
+                {shop.status === 'active' ? (
                   <button
                     onClick={() => handleShopAction('suspend', shop.id)}
                     className="flex items-center space-x-1 text-red-600 hover:text-red-700 text-sm"
                   >
                     <Icon name="XCircle" size={14} />
                     <span>Suspend</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleShopAction('unsuspend', shop.id)}
+                    className="flex items-center space-x-1 text-green-600 hover:text-green-700 text-sm"
+                  >
+                    <Icon name="CheckCircle" size={14} />
+                    <span>Unsuspend</span>
                   </button>
                 )}
               </div>
@@ -429,6 +446,18 @@ const ShopManagement = () => {
           </div>
         </div>
       )}
+
+      {/* Suspension Modal */}
+      <ShopSuspensionModal
+        isOpen={showSuspensionModal}
+        onClose={() => {
+          setShowSuspensionModal(false);
+          setSelectedShop(null);
+        }}
+        shop={selectedShop}
+        onConfirm={handleSuspendShop}
+        loading={actionLoading}
+      />
     </div>
   );
 };

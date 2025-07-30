@@ -1,0 +1,60 @@
+/* Notification Overlay Styles */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Ensure smooth animations */
+.notification-overlay-enter {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+}
+
+.notification-overlay-enter-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+.notification-overlay-exit {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.notification-overlay-exit-active {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+  transition: opacity 150ms ease-in, transform 150ms ease-in;
+}
+
+/* Custom scrollbar for notification list */
+.notification-list {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.notification-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.notification-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.notification-list::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 2px;
+}
+
+.notification-list::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
+}

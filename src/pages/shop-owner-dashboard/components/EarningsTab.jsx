@@ -6,6 +6,14 @@ import Select from '../../../components/ui/Select';
 
 const EarningsTab = () => {
   const [timeRange, setTimeRange] = useState('30d');
+  
+  // Check if user is new (no transactions/earnings)
+  const isNewUser = () => {
+    // In a real implementation, this would check actual earnings data from API
+    // For now, we can assume new users have no completed transactions
+    const completedTransactions = transactions.filter(t => t.status === 'completed' && t.type === 'sale');
+    return completedTransactions.length === 0;
+  };
 
   const timeRangeOptions = [
     { value: '7d', label: 'Last 7 days' },
@@ -145,44 +153,48 @@ const EarningsTab = () => {
     });
   };
 
-  const earningsCards = [
-    {
-      title: 'Total Earnings',
-      value: '1,773,000 XAF',
-      change: '+15.3%',
-      changeType: 'positive',
-      icon: 'DollarSign',
-      color: 'text-success',
-      bgColor: 'bg-success/10'
-    },
-    {
-      title: 'Pending Payouts',
-      value: '125,400 XAF',
-      change: '+8.2%',
-      changeType: 'positive',
-      icon: 'Clock',
-      color: 'text-warning',
-      bgColor: 'bg-warning/10'
-    },
-    {
-      title: 'Commission Paid',
-      value: '177,300 XAF',
-      change: '+12.1%',
-      changeType: 'positive',
-      icon: 'Percent',
-      color: 'text-primary',
-      bgColor: 'bg-primary/10'
-    },
-    {
-      title: 'Net Profit',
-      value: '1,595,700 XAF',
-      change: '+18.7%',
-      changeType: 'positive',
-      icon: 'TrendingUp',
-      color: 'text-success',
-      bgColor: 'bg-success/10'
-    }
-  ];
+  const getEarningsCards = () => {
+    const newUser = isNewUser();
+    
+    return [
+      {
+        title: 'Total Earnings',
+        value: newUser ? '0 XAF' : '1,773,000 XAF',
+        change: newUser ? 'No data yet' : '+15.3%',
+        changeType: newUser ? 'neutral' : 'positive',
+        icon: 'DollarSign',
+        color: 'text-success',
+        bgColor: 'bg-success/10'
+      },
+      {
+        title: 'Pending Payouts',
+        value: newUser ? '0 XAF' : '125,400 XAF',
+        change: newUser ? 'No data yet' : '+8.2%',
+        changeType: newUser ? 'neutral' : 'positive',
+        icon: 'Clock',
+        color: 'text-warning',
+        bgColor: 'bg-warning/10'
+      },
+      {
+        title: 'Commission Paid',
+        value: newUser ? '0 XAF' : '177,300 XAF',
+        change: newUser ? 'No data yet' : '+12.1%',
+        changeType: newUser ? 'neutral' : 'positive',
+        icon: 'Percent',
+        color: 'text-primary',
+        bgColor: 'bg-primary/10'
+      },
+      {
+        title: 'Net Profit',
+        value: newUser ? '0 XAF' : '1,595,700 XAF',
+        change: newUser ? 'No data yet' : '+18.7%',
+        changeType: newUser ? 'neutral' : 'positive',
+        icon: 'TrendingUp',
+        color: 'text-success',
+        bgColor: 'bg-success/10'
+      }
+    ];
+  };
 
   return (
     <div className="p-6">
@@ -199,9 +211,6 @@ const EarningsTab = () => {
             onChange={setTimeRange}
             className="w-40"
           />
-          <Button variant="outline" iconName="Download" iconPosition="left">
-            Export
-          </Button>
           <Button variant="default" iconName="CreditCard" iconPosition="left">
             Request Payout
           </Button>
@@ -210,17 +219,21 @@ const EarningsTab = () => {
 
       {/* Earnings Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-        {earningsCards.map((card, index) => (
+        {getEarningsCards().map((card, index) => (
           <div key={index} className="bg-surface border border-border rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className={`w-12 h-12 ${card.bgColor} rounded-lg flex items-center justify-center`}>
                 <Icon name={card.icon} size={24} className={card.color} />
               </div>
               <div className={`flex items-center space-x-1 text-sm ${
-                card.changeType === 'positive' ? 'text-success' : 'text-destructive'
+                card.changeType === 'positive' ? 'text-success' : 
+                card.changeType === 'negative' ? 'text-destructive' : 'text-gray-500'
               }`}>
                 <Icon 
-                  name={card.changeType === 'positive' ? 'ArrowUp' : 'ArrowDown'} 
+                  name={
+                    card.changeType === 'positive' ? 'ArrowUp' : 
+                    card.changeType === 'negative' ? 'ArrowDown' : 'Minus'
+                  } 
                   size={16} 
                 />
                 <span>{card.change}</span>

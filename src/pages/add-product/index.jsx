@@ -118,7 +118,9 @@ const AddProduct = () => {
         description: formData.description.trim(),
         price: parseFloat(formData.price),
         stock_quantity: parseInt(formData.stock_quantity),
-        is_active: true
+        is_active: true,
+        image_urls: formData.images.map(img => img.url),
+        video_urls: formData.videos.map(vid => vid.url)
       };
 
       const response = await api.createProduct(productData);
@@ -134,7 +136,9 @@ const AddProduct = () => {
         name: '',
         description: '',
         price: '',
-        stock_quantity: ''
+        stock_quantity: '',
+        images: [],
+        videos: []
       });
       setErrors({});
 

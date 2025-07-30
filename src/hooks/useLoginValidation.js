@@ -119,11 +119,9 @@ export const useLoginValidation = (
 
     validateEmail(debouncedEmail);
 
-    // Cleanup function
+    // Only cleanup when component unmounts, not on email change
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+      // Don't abort on email change, only on unmount
     };
   }, [debouncedEmail]);
 

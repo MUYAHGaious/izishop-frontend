@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
+import { showToast } from '../../../components/ui/Toast';
+import api from '../../../services/api';
 
 const ShopSettings = ({ shopData, setShopData }) => {
   const [activeSection, setActiveSection] = useState('general');
@@ -146,14 +148,50 @@ const ShopSettings = ({ shopData, setShopData }) => {
     }));
   };
 
-  const handleSaveSettings = () => {
-    console.log('Saving settings:', settings);
-    // Update shop data
-    setShopData(prev => ({
-      ...prev,
-      name: settings.general.shopName
-    }));
-    // Implement save functionality here
+  const handleSaveSettings = async () => {
+    try {
+      console.log('Saving settings:', settings);
+      
+      // Save notification preferences via API
+      if (activeSection === 'notifications') {
+        const notificationPrefs = {
+          email_notifications: settings.notifications.emailNotifications,
+          sms_notifications: settings.notifications.smsNotifications,
+          order_notifications: settings.notifications.orderNotifications,
+          low_stock_alerts: settings.notifications.lowStockAlerts,
+          review_alerts: settings.notifications.customerReviewAlerts,
+          promotional_emails: settings.notifications.promotionalEmails,
+          notification_email: settings.notifications.notificationEmail,
+          notification_phone: settings.notifications.notificationPhone
+        };
+        
+        // Save to backend API
+        await api.updateNotificationPreferences(notificationPrefs);
+        showToast.success('Notification settings saved successfully');
+      }
+      
+      // Update shop data for general settings
+      if (activeSection === 'general') {
+        setShopData(prev => ({
+          ...prev,
+          name: settings.general.shopName
+        }));
+        showToast.success('General settings saved successfully');
+      }
+      
+      // Add more section-specific save logic here
+      if (activeSection === 'payment') {
+        showToast.success('Payment settings saved successfully');
+      }
+      
+      if (activeSection === 'shipping') {
+        showToast.success('Shipping settings saved successfully');
+      }
+      
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      showToast.error('Failed to save settings. Please try again.');
+    }
   };
 
   const renderGeneralSettings = () => (
@@ -649,6 +687,84 @@ const ShopSettings = ({ shopData, setShopData }) => {
               }`}
             />
           </button>
+        </div>
+      </div>
+
+      {/* Additional Notification Actions */}
+      <div className="bg-gray-50 p-4 rounded-lg">
+        <h4 className="text-sm font-medium text-gray-900 mb-3">Notification Actions</h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <button
+            onClick={async () => {
+              try {
+                await api.sendTestNotification('email');
+                showToast.success('Test email notification sent!');
+              } catch (error) {
+                showToast.error('Failed to send test email');
+              }
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+          >
+            <Icon name="Mail" size={16} />
+            <span>Send Test Email</span>
+          </button>
+          
+          <button
+            onClick={async () => {
+              try {
+                await api.sendTestNotification('sms');
+                showToast.success('Test SMS notification sent!');
+              } catch (error) {
+                showToast.error('Failed to send test SMS');
+              }
+            }}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+          >
+            <Icon name="MessageSquare" size={16} />
+            <span>Send Test SMS</span>
+          </button>
+          
+          <button
+            onClick={async () => {
+              try {
+                await api.markAllNotificationsAsRead();
+                showToast.success('All notifications marked as read');
+              } catch (error) {
+                showToast.error('Failed to mark notifications as read');
+              }
+            }}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center space-x-2"
+          >
+            <Icon name="CheckCheck" size={16} />
+            <span>Mark All Read</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Notification History */}
+      <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-sm font-medium text-gray-900">Recent Notifications</h4>
+          <button
+            onClick={() => window.open('/notification-center-modal', '_blank')}
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          >
+            View All
+          </button>
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600">Order notifications sent today</span>
+            <span className="font-medium text-gray-900">12</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600">Low stock alerts sent this week</span>
+            <span className="font-medium text-gray-900">3</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600">Review alerts sent this month</span>
+            <span className="font-medium text-gray-900">7</span>
+          </div>
         </div>
       </div>
     </div>

@@ -20,6 +20,7 @@ import AdminLogin from "./pages/admin-login";
 import ShopsListing from "./pages/shops-listing";
 import ChatInterfaceModal from "./pages/chat-interface-modal";
 import NotificationCenterModal from "./pages/notification-center-modal";
+import NotificationsPage from "./pages/notifications";
 import LandingPage from "./pages/landing-page";
 import AuthenticationLoginRegister from "./pages/authentication-login-register";
 import Checkout from "./pages/checkout";
@@ -34,6 +35,12 @@ import PublicProfile from "./pages/public-profile";
 import Wishlist from "./pages/wishlist";
 import SellerDashboard from "./pages/seller-dashboard";
 import MyProducts from "./pages/my-products";
+import OrderSuccess from "./pages/order-success";
+import MyOrders from "./pages/my-orders";
+import CustomerSupport from "./pages/customer-support";
+import OrderManagement from "./pages/order-management";
+import CustomerDashboard from "./pages/customer-dashboard";
+import DeliveryAgentDashboard from "./pages/delivery-agent-dashboard";
 
 // Protected Route Component
 const ProtectedRoute = ({ children, requiredRole = null }) => {
@@ -48,46 +55,69 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     </div>;
   }
   
-  // Simple authentication check
-  const accessToken = localStorage.getItem('accessToken');
+  // Enhanced authentication check
+  const accessToken = localStorage.getItem('accessToken') || localStorage.getItem('authToken');
   const storedUser = localStorage.getItem('user');
   
+  console.log('ProtectedRoute Debug:', {
+    accessToken: !!accessToken,
+    storedUser: !!storedUser,
+    user: user,
+    requiredRole,
+    userRole: user?.role,
+    isAuthenticated: isAuthenticated()
+  });
+  
   if (!accessToken || !storedUser) {
+    console.log('ProtectedRoute: No token or user, redirecting to login');
     return <Navigate to="/authentication-login-register" replace />;
   }
   
-  if (requiredRole && user?.role !== requiredRole) {
+  // Parse stored user to check role if user context is not loaded yet
+  let userRole = user?.role;
+  if (!userRole && storedUser) {
+    try {
+      const parsedUser = JSON.parse(storedUser);
+      userRole = parsedUser.role;
+      console.log('ProtectedRoute: Using stored user role:', userRole);
+    } catch (e) {
+      console.error('ProtectedRoute: Failed to parse stored user');
+    }
+  }
+  
+  if (requiredRole && userRole !== requiredRole) {
+    console.log('ProtectedRoute: Role mismatch - required:', requiredRole, 'actual:', userRole);
     return <Navigate to="/unauthorized" replace />;
   }
   
+  console.log('ProtectedRoute: All checks passed, rendering children');
   return children;
 };
 
 // Public Route Component (redirect to dashboard if already logged in)
 const PublicRoute = ({ children }) => {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        <p className="mt-4 text-gray-600">Loading...</p>
-      </div>
-    </div>;
-  }
-  
-  // Simple authentication check
-  const accessToken = localStorage.getItem('accessToken');
+  // Don't use useAuth here - just check localStorage directly to avoid context issues
+  const accessToken = localStorage.getItem('accessToken') || localStorage.getItem('authToken');
   const storedUser = localStorage.getItem('user');
   
   if (accessToken && storedUser) {
-    // Already logged in, redirect to appropriate page
-    if (user?.role === 'SHOP_OWNER') {
-      return <Navigate to="/shops-listing" replace />;
-    } else if (user?.role === 'ADMIN') {
-      return <Navigate to="/admin-dashboard" replace />;
-    } else {
-      return <Navigate to="/product-catalog" replace />;
+    try {
+      const user = JSON.parse(storedUser);
+      // Already logged in, redirect to appropriate page
+      if (user?.role === 'SHOP_OWNER') {
+        return <Navigate to="/shop-owner-dashboard" replace />;
+      } else if (user?.role === 'ADMIN') {
+        return <Navigate to="/admin-dashboard" replace />;
+      } else if (user?.role === 'DELIVERY_AGENT') {
+        return <Navigate to="/delivery-agent-dashboard" replace />;
+      } else if (user?.role === 'CUSTOMER') {
+        return <Navigate to="/customer-dashboard" replace />;
+      } else {
+        return <Navigate to="/product-catalog" replace />;
+      }
+    } catch (e) {
+      // If user data is corrupted, clear it and continue
+      localStorage.removeItem('user');
     }
   }
   
@@ -125,6 +155,14 @@ const AppRoutes = () => {
       
       {/* Protected routes */}
       <Route 
+        path="/notifications" 
+        element={
+          <AuthenticatedRouteGuard>
+            <NotificationsPage />
+          </AuthenticatedRouteGuard>
+        } 
+      />
+      <Route 
         path="/user-profile" 
         element={
           <AuthenticatedRouteGuard>
@@ -152,12 +190,15 @@ const AppRoutes = () => {
         path="/customer-dashboard" 
         element={
           <ProtectedRoute requiredRole="CUSTOMER">
-            <div className="min-h-screen bg-gray-50 p-8">
-              <div className="max-w-7xl mx-auto">
-                <h1 className="text-3xl font-bold text-gray-900 mb-8">Customer Dashboard</h1>
-                <p className="text-gray-600">Welcome to your customer dashboard!</p>
-              </div>
-            </div>
+            <CustomerDashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/delivery-agent-dashboard" 
+        element={
+          <ProtectedRoute requiredRole="DELIVERY_AGENT">
+            <DeliveryAgentDashboard />
           </ProtectedRoute>
         } 
       />
@@ -188,6 +229,25 @@ const AppRoutes = () => {
         } 
       />
       
+      {/* Order success page */}
+      <Route 
+        path="/order-success" 
+        element={
+          <AuthenticatedRouteGuard>
+            <OrderSuccess />
+          </AuthenticatedRouteGuard>
+        } 
+      />
+      
+      {/* My orders page */}
+      <Route 
+        path="/my-orders" 
+        element={
+          <AuthenticatedRouteGuard>
+            <MyOrders />
+          </AuthenticatedRouteGuard>
+        } 
+      />
       
       {/* Add product - shop owners only */}
       <Route 
@@ -267,6 +327,26 @@ const AppRoutes = () => {
       <Route path="/landing-page" element={<Navigate to="/" replace />} />
       <Route path="/shop-profile" element={<Navigate to="/shops-listing" replace />} />
       
+      {/* Customer Support */}
+      <Route 
+        path="/customer-support" 
+        element={
+          <AuthenticatedRouteGuard>
+            <CustomerSupport />
+          </AuthenticatedRouteGuard>
+        } 
+      />
+      
+      {/* Order Management */}
+      <Route 
+        path="/order-management" 
+        element={
+          <ShopOwnerRouteGuard>
+            <OrderManagement />
+          </ShopOwnerRouteGuard>
+        } 
+      />
+      
       {/* Error routes */}
       <Route path="/unauthorized" element={
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -290,7 +370,12 @@ const AppRoutes = () => {
 
 const Routes = () => {
   return (
-    <BrowserRouter>
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true
+      }}
+    >
       <ErrorBoundary>
         <ScrollToTop />
         <AppRoutes />

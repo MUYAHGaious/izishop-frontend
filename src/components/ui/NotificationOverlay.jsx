@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../AppIcon';
 import { useNotifications } from '../../contexts/NotificationContext';
+import '../../styles/notification-overlay.css';
 
 const NotificationOverlay = ({ isOpen, onClose }) => {
   const [filter, setFilter] = useState('all');
@@ -32,15 +33,24 @@ const NotificationOverlay = ({ isOpen, onClose }) => {
 
   const formatTime = (timestamp) => {
     const now = new Date();
-    const diff = now - new Date(timestamp);
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
+    const date = new Date(timestamp);
+    const diffInMs = now - date;
+    const minutes = Math.floor(diffInMs / 60000);
+    const hours = Math.floor(diffInMs / 3600000);
+    const days = Math.floor(diffInMs / 86400000);
 
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m`;
-    if (hours < 24) return `${hours}h`;
-    return `${days}d`;
+    if (diffInMs < 60000) return 'Just now'; // Less than 1 minute
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days}d ago`;
+    
+    // For older notifications, show date
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    });
   };
 
   const getNotificationColor = (type) => {
@@ -81,35 +91,38 @@ const NotificationOverlay = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[9999] flex justify-end">
-      <div className="w-full max-w-sm h-full bg-white flex flex-col shadow-2xl transform transition-transform duration-300 ease-out">
+    <>
+      {/* Backdrop */}
+      <div className="fixed inset-0 z-[9998]" onClick={onClose}></div>
+      
+      {/* Notification Dropdown */}
+      <div className="absolute top-full right-0 mt-2 w-96 max-h-[600px] bg-white rounded-xl shadow-xl border border-gray-100 z-[9999] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="px-4 py-6 border-b border-gray-100 flex-shrink-0">
-          <div className="flex items-center justify-between mb-6">
+        <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0">
+          <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Notifications</h2>
-              <p className="text-sm text-gray-500">{unreadCount} unread</p>
+              <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
+              <p className="text-xs text-gray-500">{unreadCount} unread</p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <Icon name="X" size={24} className="text-gray-500" />
+              <Icon name="X" size={20} className="text-gray-500" />
             </button>
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex space-x-1 bg-gray-50 rounded-xl p-1">
+          <div className="flex space-x-1 bg-gray-50 rounded-lg p-1">
             {[
               { key: 'all', label: 'All' },
               { key: 'unread', label: 'Unread' },
-              { key: 'order', label: 'Orders' },
-              { key: 'system', label: 'System' }
+              { key: 'read', label: 'Read' }
             ].map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setFilter(tab.key)}
-                className={`flex-1 px-3 py-3 text-sm font-medium rounded-lg transition-all ${
+                className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all ${
                   filter === tab.key
                     ? 'bg-white text-blue-600 shadow-sm'
                     : 'text-gray-600 hover:text-gray-800'
@@ -117,7 +130,7 @@ const NotificationOverlay = ({ isOpen, onClose }) => {
               >
                 {tab.label}
                 {tab.key === 'unread' && unreadCount > 0 && (
-                  <span className="ml-2 bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full text-xs">
+                  <span className="ml-1 bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full text-xs">
                     {unreadCount}
                   </span>
                 )}
@@ -196,57 +209,88 @@ const NotificationOverlay = ({ isOpen, onClose }) => {
               {filteredNotifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`relative border-b border-gray-50 transition-colors ${
+                  className={`relative border-b border-gray-50 transition-colors hover:bg-gray-50 ${
                     !notification.read ? 'bg-blue-50/30' : 'bg-white'
                   }`}
                 >
                   {/* Unread indicator */}
                   {!notification.read && (
-                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <div className="absolute left-3 top-4 w-2 h-2 bg-blue-500 rounded-full"></div>
                   )}
                   
-                  <div className="flex items-start space-x-4 p-4 pl-8">
-                    <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${
+                  <div className="flex items-start space-x-3 p-3 pl-6">
+                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
                       !notification.read ? 'bg-blue-100' : 'bg-gray-100'
                     }`}>
                       <Icon 
-                        name={notification.icon} 
-                        size={20} 
+                        name={notification.icon || 'Bell'} 
+                        size={16} 
                         className={getNotificationColor(notification.type)}
                       />
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <h4 className={`text-sm font-medium mb-1 ${
-                        !notification.read ? 'text-gray-900' : 'text-gray-700'
-                      }`}>
-                        {notification.title}
-                      </h4>
-                      <p className="text-sm text-gray-600 mb-2 leading-relaxed">
+                      <div className="flex items-start justify-between mb-1">
+                        <h4 className={`text-sm font-medium truncate ${
+                          !notification.read ? 'text-gray-900' : 'text-gray-700'
+                        }`}>
+                          {notification.title}
+                        </h4>
+                        <div className="flex items-center space-x-1 ml-2">
+                          {!notification.read && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleMarkAsRead(notification.id);
+                              }}
+                              className="p-1 hover:bg-blue-100 rounded transition-colors"
+                              title="Mark as read"
+                              disabled={isLoading}
+                            >
+                              <Icon name="Check" size={12} className="text-blue-600" />
+                            </button>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteNotification(notification.id);
+                            }}
+                            className="p-1 hover:bg-red-100 rounded transition-colors"
+                            title="Delete notification"
+                            disabled={isLoading}
+                          >
+                            <Icon name="Trash2" size={12} className="text-red-600" />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Message - Truncated with expand option */}
+                      <p className="text-xs text-gray-600 mb-2 overflow-hidden" style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical'
+                      }}>
                         {notification.message}
                       </p>
+                      
+                      {/* Footer with time and actions */}
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500">
                           {formatTime(notification.timestamp)}
                         </span>
-                        <div className="flex items-center space-x-2">
-                          {!notification.read && (
-                            <button
-                              onClick={() => handleMarkAsRead(notification.id)}
-                              className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
-                              disabled={isLoading}
-                            >
-                              <Icon name="Check" size={16} className="text-blue-600" />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => handleDeleteNotification(notification.id)}
-                            className="p-2 hover:bg-red-100 rounded-lg transition-colors"
-                            disabled={isLoading}
+                        
+                        {/* Action button if available */}
+                        {notification.actionUrl && notification.actionLabel && (
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(notification.actionUrl, '_blank');
+                            }}
+                            className="text-xs text-blue-600 hover:text-blue-700 font-medium"
                           >
-                            <Icon name="Trash2" size={16} className="text-red-600" />
+                            {notification.actionLabel}
                           </button>
-                        </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -256,7 +300,7 @@ const NotificationOverlay = ({ isOpen, onClose }) => {
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

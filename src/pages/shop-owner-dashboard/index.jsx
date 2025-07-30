@@ -5,6 +5,7 @@ import { useShop } from '../../contexts/ShopContext';
 import useDashboardData from '../../hooks/useDashboardData';
 import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
+import NotificationBell from '../../components/ui/NotificationBell';
 import ShopOverview from './components/ShopOverview';
 import OrderManagement from './components/OrderManagement';
 import CustomerManagement from './components/CustomerManagement';
@@ -12,9 +13,11 @@ import ShopAnalytics from './components/ShopAnalytics';
 import ShopSettings from './components/ShopSettings';
 import ProductsTab from './components/ProductsTab';
 import ShopSelector from '../../components/ui/ShopSelector';
+import CreateShopModal from '../../components/ui/CreateShopModal';
 import api from '../../services/api';
 import { showToast } from '../../components/ui/Toast';
 import notificationService from '../../services/notificationService';
+import { ReportGenerator } from '../../utils/reportGenerator';
 
 const ShopOwnerDashboard = () => {
   const location = useLocation();
@@ -22,6 +25,9 @@ const ShopOwnerDashboard = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [shopData, setShopData] = useState({
     name: 'Loading...',
     owner: 'Loading...',
@@ -50,7 +56,13 @@ const ShopOwnerDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(12);
   
+  // Export functionality states
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  
   const [loading, setLoading] = useState(true);
+  const [noShopFound, setNoShopFound] = useState(false);
+  const [showCreateShopModal, setShowCreateShopModal] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const { selectedShop, userShops, hasMultipleShops, selectShop } = useShop();
   const navigate = useNavigate();
@@ -66,6 +78,47 @@ const ShopOwnerDashboard = () => {
     clearError
   } = useDashboardData('shop-owner');
 
+  // Search functionality
+  const handleSearch = async (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    try {
+      setIsSearching(true);
+      
+      // Search in products and orders simultaneously
+      const [productsResponse, ordersResponse] = await Promise.all([
+        api.searchMyProducts(query),
+        api.searchMyOrders(query)
+      ]);
+
+      const results = {
+        products: productsResponse.products || [],
+        orders: ordersResponse.orders || [],
+        total: (productsResponse.products?.length || 0) + (ordersResponse.orders?.length || 0)
+      };
+
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Search failed:', error);
+      showToast.error('Search failed. Please try again.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Debounced search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      handleSearch(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
   // Handle URL tab parameter
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
@@ -77,11 +130,32 @@ const ShopOwnerDashboard = () => {
 
   // Check shop owner authentication
   useEffect(() => {
-    const validShopOwnerRoles = ['SHOP_OWNER', 'shop_owner'];
-    if (!isAuthenticated() || !validShopOwnerRoles.includes(user?.role)) {
-      navigate('/authentication-login-register');
-    }
-  }, [isAuthenticated, user, navigate]);
+    const checkAuth = async () => {
+      // Don't redirect immediately if still loading or initializing
+      if (loading || !user) {
+        console.log('Dashboard: Waiting for auth to load...');
+        return;
+      }
+      
+      const validShopOwnerRoles = ['SHOP_OWNER', 'shop_owner'];
+      const isAuth = isAuthenticated();
+      const hasValidRole = validShopOwnerRoles.includes(user?.role);
+      
+      console.log('Dashboard auth check:', {
+        isAuthenticated: isAuth,
+        userRole: user?.role,
+        hasValidRole,
+        shouldRedirect: !isAuth || !hasValidRole
+      });
+      
+      if (!isAuth || !hasValidRole) {
+        console.log('Dashboard: Authentication failed, redirecting to login');
+        navigate('/authentication-login-register');
+      }
+    };
+    
+    checkAuth();
+  }, [isAuthenticated, user, navigate, loading]);
 
   // Setup real notifications
   useEffect(() => {
@@ -147,6 +221,7 @@ const ShopOwnerDashboard = () => {
       try {
         setLoading(true);
         clearError();
+        setNoShopFound(false);
         
         // Fetch initial data using cached approach
         const data = await fetchMultipleData(['shopData', 'productStats', 'products']);
@@ -197,7 +272,14 @@ const ShopOwnerDashboard = () => {
       } catch (error) {
         if (isMounted) {
           console.error('Error loading dashboard data:', error);
-          showToast('Failed to load dashboard data', 'error');
+          
+          // Check if error is due to shop not found
+          if (error?.message?.includes('Shop not found')) {
+            setNoShopFound(true);
+            setShowCreateShopModal(true);
+          } else {
+            showToast('Failed to load dashboard data', 'error');
+          }
         }
       } finally {
         if (isMounted) {
@@ -263,6 +345,20 @@ const ShopOwnerDashboard = () => {
     
     return () => clearInterval(timer);
   }, []);
+
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showExportMenu && !event.target.closest('.export-menu-container')) {
+        setShowExportMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showExportMenu]);
 
   // Filter products
   useEffect(() => {
@@ -439,6 +535,129 @@ const ShopOwnerDashboard = () => {
     );
   };
 
+  // Unified export functionality for all tabs
+  const handleUnifiedExport = async (format = 'json') => {
+    try {
+      setIsExporting(true);
+      setShowExportMenu(false);
+      
+      // Collect data from all tabs
+      const exportData = {
+        shopInfo: {
+          name: shopData.name,
+          owner: shopData.owner,
+          rating: shopData.rating,
+          totalProducts: shopData.totalProducts,
+          totalOrders: shopData.totalOrders,
+          monthlyRevenue: shopData.monthlyRevenue,
+          status: shopData.status,
+          exportedBy: 'Shop Owner',
+          generatedAt: new Date().toLocaleString()
+        },
+        overview: {
+          productStats,
+          shopData
+        },
+        products: products.map(product => ({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          stock: product.stock,
+          status: product.status,
+          category: product.category,
+          sku: product.sku,
+          sales: product.sales,
+          rating: product.rating,
+          createdAt: product.createdAt
+        })),
+        analytics: {
+          timeRange: '30d',
+          note: 'Analytics data would be fetched from current analytics tab state'
+        },
+        orders: {
+          note: 'Orders data would be fetched from orders tab'
+        },
+        customers: {
+          note: 'Customer data would be fetched from customers tab'
+        },
+        exportDate: new Date().toISOString()
+      };
+
+      switch (format) {
+        case 'pdf':
+          const generator = new ReportGenerator();
+          generator
+            .initializePDF(`${shopData.name} - Complete Shop Report`)
+            .addSectionHeader('Shop Overview')
+            .addMetricsSummary({
+              'Total Products': { current: shopData.totalProducts, change: 0 },
+              'Total Orders': { current: shopData.totalOrders, change: 0 },
+              'Monthly Revenue': { current: shopData.monthlyRevenue, change: 0 },
+              'Shop Rating': { current: parseFloat(shopData.rating), change: 0 }
+            });
+            
+          if (products.length > 0) {
+            const productsForPDF = products.map(product => ({
+              name: product.name,
+              sales: product.sales || 0,
+              revenue: product.price * (product.sales || 0),
+              growth: 0
+            }));
+            generator.addTopProducts(productsForPDF, 'Products Catalog');
+          }
+          
+          generator.downloadPDF(`${shopData.name.replace(/\s+/g, '-').toLowerCase()}-shop-report`);
+          
+          showToast({
+            type: 'success',
+            message: 'PDF report downloaded successfully',
+            duration: 3000
+          });
+          break;
+
+        case 'excel':
+          const excelGenerator = new ReportGenerator();
+          excelGenerator.downloadExcel(exportData, `${shopData.name.replace(/\s+/g, '-').toLowerCase()}-shop-data`);
+          
+          showToast({
+            type: 'success',
+            message: 'Excel report downloaded successfully',
+            duration: 3000
+          });
+          break;
+
+        case 'json':
+        default:
+          const jsonString = JSON.stringify(exportData, null, 2);
+          const blob = new Blob([jsonString], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${shopData.name.replace(/\s+/g, '-').toLowerCase()}-complete-data-${new Date().toISOString().split('T')[0]}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          showToast({
+            type: 'success',
+            message: 'JSON data downloaded successfully',
+            duration: 3000
+          });
+          break;
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      showToast({
+        type: 'error',
+        message: `Failed to export ${format.toUpperCase()} report: ${error.message}`,
+        duration: 4000
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const getCurrentPageProducts = () => {
     const indexOfLastProduct = currentPage * productsPerPage;
     const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
@@ -460,7 +679,7 @@ const ShopOwnerDashboard = () => {
     try {
       switch (activeTab) {
         case 'overview':
-          return <ShopOverview shopData={shopData} productStats={productStats} />;
+          return <ShopOverview shopData={shopData} productStats={productStats} onTabChange={setActiveTab} />;
         case 'products':
           return <ProductsTab />;
         case 'orders':
@@ -472,7 +691,7 @@ const ShopOwnerDashboard = () => {
         case 'settings':
           return <ShopSettings shopData={shopData} setShopData={setShopData} />;
         default:
-          return <ShopOverview shopData={shopData} productStats={productStats} />;
+          return <ShopOverview shopData={shopData} productStats={productStats} onTabChange={setActiveTab} />;
       }
     } catch (error) {
       console.error('Error rendering tab content:', error);
@@ -830,6 +1049,43 @@ const ShopOwnerDashboard = () => {
     </div>
   );
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">
+            {noShopFound ? 'Setting up your shop...' : 'Loading dashboard...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // No shop found state
+  if (noShopFound && !showCreateShopModal) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Icon name="Store" size={32} className="text-blue-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to IziShopin!</h2>
+          <p className="text-gray-600 mb-6">
+            To get started, you'll need to create your shop. This will only take a few minutes.
+          </p>
+          <Button 
+            onClick={() => setShowCreateShopModal(true)}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
+          >
+            Create Your Shop
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top Navigation Bar */}
@@ -878,18 +1134,6 @@ const ShopOwnerDashboard = () => {
 
           {/* Right Side - Actions */}
           <div className="flex items-center space-x-3">
-            
-            <button 
-              className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
-              onClick={() => setActiveTab('notifications')}
-            >
-              <Icon name="Bell" size={20} />
-              {notificationCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {notificationCount > 99 ? '99+' : notificationCount}
-                </span>
-              )}
-            </button>
             
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -940,21 +1184,6 @@ const ShopOwnerDashboard = () => {
             </div>
             
             
-            {/* Notifications */}
-            <div className="relative">
-              <button 
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative"
-                onClick={() => setActiveTab('notifications')}
-              >
-                <Icon name="Bell" size={20} className="text-gray-600" />
-                {notificationCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {notificationCount > 99 ? '99+' : notificationCount}
-                  </span>
-                )}
-              </button>
-            </div>
-            
             {/* Profile */}
             <button 
               onClick={handleLogout}
@@ -990,8 +1219,11 @@ const ShopOwnerDashboard = () => {
       {/* Desktop Sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:top-16 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
-          {/* Shop Info */}
-          <div className="flex flex-col p-6 border-b border-gray-200">
+          {/* Shop Info - Clickable to open shop profile */}
+          <button 
+            onClick={handleViewShop}
+            className="flex flex-col p-6 border-b border-gray-200 hover:bg-gray-50 transition-colors text-left w-full"
+          >
             {hasMultipleShops ? (
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
@@ -1012,7 +1244,7 @@ const ShopOwnerDashboard = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h1 className="text-lg font-bold text-gray-900 truncate">{selectedShop?.name || shopData.name}</h1>
-                  <p className="text-sm text-gray-500">Shop Owner Dashboard</p>
+                  <p className="text-sm text-gray-500">Click to view shop profile</p>
                 </div>
               </div>
             )}
@@ -1020,6 +1252,7 @@ const ShopOwnerDashboard = () => {
               <div className="flex items-center space-x-1">
                 <Icon name="Star" size={16} className="text-yellow-400 fill-current" />
                 <span className="text-sm font-medium text-gray-900">{shopData.rating}</span>
+                <span className="text-xs text-gray-500">({shopData.totalReviews || 0} reviews)</span>
               </div>
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                 shopData.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
@@ -1027,19 +1260,10 @@ const ShopOwnerDashboard = () => {
                 {shopData.status}
               </span>
             </div>
-          </div>
+          </button>
           
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-2">
-            {/* Back to Site Button */}
-            <button
-              onClick={() => navigate('/landing-page')}
-              className="w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-b border-gray-200 mb-4 pb-4"
-            >
-              <Icon name="ArrowLeft" size={20} className="text-gray-500" />
-              <span className="ml-3">Back to Site</span>
-            </button>
-            
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -1121,15 +1345,27 @@ const ShopOwnerDashboard = () => {
       {isMobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setIsMobileMenuOpen(false)}>
           <div className="fixed inset-y-0 left-0 w-64 bg-white" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-              <h1 className="text-lg font-bold text-gray-900">{shopData.name}</h1>
+            <button 
+              onClick={() => {
+                handleViewShop();
+                setIsMobileMenuOpen(false);
+              }}
+              className="flex items-center justify-between h-16 px-6 border-b border-gray-200 hover:bg-gray-50 transition-colors w-full text-left"
+            >
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">{shopData.name}</h1>
+                <p className="text-xs text-gray-500">Tap to view shop profile</p>
+              </div>
               <button
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMobileMenuOpen(false);
+                }}
                 className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <Icon name="X" size={20} className="text-gray-600" />
               </button>
-            </div>
+            </button>
             
             <nav className="px-4 py-6 space-y-2">
               {tabs.map((tab) => (
@@ -1178,26 +1414,85 @@ const ShopOwnerDashboard = () => {
                   <input
                     type="text"
                     placeholder="Search products, orders..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
+                  {isSearching && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="w-4 h-4 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin"></div>
+                    </div>
+                  )}
                 </div>
               )}
               
-              {/* Notifications */}
-              <div className="relative">
+              {/* Export Button */}
+              <div className="relative export-menu-container">
                 <button 
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative"
-                  onClick={() => setActiveTab('notifications')}
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  disabled={isExporting}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Icon name="Bell" size={20} className="text-gray-600" />
-                  {notificationCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {notificationCount > 99 ? '99+' : notificationCount}
-                    </span>
+                  {isExporting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      <span>Exporting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="Download" size={16} />
+                      <span>Export Data</span>
+                      <Icon name="ChevronDown" size={16} />
+                    </>
                   )}
                 </button>
+                
+                {showExportMenu && !isExporting && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                    <div className="py-1">
+                      <button
+                        onClick={() => handleUnifiedExport('pdf')}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                      >
+                        <Icon name="FileText" size={16} className="text-red-600" />
+                        <span>Download as PDF</span>
+                      </button>
+                      <button
+                        onClick={() => handleUnifiedExport('excel')}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                      >
+                        <Icon name="Table" size={16} className="text-green-600" />
+                        <span>Download as Excel</span>
+                      </button>
+                      <button
+                        onClick={() => handleUnifiedExport('json')}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                      >
+                        <Icon name="Code" size={16} className="text-blue-600" />
+                        <span>Download as JSON</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-              
+
+              {/* Notification Bell */}
+              <NotificationBell variant="header" size={20} />
+            </div>
+          </div>
+
+          {/* Mobile Header */}
+          <div className="lg:hidden flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">
+                {tabs.find(tab => tab.id === activeTab)?.label || 'Dashboard'}
+              </h1>
+              <p className="text-sm text-gray-600">{shopData.name}</p>
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              {/* Notification Bell for Mobile */}
+              <NotificationBell variant="mobile" size={20} />
             </div>
           </div>
 
@@ -1237,6 +1532,25 @@ const ShopOwnerDashboard = () => {
           <Icon name="Plus" size={24} />
         </button>
       </div>
+
+      {/* Create Shop Modal */}
+      <CreateShopModal
+        isOpen={showCreateShopModal}
+        onClose={() => {
+          setShowCreateShopModal(false);
+          // If user closes modal without creating shop, redirect to profile
+          if (noShopFound) {
+            navigate('/user-profile');
+          }
+        }}
+        onShopCreated={(newShop) => {
+          setShowCreateShopModal(false);
+          setNoShopFound(false);
+          showToast(`Shop "${newShop.name}" created successfully!`, 'success');
+          // Reload dashboard data
+          window.location.reload();
+        }}
+      />
     </div>
   );
 };

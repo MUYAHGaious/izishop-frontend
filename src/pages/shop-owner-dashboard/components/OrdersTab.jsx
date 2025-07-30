@@ -1,102 +1,99 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
+import api from '../../../services/api';
+import { showToast } from '../../../components/ui/Toast';
 
 const OrdersTab = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [ordersPerPage] = useState(10);
 
-  const orders = [
-    {
-      id: "ORD-2025-001",
-      customer: {
-        name: "Marie Dubois",
-        email: "marie.dubois@email.com",
-        avatar: "https://randomuser.me/api/portraits/women/1.jpg"
-      },
-      items: [
-        { name: "Premium Wireless Headphones", quantity: 1, price: 45000 },
-        { name: "Phone Case", quantity: 2, price: 5000 }
-      ],
-      total: 55000,
-      status: "pending",
-      paymentStatus: "paid",
-      orderDate: "2025-01-16T10:30:00",
-      deliveryAddress: "123 Rue de la Paix, Douala, Cameroon",
-      trackingNumber: "TRK123456789"
-    },
-    {
-      id: "ORD-2025-002",
-      customer: {
-        name: "Jean Baptiste",
-        email: "jean.baptiste@email.com",
-        avatar: "https://randomuser.me/api/portraits/men/2.jpg"
-      },
-      items: [
-        { name: "Organic Cotton T-Shirt", quantity: 3, price: 8500 }
-      ],
-      total: 25500,
-      status: "processing",
-      paymentStatus: "paid",
-      orderDate: "2025-01-16T09:15:00",
-      deliveryAddress: "456 Avenue du Cameroun, Yaoundé, Cameroon",
-      trackingNumber: "TRK123456790"
-    },
-    {
-      id: "ORD-2025-003",
-      customer: {
-        name: "Aminata Sow",
-        email: "aminata.sow@email.com",
-        avatar: "https://randomuser.me/api/portraits/women/3.jpg"
-      },
-      items: [
-        { name: "Artisan Coffee Beans", quantity: 2, price: 12000 },
-        { name: "Coffee Mug", quantity: 1, price: 3500 }
-      ],
-      total: 27500,
-      status: "shipped",
-      paymentStatus: "paid",
-      orderDate: "2025-01-15T14:20:00",
-      deliveryAddress: "789 Boulevard de la Liberté, Bafoussam, Cameroon",
-      trackingNumber: "TRK123456791"
-    },
-    {
-      id: "ORD-2025-004",
-      customer: {
-        name: "Paul Mbarga",
-        email: "paul.mbarga@email.com",
-        avatar: "https://randomuser.me/api/portraits/men/4.jpg"
-      },
-      items: [
-        { name: "Smart Fitness Tracker", quantity: 1, price: 32000 }
-      ],
-      total: 32000,
-      status: "delivered",
-      paymentStatus: "paid",
-      orderDate: "2025-01-14T16:45:00",
-      deliveryAddress: "321 Rue des Palmiers, Garoua, Cameroon",
-      trackingNumber: "TRK123456792"
-    },
-    {
-      id: "ORD-2025-005",
-      customer: {
-        name: "Fatima Hassan",
-        email: "fatima.hassan@email.com",
-        avatar: "https://randomuser.me/api/portraits/women/5.jpg"
-      },
-      items: [
-        { name: "Handmade Leather Wallet", quantity: 1, price: 18500 }
-      ],
-      total: 18500,
-      status: "cancelled",
-      paymentStatus: "refunded",
-      orderDate: "2025-01-13T11:30:00",
-      deliveryAddress: "654 Avenue de l'Indépendance, Bamenda, Cameroon",
-      trackingNumber: null
+  // Load orders from API
+  useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        setLoading(true);
+        const response = await api.getShopOwnerOrders({
+          page: currentPage,
+          limit: ordersPerPage,
+          status: statusFilter || undefined,
+          search: searchQuery || undefined
+        });
+        
+        // Transform API response to match component structure
+        const transformedOrders = (response.orders || response || []).map(order => ({
+          id: order.id || `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 3)}`,
+          customer: {
+            name: order.customer_name || order.user?.name || 'Unknown Customer',
+            email: order.customer_email || order.user?.email || 'unknown@email.com',
+            avatar: order.customer_avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(order.customer_name || 'User')}&background=random`
+          },
+          items: order.items || [{
+            name: order.product_name || 'Product',
+            quantity: order.quantity || 1,
+            price: parseFloat(order.unit_price || order.total_amount || 0)
+          }],
+          total: parseFloat(order.total_amount || 0),
+          status: order.status || 'pending',
+          paymentStatus: order.payment_status || 'pending',
+          orderDate: order.created_at || new Date().toISOString(),
+          deliveryAddress: order.delivery_address || order.shipping_address || 'Address not provided',
+          trackingNumber: order.tracking_number || null
+        }));
+        
+        setOrders(transformedOrders);
+      } catch (error) {
+        console.error('Error loading orders:', error);
+        showToast({
+          type: 'error',
+          message: 'Failed to load orders. Using sample data.',
+          duration: 3000
+        });
+        
+        // No fallback data - show empty state
+        setOrders([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadOrders();
+  }, [currentPage, statusFilter, searchQuery]);
+
+  // Handle order status updates
+  const handleStatusUpdate = async (orderId, newStatus) => {
+    try {
+      await api.updateOrderStatus(orderId, newStatus);
+      
+      // Update local state
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === orderId 
+            ? { ...order, status: newStatus }
+            : order
+        )
+      );
+      
+      showToast({
+        type: 'success',
+        message: `Order ${orderId} status updated to ${newStatus}`,
+        duration: 3000
+      });
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      showToast({
+        type: 'error',
+        message: 'Failed to update order status',
+        duration: 3000
+      });
     }
-  ];
+  };
 
   const statusOptions = [
     { value: '', label: 'All Orders' },
@@ -178,9 +175,6 @@ const OrdersTab = () => {
           />
         </div>
         <div className="flex items-center space-x-3">
-          <Button variant="outline" iconName="Download" iconPosition="left">
-            Export Orders
-          </Button>
           <Button variant="outline" iconName="RefreshCw" iconPosition="left">
             Refresh
           </Button>
@@ -189,7 +183,31 @@ const OrdersTab = () => {
 
       {/* Orders List */}
       <div className="space-y-4">
-        {filteredOrders.map((order) => (
+        {loading ? (
+          // Loading skeleton
+          Array.from({ length: ordersPerPage }).map((_, index) => (
+            <div key={index} className="bg-surface border border-border rounded-xl p-6 animate-pulse">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-muted rounded-full"></div>
+                  <div className="space-y-2">
+                    <div className="w-32 h-4 bg-muted rounded"></div>
+                    <div className="w-24 h-3 bg-muted rounded"></div>
+                    <div className="w-20 h-3 bg-muted rounded"></div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-16 h-6 bg-muted rounded-full"></div>
+                  <div className="w-16 h-6 bg-muted rounded-full"></div>
+                  <div className="w-24 h-4 bg-muted rounded"></div>
+                </div>
+              </div>
+              <div className="w-full h-16 bg-muted rounded mb-4"></div>
+              <div className="w-full h-8 bg-muted rounded"></div>
+            </div>
+          ))
+        ) : filteredOrders.length > 0 ? (
+          filteredOrders.map((order) => (
           <div key={order.id} className="bg-surface border border-border rounded-xl p-6 hover:shadow-moderate transition-shadow">
             {/* Order Header */}
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
@@ -261,21 +279,45 @@ const OrdersTab = () => {
             <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-border">
               {order.status === 'pending' && (
                 <>
-                  <Button variant="default" size="sm" iconName="Check" iconPosition="left">
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    iconName="Check" 
+                    iconPosition="left"
+                    onClick={() => handleStatusUpdate(order.id, 'processing')}
+                  >
                     Accept Order
                   </Button>
-                  <Button variant="destructive" size="sm" iconName="X" iconPosition="left">
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    iconName="X" 
+                    iconPosition="left"
+                    onClick={() => handleStatusUpdate(order.id, 'cancelled')}
+                  >
                     Decline
                   </Button>
                 </>
               )}
               {order.status === 'processing' && (
-                <Button variant="default" size="sm" iconName="Truck" iconPosition="left">
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  iconName="Truck" 
+                  iconPosition="left"
+                  onClick={() => handleStatusUpdate(order.id, 'shipped')}
+                >
                   Mark as Shipped
                 </Button>
               )}
               {order.status === 'shipped' && (
-                <Button variant="default" size="sm" iconName="Package" iconPosition="left">
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  iconName="Package" 
+                  iconPosition="left"
+                  onClick={() => handleStatusUpdate(order.id, 'delivered')}
+                >
                   Mark as Delivered
                 </Button>
               )}
@@ -290,26 +332,58 @@ const OrdersTab = () => {
               </Button>
             </div>
           </div>
-        ))}
+          ))
+        ) : (
+          <div className="bg-surface border border-border rounded-xl p-8 text-center">
+            <div className="flex flex-col items-center space-y-4">
+              <Icon name="ShoppingBag" size={48} className="text-muted" />
+              <h3 className="text-lg font-medium text-text-primary">No orders found</h3>
+              <p className="text-text-secondary">
+                {searchQuery || statusFilter 
+                  ? "Try adjusting your search or filter criteria"
+                  : "Orders will appear here when customers make purchases"
+                }
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between mt-6">
-        <div className="text-sm text-text-secondary">
-          Showing {filteredOrders.length} of {orders.length} orders
+      {!loading && filteredOrders.length > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-6">
+          <div className="text-sm text-text-secondary">
+            Showing {filteredOrders.length} orders
+            {searchQuery && ` matching "${searchQuery}"`}
+            {statusFilter && ` with status "${statusOptions.find(opt => opt.value === statusFilter)?.label}"`}
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              iconName="ChevronLeft" 
+              iconPosition="left"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <span className="px-3 py-1 text-sm text-text-secondary">
+              Page {currentPage}
+            </span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              iconName="ChevronRight" 
+              iconPosition="right"
+              onClick={() => setCurrentPage(prev => prev + 1)}
+              disabled={filteredOrders.length < ordersPerPage}
+            >
+              Next
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" iconName="ChevronLeft" iconPosition="left">
-            Previous
-          </Button>
-          <Button variant="default" size="sm">1</Button>
-          <Button variant="outline" size="sm">2</Button>
-          <Button variant="outline" size="sm">3</Button>
-          <Button variant="outline" size="sm" iconName="ChevronRight" iconPosition="right">
-            Next
-          </Button>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

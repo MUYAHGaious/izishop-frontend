@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useCart } from '../../contexts/CartContext';
 import Header from '../../components/ui/Header';
 import MobileBottomTab from '../../components/ui/MobileBottomTab';
 import FilterPanel from './components/FilterPanel';
@@ -13,6 +14,7 @@ import api from '../../services/api';
 
 const ProductCatalog = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { addToCart } = useCart();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -234,13 +236,12 @@ const ProductCatalog = () => {
 
   // Add to cart
   const handleAddToCart = useCallback(async (product) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log('Added to cart:', product);
-        resolve();
-      }, 500);
-    });
-  }, []);
+    try {
+      await addToCart(product);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    }
+  }, [addToCart]);
 
   // Toggle wishlist
   const handleToggleWishlist = useCallback(async (productId, isWishlisted) => {

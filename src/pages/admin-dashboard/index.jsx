@@ -8,6 +8,7 @@ import ShopManagement from './components/ShopManagement';
 import OrderManagement from './components/OrderManagement';
 import Analytics from './components/Analytics';
 import SystemSettings from './components/SystemSettings';
+import NotificationCenter from './components/NotificationCenter';
 import notificationService from '../../services/notificationService';
 
 const AdminDashboard = () => {
@@ -15,31 +16,60 @@ const AdminDashboard = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuth();
 
+  // Show loading while auth is being checked
+  if (!user && isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading admin dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Check admin authentication
   useEffect(() => {
-    if (!isAuthenticated() || !user || user.role !== 'ADMIN') {
+    try {
+      if (!isAuthenticated() || !user || user.role !== 'ADMIN') {
+        console.log('Admin auth check failed, redirecting to login');
+        navigate('/admin-login');
+      } else {
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Error in admin auth check:', error);
       navigate('/admin-login');
     }
   }, [user, isAuthenticated, navigate]);
 
   // Real notification service
   useEffect(() => {
-    // Subscribe to real notifications
-    const unsubscribe = notificationService.subscribe((data) => {
-      setNotifications(data.notifications);
-      setNotificationCount(data.count);
-    });
+    try {
+      // Subscribe to real notifications
+      const unsubscribe = notificationService.subscribe((data) => {
+        setNotifications(data.notifications);
+        setNotificationCount(data.count);
+      });
 
-    // Start real-time notifications
-    notificationService.startRealTimeNotifications();
+      // Start real-time notifications
+      notificationService.startRealTimeNotifications();
 
-    return () => {
-      unsubscribe();
-      notificationService.stopNotifications();
-    };
+      return () => {
+        try {
+          unsubscribe();
+          notificationService.stopNotifications();
+        } catch (error) {
+          console.error('Error cleaning up notifications:', error);
+        }
+      };
+    } catch (error) {
+      console.error('Error initializing notifications:', error);
+    }
   }, []);
 
   const handleLogout = async () => {
@@ -59,13 +89,14 @@ const AdminDashboard = () => {
     { id: 'shops', label: 'Shops', icon: 'Store', color: 'text-purple-600' },
     { id: 'orders', label: 'Orders', icon: 'ShoppingBag', color: 'text-orange-600' },
     { id: 'analytics', label: 'Analytics', icon: 'TrendingUp', color: 'text-indigo-600' },
+    { id: 'notifications', label: 'Notifications', icon: 'Send', color: 'text-pink-600' },
     { id: 'settings', label: 'Settings', icon: 'Settings', color: 'text-gray-600' }
   ];
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
-        return <DashboardOverview />;
+        return <DashboardOverview onTabChange={setActiveTab} />;
       case 'users':
         return <UserManagement />;
       case 'shops':
@@ -74,10 +105,12 @@ const AdminDashboard = () => {
         return <OrderManagement />;
       case 'analytics':
         return <Analytics />;
+      case 'notifications':
+        return <NotificationCenter />;
       case 'settings':
         return <SystemSettings />;
       default:
-        return <DashboardOverview />;
+        return <DashboardOverview onTabChange={setActiveTab} />;
     }
   };
 
@@ -157,18 +190,6 @@ const AdminDashboard = () => {
           </div>
           
           <div className="flex items-center space-x-2">
-            {/* Notifications */}
-            <div className="relative">
-              <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative">
-                <Icon name="Bell" size={20} className="text-gray-600" />
-                {notifications.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {notifications.length}
-                  </span>
-                )}
-              </button>
-            </div>
-            
             {/* Profile */}
             <button 
               onClick={handleLogout}
@@ -287,24 +308,6 @@ const AdminDashboard = () => {
                   className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-              
-              {/* Notifications */}
-              <div className="relative">
-                <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative">
-                  <Icon name="Bell" size={20} className="text-gray-600" />
-                  {notifications.length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {notifications.length}
-                    </span>
-                  )}
-                </button>
-              </div>
-              
-              {/* Quick Actions */}
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
-                <Icon name="Plus" size={16} />
-                <span>Quick Action</span>
-              </button>
             </div>
           </div>
 

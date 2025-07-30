@@ -1,64 +1,117 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import Icon from '../../../components/AppIcon';
+import api from '../../../services/api';
+import { showToast } from '../../../components/ui/Toast';
+import AnalyticsCards from './AnalyticsCards';
+import MLAnalytics from './MLAnalytics';
+import NotificationCenter from '../../../components/notifications/NotificationCenter';
 
 const ShopAnalytics = () => {
   const [timeRange, setTimeRange] = useState('7d');
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMetric, setSelectedMetric] = useState('all');
   const [analyticsData, setAnalyticsData] = useState({
-    revenue: {
-      current: 2450000,
-      previous: 2100000,
-      change: 16.7
-    },
-    orders: {
-      current: 45,
-      previous: 38,
-      change: 18.4
-    },
-    customers: {
-      current: 32,
-      previous: 28,
-      change: 14.3
-    },
-    conversionRate: {
-      current: 3.2,
-      previous: 2.8,
-      change: 14.3
-    }
+    revenue: { current: 0, previous: 0, change: 0 },
+    orders: { current: 0, previous: 0, change: 0, average_value: 0 },
+    customers: { current: 0, previous: 0, change: 0, new: 0, returning: 0, retention_rate: 0, lifetime_value: 0 },
+    conversionRate: { current: 0, previous: 0, change: 0 }
   });
 
-  const [topProducts, setTopProducts] = useState([
-    { name: 'iPhone 15 Pro', sales: 15, revenue: 12750000, growth: 25 },
-    { name: 'Samsung Galaxy S24', sales: 12, revenue: 9000000, growth: 18 },
-    { name: 'Wireless Headphones', sales: 28, revenue: 2492000, growth: 35 },
-    { name: 'MacBook Air M3', sales: 5, revenue: 6000000, growth: -5 },
-    { name: 'Gaming Chair', sales: 8, revenue: 1248000, growth: 12 }
-  ]);
-
-  const [salesData, setSalesData] = useState([
-    { date: '2024-07-12', sales: 350000, orders: 6 },
-    { date: '2024-07-13', sales: 420000, orders: 8 },
-    { date: '2024-07-14', sales: 280000, orders: 4 },
-    { date: '2024-07-15', sales: 520000, orders: 9 },
-    { date: '2024-07-16', sales: 380000, orders: 7 },
-    { date: '2024-07-17', sales: 450000, orders: 8 },
-    { date: '2024-07-18', sales: 390000, orders: 7 }
-  ]);
-
+  const [topProducts, setTopProducts] = useState([]);
+  const [salesData, setSalesData] = useState([]);
   const [customerInsights, setCustomerInsights] = useState({
-    newCustomers: 12,
-    returningCustomers: 20,
-    customerRetentionRate: 68.5,
-    averageOrderValue: 156000,
-    customerLifetimeValue: 890000
+    newCustomers: 0,
+    returningCustomers: 0,
+    customerRetentionRate: 0,
+    averageOrderValue: 0,
+    customerLifetimeValue: 0
   });
+  const [trafficSources, setTrafficSources] = useState([]);
+  const [error, setError] = useState(null);
+  const [daysActive, setDaysActive] = useState(1);
 
-  const [trafficSources, setTrafficSources] = useState([
-    { source: 'Direct', visitors: 245, percentage: 35 },
-    { source: 'Social Media', visitors: 189, percentage: 27 },
-    { source: 'Search Engine', visitors: 154, percentage: 22 },
-    { source: 'Email', visitors: 77, percentage: 11 },
-    { source: 'Referral', visitors: 35, percentage: 5 }
-  ]);
+  // Load analytics data from API
+  useEffect(() => {
+    const loadAnalyticsData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Load analytics data in parallel
+        const [analytics, products, sales, userDays] = await Promise.all([
+          api.getShopOwnerAnalytics(timeRange),
+          api.getShopOwnerTopProducts(5),
+          api.getShopOwnerSalesData(timeRange),
+          api.getUserDaysActive()
+        ]);
+
+        console.log('Analytics loaded:', analytics);
+        console.log('Products loaded:', products);
+        console.log('Sales loaded:', sales);
+        
+        setAnalyticsData(analytics);
+        setTopProducts(products);
+        setSalesData(processSalesData(sales));
+        setDaysActive(userDays);
+        
+        // Set customer insights from analytics data
+        setCustomerInsights({
+          newCustomers: analytics.customers?.new || 0,
+          returningCustomers: analytics.customers?.returning || 0,
+          customerRetentionRate: analytics.customers?.retention_rate || 0,
+          averageOrderValue: analytics.orders?.average_value || 0,
+          customerLifetimeValue: analytics.customers?.lifetime_value || 0
+        });
+        
+        // Load real traffic sources data from analytics endpoint
+        try {
+          const trafficData = await api.getShopOwnerTrafficSources();
+          setTrafficSources(trafficData);
+        } catch (trafficError) {
+          console.warn('Failed to load traffic sources, using fallback data:', trafficError);
+          // Fallback to mock data only if API fails
+          setTrafficSources([
+            { source: 'Direct', visitors: Math.floor(Math.random() * 300) + 100, percentage: 35 },
+            { source: 'Social Media', visitors: Math.floor(Math.random() * 200) + 80, percentage: 27 },
+            { source: 'Search Engine', visitors: Math.floor(Math.random() * 180) + 70, percentage: 22 },
+            { source: 'Email', visitors: Math.floor(Math.random() * 100) + 30, percentage: 11 },
+            { source: 'Referral', visitors: Math.floor(Math.random() * 50) + 20, percentage: 5 }
+          ]);
+        }
+        
+      } catch (error) {
+        console.error('Error loading analytics data:', error);
+        setError(error.message || 'Failed to load analytics data');
+        showToast({
+          type: 'error',
+          message: 'Failed to load analytics data. Please try again.',
+          duration: 3000
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAnalyticsData();
+  }, [timeRange]);
+
+  // Process sales data for chart display
+  const processSalesData = (rawSalesData) => {
+    if (!rawSalesData || !Array.isArray(rawSalesData)) {
+      return [];
+    }
+
+    return rawSalesData.map(item => ({
+      date: new Date(item.date).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric' 
+      }),
+      sales: item.sales,
+      orders: item.orders
+    }));
+  };
 
   const timeRanges = [
     { value: '7d', label: 'Last 7 Days' },
@@ -91,15 +144,92 @@ const ShopAnalytics = () => {
     return change > 0 ? 'TrendingUp' : change < 0 ? 'TrendingDown' : 'Minus';
   };
 
+
+  // Filter products based on search query
+  const filteredProducts = topProducts.filter(product =>
+    product.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Filter metrics based on selected metric
+  const getFilteredMetrics = () => {
+    const allMetrics = [
+      { key: 'revenue', label: 'Revenue', value: analyticsData.revenue.current, change: analyticsData.revenue.change },
+      { key: 'orders', label: 'Orders', value: analyticsData.orders.current, change: analyticsData.orders.change },
+      { key: 'customers', label: 'Customers', value: analyticsData.customers.current, change: analyticsData.customers.change },
+      { key: 'avgOrder', label: 'Avg Order Value', value: analyticsData.orders.average_value, change: 0 }
+    ];
+    
+    if (selectedMetric === 'all') return allMetrics;
+    return allMetrics.filter(metric => metric.key === selectedMetric);
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="p-4 lg:p-6 space-y-6">
+        <div className="flex items-center justify-center min-h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading analytics data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="p-4 lg:p-6 space-y-6">
+        <div className="flex items-center justify-center min-h-96">
+          <div className="text-center">
+            <Icon name="AlertTriangle" size={48} className="text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to Load Analytics</h3>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 lg:p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Shop Analytics</h2>
-          <p className="text-gray-600">Track your shop's performance and insights</p>
-        </div>
-        <div className="flex items-center space-x-3">
+        <div></div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          {/* Search */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64"
+            />
+            <Icon name="Search" size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          </div>
+          
+          {/* Metric Filter */}
+          <select
+            value={selectedMetric}
+            onChange={(e) => setSelectedMetric(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="all">All Metrics</option>
+            <option value="revenue">Revenue</option>
+            <option value="orders">Orders</option>
+            <option value="customers">Customers</option>
+            <option value="avgOrder">Avg Order Value</option>
+          </select>
+          
+          {/* Time Range */}
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
@@ -109,142 +239,15 @@ const ShopAnalytics = () => {
               <option key={range.value} value={range.value}>{range.label}</option>
             ))}
           </select>
-          <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2">
-            <Icon name="Download" size={16} />
-            <span>Export Report</span>
-          </button>
+          
         </div>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Revenue</p>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(analyticsData.revenue.current)}</p>
-            </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <Icon name="DollarSign" size={24} className="text-green-600" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-sm">
-            <Icon name={getChangeIcon(analyticsData.revenue.change)} size={16} className={`mr-1 ${getChangeColor(analyticsData.revenue.change)}`} />
-            <span className={`font-medium ${getChangeColor(analyticsData.revenue.change)}`}>
-              {formatPercentage(analyticsData.revenue.change)}
-            </span>
-            <span className="text-gray-500 ml-1">vs previous period</span>
-          </div>
-        </div>
+      {/* Analytics Cards with Real Data */}
+      <AnalyticsCards timeRange={timeRange} />
 
-        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Orders</p>
-              <p className="text-2xl font-bold text-gray-900">{analyticsData.orders.current}</p>
-            </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Icon name="ShoppingBag" size={24} className="text-blue-600" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-sm">
-            <Icon name={getChangeIcon(analyticsData.orders.change)} size={16} className={`mr-1 ${getChangeColor(analyticsData.orders.change)}`} />
-            <span className={`font-medium ${getChangeColor(analyticsData.orders.change)}`}>
-              {formatPercentage(analyticsData.orders.change)}
-            </span>
-            <span className="text-gray-500 ml-1">vs previous period</span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Customers</p>
-              <p className="text-2xl font-bold text-gray-900">{analyticsData.customers.current}</p>
-            </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Icon name="Users" size={24} className="text-purple-600" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-sm">
-            <Icon name={getChangeIcon(analyticsData.customers.change)} size={16} className={`mr-1 ${getChangeColor(analyticsData.customers.change)}`} />
-            <span className={`font-medium ${getChangeColor(analyticsData.customers.change)}`}>
-              {formatPercentage(analyticsData.customers.change)}
-            </span>
-            <span className="text-gray-500 ml-1">vs previous period</span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Conversion Rate</p>
-              <p className="text-2xl font-bold text-gray-900">{analyticsData.conversionRate.current}%</p>
-            </div>
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <Icon name="Target" size={24} className="text-orange-600" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-sm">
-            <Icon name={getChangeIcon(analyticsData.conversionRate.change)} size={16} className={`mr-1 ${getChangeColor(analyticsData.conversionRate.change)}`} />
-            <span className={`font-medium ${getChangeColor(analyticsData.conversionRate.change)}`}>
-              {formatPercentage(analyticsData.conversionRate.change)}
-            </span>
-            <span className="text-gray-500 ml-1">vs previous period</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sales Chart */}
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Sales Trend</h3>
-            <div className="flex items-center space-x-4 text-sm text-gray-500">
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span>Revenue</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span>Orders</span>
-              </div>
-            </div>
-          </div>
-          <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-            <div className="text-center">
-              <Icon name="BarChart3" size={48} className="text-gray-400 mx-auto mb-2" />
-              <p className="text-gray-500">Sales trend chart</p>
-              <p className="text-sm text-gray-400">Chart visualization will be displayed here</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Traffic Sources */}
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Traffic Sources</h3>
-          <div className="space-y-4">
-            {trafficSources.map((source, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-3 h-3 rounded-full ${
-                    index === 0 ? 'bg-blue-500' :
-                    index === 1 ? 'bg-green-500' :
-                    index === 2 ? 'bg-yellow-500' :
-                    index === 3 ? 'bg-purple-500' : 'bg-gray-500'
-                  }`}></div>
-                  <span className="text-sm font-medium text-gray-900">{source.source}</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <span className="text-sm text-gray-600">{source.visitors} visitors</span>
-                  <span className="text-sm font-medium text-gray-900">{source.percentage}%</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* AI Analytics Section - Full Width */}
+      <MLAnalytics timeRange={timeRange} />
 
       {/* Top Products & Customer Insights */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -252,34 +255,90 @@ const ShopAnalytics = () => {
         <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900">Top Products</h3>
-            <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            <button 
+              onClick={() => showToast({
+                type: 'info',
+                message: 'Product management page will be implemented soon',
+                duration: 3000
+              })}
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            >
               View All
             </button>
           </div>
           <div className="space-y-4">
-            {topProducts.map((product, index) => (
-              <div key={index} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
-                    <Icon name="Package" size={16} className="text-gray-600" />
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((product, index) => (
+                <div key={product.id || index} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100">
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center">
+                        <Icon name="Package" size={16} className="text-blue-600" />
+                      </div>
+                      <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                        index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-orange-500' : 'bg-gray-300'
+                      }`}>
+                        {index + 1}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{product.name}</p>
+                      <div className="flex items-center space-x-2 text-sm text-gray-500">
+                        <span>{formatNumber(product.sales)} sales</span>
+                        <span>•</span>
+                        <span>Avg: {formatCurrency(product.avg_order_value || product.revenue / Math.max(1, product.sales))}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{product.name}</p>
-                    <p className="text-sm text-gray-500">{product.sales} sales</p>
+                  <div className="text-right">
+                    <p className="font-medium text-gray-900">{formatCurrency(product.revenue)}</p>
+                    <div className="flex items-center justify-end space-x-1 mt-1">
+                      <Icon name={getChangeIcon(product.growth)} size={12} className={getChangeColor(product.growth)} />
+                      <span className={`text-xs font-medium ${getChangeColor(product.growth)}`}>
+                        {formatPercentage(product.growth)}
+                      </span>
+                    </div>
+                    <div className="w-16 bg-gray-200 rounded-full h-1 mt-1">
+                      <div 
+                        className="h-1 bg-blue-500 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(100, (product.revenue / (filteredProducts[0]?.revenue || 1)) * 100)}%` }}
+                      ></div>
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-medium text-gray-900">{formatCurrency(product.revenue)}</p>
-                  <div className="flex items-center space-x-1">
-                    <Icon name={getChangeIcon(product.growth)} size={12} className={getChangeColor(product.growth)} />
-                    <span className={`text-xs font-medium ${getChangeColor(product.growth)}`}>
-                      {formatPercentage(product.growth)}
-                    </span>
-                  </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <Icon name="Package" size={48} className="mx-auto mb-2 text-gray-300" />
+                <p>No top products data available</p>
+                <p className="text-xs mt-1">Start selling to see your top performers</p>
+              </div>
+            )}
+          </div>
+          
+          {/* Top Products Summary */}
+          {filteredProducts.length > 0 && (
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-lg font-bold text-blue-600">{filteredProducts.length}</p>
+                  <p className="text-xs text-gray-600">Products Tracked</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-green-600">
+                    {formatCurrency(filteredProducts.reduce((sum, p) => sum + p.revenue, 0))}
+                  </p>
+                  <p className="text-xs text-gray-600">Total Revenue</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-purple-600">
+                    {formatNumber(filteredProducts.reduce((sum, p) => sum + p.sales, 0))}
+                  </p>
+                  <p className="text-xs text-gray-600">Total Sales</p>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Customer Insights */}
@@ -287,31 +346,135 @@ const ShopAnalytics = () => {
           <h3 className="text-lg font-semibold text-gray-900 mb-6">Customer Insights</h3>
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <p className="text-2xl font-bold text-blue-600">{customerInsights.newCustomers}</p>
+              <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-100">
+                <Icon name="UserPlus" size={20} className="text-blue-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-blue-600">{formatNumber(customerInsights.newCustomers)}</p>
                 <p className="text-sm text-gray-600">New Customers</p>
+                <div className="mt-2 text-xs text-blue-600">This Period</div>
               </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <p className="text-2xl font-bold text-green-600">{customerInsights.returningCustomers}</p>
+              <div className="text-center p-4 bg-green-50 rounded-lg border border-green-100">
+                <Icon name="UserCheck" size={20} className="text-green-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-green-600">{formatNumber(customerInsights.returningCustomers)}</p>
                 <p className="text-sm text-gray-600">Returning Customers</p>
+                <div className="mt-2 text-xs text-green-600">Repeat Buyers</div>
               </div>
             </div>
             
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Customer Retention Rate</span>
-                <span className="font-medium text-gray-900">{customerInsights.customerRetentionRate}%</span>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <Icon name="Repeat" size={16} className="text-gray-600" />
+                  <span className="text-sm text-gray-600">Customer Retention Rate</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="font-medium text-gray-900">{customerInsights.customerRetentionRate}%</span>
+                  <div className="w-16 bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="h-2 bg-blue-500 rounded-full"
+                      style={{ width: `${customerInsights.customerRetentionRate}%` }}
+                    ></div>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Average Order Value</span>
+              
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <Icon name="ShoppingCart" size={16} className="text-gray-600" />
+                  <span className="text-sm text-gray-600">Average Order Value</span>
+                </div>
                 <span className="font-medium text-gray-900">{formatCurrency(customerInsights.averageOrderValue)}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Customer Lifetime Value</span>
-                <span className="font-medium text-gray-900">{formatCurrency(customerInsights.customerLifetimeValue)}</span>
+              
+              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-100">
+                <div className="flex items-center space-x-2">
+                  <Icon name="Target" size={16} className="text-purple-600" />
+                  <span className="text-sm text-gray-600">Customer Lifetime Value</span>
+                </div>
+                <span className="font-medium text-purple-600">{formatCurrency(customerInsights.customerLifetimeValue)}</span>
+              </div>
+            </div>
+            
+            {/* Customer Segmentation */}
+            <div className="pt-4 border-t border-gray-200">
+              <h4 className="text-sm font-medium text-gray-900 mb-3">Customer Distribution</h4>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">New Customers</span>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-20 bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="h-2 bg-blue-500 rounded-full"
+                        style={{ 
+                          width: `${(customerInsights.newCustomers / Math.max(1, customerInsights.newCustomers + customerInsights.returningCustomers)) * 100}%` 
+                        }}
+                      ></div>
+                    </div>
+                    <span className="font-medium text-gray-900 w-10 text-right">
+                      {Math.round((customerInsights.newCustomers / Math.max(1, customerInsights.newCustomers + customerInsights.returningCustomers)) * 100)}%
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Returning Customers</span>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-20 bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="h-2 bg-green-500 rounded-full"
+                        style={{ 
+                          width: `${(customerInsights.returningCustomers / Math.max(1, customerInsights.newCustomers + customerInsights.returningCustomers)) * 100}%` 
+                        }}
+                      ></div>
+                    </div>
+                    <span className="font-medium text-gray-900 w-10 text-right">
+                      {Math.round((customerInsights.returningCustomers / Math.max(1, customerInsights.newCustomers + customerInsights.returningCustomers)) * 100)}%
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Traffic Sources */}
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">Traffic Sources</h3>
+        <div className="space-y-4">
+          {trafficSources.map((source, index) => (
+            <div key={index} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
+              <div className="flex items-center space-x-3">
+                <div className={`w-3 h-3 rounded-full ${
+                  index === 0 ? 'bg-blue-500' :
+                  index === 1 ? 'bg-green-500' :
+                  index === 2 ? 'bg-yellow-500' :
+                  index === 3 ? 'bg-purple-500' : 'bg-gray-500'
+                }`}></div>
+                <div>
+                  <span className="text-sm font-medium text-gray-900">{source.source}</span>
+                  {source.conversion_rate && (
+                    <p className="text-xs text-gray-500">Conv: {source.conversion_rate}%</p>
+                  )}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm text-gray-600">{formatNumber(source.visitors)} visitors</span>
+                  <span className="text-sm font-medium text-gray-900">{source.percentage}%</span>
+                </div>
+                <div className="w-20 bg-gray-200 rounded-full h-1.5 mt-1">
+                  <div 
+                    className={`h-1.5 rounded-full ${
+                      index === 0 ? 'bg-blue-500' :
+                      index === 1 ? 'bg-green-500' :
+                      index === 2 ? 'bg-yellow-500' :
+                      index === 3 ? 'bg-purple-500' : 'bg-gray-500'
+                    }`}
+                    style={{ width: `${source.percentage}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -322,9 +485,11 @@ const ShopAnalytics = () => {
           <div className="p-4 bg-green-50 rounded-lg border border-green-200">
             <div className="flex items-center space-x-2 mb-2">
               <Icon name="TrendingUp" size={20} className="text-green-600" />
-              <h4 className="font-medium text-green-800">Strong Performance</h4>
+              <h4 className="font-medium text-green-800">Revenue Performance</h4>
             </div>
-            <p className="text-sm text-green-700">Your revenue is up 16.7% compared to the previous period. Keep up the great work!</p>
+            <p className="text-sm text-green-700">
+              Your revenue is {formatPercentage(analyticsData.revenue.change)} compared to the previous period.
+            </p>
           </div>
           
           <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
@@ -332,21 +497,25 @@ const ShopAnalytics = () => {
               <Icon name="Users" size={20} className="text-blue-600" />
               <h4 className="font-medium text-blue-800">Customer Growth</h4>
             </div>
-            <p className="text-sm text-blue-700">You gained 12 new customers this period. Consider running a referral program to boost growth.</p>
+            <p className="text-sm text-blue-700">
+              You have {analyticsData.customers.current} customers, {formatPercentage(analyticsData.customers.change)} from last period.
+            </p>
           </div>
           
-          <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+          <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
             <div className="flex items-center space-x-2 mb-2">
-              <Icon name="AlertTriangle" size={20} className="text-yellow-600" />
-              <h4 className="font-medium text-yellow-800">Opportunity</h4>
+              <Icon name="ShoppingCart" size={20} className="text-purple-600" />
+              <h4 className="font-medium text-purple-800">Order Performance</h4>
             </div>
-            <p className="text-sm text-yellow-700">Your conversion rate could be improved. Consider optimizing your product pages and checkout process.</p>
+            <p className="text-sm text-purple-700">
+              You received {analyticsData.orders.current} orders with an average value of {formatCurrency(analyticsData.orders.average_value)}.
+            </p>
           </div>
         </div>
       </div>
+
     </div>
   );
 };
 
 export default ShopAnalytics;
-

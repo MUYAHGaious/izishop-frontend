@@ -35,17 +35,23 @@ export const ShopProvider = ({ children }) => {
       setUserShops(shops || []);
       
       // Auto-select first shop if only one exists and no shop is currently selected
-      if (shops.length === 1 && !selectedShop) {
+      if (shops && shops.length === 1 && !selectedShop) {
         setSelectedShop(shops[0]);
       }
       
       // Clear selected shop if it no longer exists
-      if (selectedShop && !shops.find(shop => shop.id === selectedShop.id)) {
+      if (selectedShop && shops && !shops.find(shop => shop.id === selectedShop.id)) {
         setSelectedShop(null);
       }
     } catch (error) {
       console.error('Failed to load user shops:', error);
-      setUserShops([]);
+      // Handle 404 specifically for new shop owners who don't have shops yet
+      if (error.message && error.message.includes('Shop not found')) {
+        console.log('No shops found for user - this is normal for new shop owners');
+        setUserShops([]);
+      } else {
+        setUserShops([]);
+      }
     } finally {
       setLoading(false);
     }

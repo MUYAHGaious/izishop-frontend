@@ -1,103 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useCart } from '../../contexts/CartContext';
 import Icon from '../AppIcon';
 import Button from './Button';
 import Image from '../AppImage';
 
 const CartIndicator = ({ 
-  cartItems = [], 
-  onUpdateCart, 
   showPreview = true,
   className = "" 
 }) => {
+  const { cartItems, updateQuantity, removeFromCart, getCartTotals } = useCart();
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [cartItemCount, setCartItemCount] = useState(0);
-  const [cartTotal, setCartTotal] = useState(0);
-  const [mockCartItems, setMockCartItems] = useState([]);
-
-  // Mock cart data
-  const mockItems = [
-    {
-      id: 1,
-      name: 'iPhone 14 Pro',
-      price: 999.99,
-      quantity: 1,
-      image: '/assets/images/products/iphone-14-pro.jpg',
-      shop: 'TechHub Store',
-      variant: '128GB, Space Black'
-    },
-    {
-      id: 2,
-      name: 'Samsung Galaxy Buds Pro',
-      price: 199.99,
-      quantity: 2,
-      image: '/assets/images/products/galaxy-buds.jpg',
-      shop: 'Audio World',
-      variant: 'Phantom Black'
-    },
-    {
-      id: 3,
-      name: 'MacBook Air M2',
-      price: 1299.99,
-      quantity: 1,
-      image: '/assets/images/products/macbook-air.jpg',
-      shop: 'Apple Store',
-      variant: '13-inch, 256GB'
-    }
-  ];
-
-  useEffect(() => {
-    // Use provided cart items or mock data
-    const items = cartItems.length > 0 ? cartItems : mockItems;
-    setMockCartItems(items);
-    
-    // Calculate totals
-    const count = items.reduce((sum, item) => sum + item.quantity, 0);
-    const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
-    setCartItemCount(count);
-    setCartTotal(total);
-
-    // Save to localStorage
-    localStorage.setItem('cartItemCount', count.toString());
-    localStorage.setItem('cartItems', JSON.stringify(items));
-  }, [cartItems]);
+  
+  const { subtotal, itemCount } = getCartTotals();
 
   const handlePreviewToggle = () => {
-    if (showPreview && cartItemCount > 0) {
+    if (showPreview && itemCount > 0) {
       setIsPreviewOpen(!isPreviewOpen);
     }
   };
 
   const handleQuantityChange = (itemId, newQuantity) => {
-    if (newQuantity <= 0) {
-      handleRemoveItem(itemId);
-      return;
-    }
-
-    const updatedItems = mockCartItems.map(item =>
-      item.id === itemId ? { ...item, quantity: newQuantity } : item
-    );
-    
-    setMockCartItems(updatedItems);
-    if (onUpdateCart) {
-      onUpdateCart(updatedItems);
-    }
+    updateQuantity(itemId, newQuantity);
   };
 
   const handleRemoveItem = (itemId) => {
-    const updatedItems = mockCartItems.filter(item => item.id !== itemId);
-    setMockCartItems(updatedItems);
-    if (onUpdateCart) {
-      onUpdateCart(updatedItems);
-    }
+    removeFromCart(itemId);
   };
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
-      currency: 'USD'
-    }).format(price);
+      currency: 'XAF',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(price).replace('XAF', 'XAF');
   };
 
   return (
@@ -110,15 +47,15 @@ const CartIndicator = ({
         <Icon name="ShoppingCart" size={20} />
         
         {/* Item Count Badge */}
-        {cartItemCount > 0 && (
+        {itemCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center marketplace-spring">
-            {cartItemCount > 99 ? '99+' : cartItemCount}
+            {itemCount > 99 ? '99+' : itemCount}
           </span>
         )}
       </button>
 
       {/* Cart Preview Dropdown */}
-      {isPreviewOpen && showPreview && cartItemCount > 0 && (
+      {isPreviewOpen && showPreview && itemCount > 0 && (
         <>
           {/* Backdrop */}
           <div 
@@ -132,7 +69,7 @@ const CartIndicator = ({
             <div className="px-4 py-3 border-b border-border">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-foreground">
-                  Shopping Cart ({cartItemCount} items)
+                  Shopping Cart ({itemCount} items)
                 </h3>
                 <button
                   onClick={() => setIsPreviewOpen(false)}
@@ -145,7 +82,7 @@ const CartIndicator = ({
 
             {/* Cart Items */}
             <div className="max-h-64 overflow-y-auto">
-              {mockCartItems.map((item) => (
+              {cartItems.map((item) => (
                 <div key={item.id} className="px-4 py-3 border-b border-border last:border-b-0">
                   <div className="flex items-start space-x-3">
                     {/* Product Image */}
@@ -163,7 +100,7 @@ const CartIndicator = ({
                         {item.name}
                       </h4>
                       <p className="text-xs text-text-secondary truncate">
-                        {item.shop}
+                        {item.shopName}
                       </p>
                       {item.variant && (
                         <p className="text-xs text-text-secondary truncate">
@@ -215,7 +152,7 @@ const CartIndicator = ({
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-medium text-foreground">Total:</span>
                 <span className="text-lg font-bold text-primary font-mono">
-                  {formatPrice(cartTotal)}
+                  {formatPrice(subtotal)}
                 </span>
               </div>
               
@@ -237,7 +174,7 @@ const CartIndicator = ({
       )}
 
       {/* Empty Cart State */}
-      {isPreviewOpen && showPreview && cartItemCount === 0 && (
+      {isPreviewOpen && showPreview && itemCount === 0 && (
         <>
           <div 
             className="fixed inset-0 z-1000"

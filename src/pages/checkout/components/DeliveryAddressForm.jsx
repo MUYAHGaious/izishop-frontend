@@ -47,17 +47,20 @@ const DeliveryAddressForm = ({ onNext, formData, setFormData }) => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.fullName?.trim()) newErrors.fullName = "Nom complet requis";
-    if (!formData.phone?.trim()) newErrors.phone = "Numéro de téléphone requis";
-    if (!formData.address?.trim()) newErrors.address = "Adresse requise";
-    if (!formData.city?.trim()) newErrors.city = "Ville requise";
-    if (!formData.region) newErrors.region = "Région requise";
-    if (!formData.postalCode?.trim()) newErrors.postalCode = "Code postal requis";
+    if (!formData.fullName?.trim()) newErrors.fullName = "Full name required";
+    if (!formData.phone?.trim()) newErrors.phone = "Phone number required";
+    if (!formData.address?.trim()) newErrors.address = "Address required";
+    if (!formData.city?.trim()) newErrors.city = "City required";
+    if (!formData.region) newErrors.region = "Region required";
+    if (!formData.postalCode?.trim()) newErrors.postalCode = "Postal code required";
     
-    // Phone validation for Cameroon
-    const phoneRegex = /^(\+237|237)?[67]\d{8}$/;
-    if (formData.phone && !phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
-      newErrors.phone = "Format de téléphone invalide";
+    // Phone validation for Cameroon - more flexible
+    if (formData.phone) {
+      const cleanPhone = formData.phone.replace(/[\s-]/g, '');
+      const phoneRegex = /^(\+?237)?[67]\d{8}$/;
+      if (!phoneRegex.test(cleanPhone)) {
+        newErrors.phone = "Invalid phone format. Use: +237 6XX XXX XXX or 6XX XXX XXX";
+      }
     }
 
     setErrors(newErrors);
@@ -94,7 +97,7 @@ const DeliveryAddressForm = ({ onNext, formData, setFormData }) => {
     <div className="max-w-2xl mx-auto">
       <div className="bg-surface rounded-lg border border-border p-6 elevation-1">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-foreground">Adresse de Livraison</h2>
+          <h2 className="text-xl font-semibold text-foreground">Delivery Address</h2>
           <Button
             variant="outline"
             size="sm"
@@ -102,14 +105,14 @@ const DeliveryAddressForm = ({ onNext, formData, setFormData }) => {
             iconName="BookOpen"
             iconPosition="left"
           >
-            Carnet d'adresses
+            Address Book
           </Button>
         </div>
 
         {/* Address Book */}
         {showAddressBook && (
           <div className="mb-6 p-4 bg-muted/50 rounded-lg border border-border">
-            <h3 className="text-sm font-medium text-foreground mb-3">Adresses Sauvegardées</h3>
+            <h3 className="text-sm font-medium text-foreground mb-3">Saved Addresses</h3>
             <div className="space-y-2">
               {savedAddresses.map((address) => (
                 <div
@@ -141,9 +144,9 @@ const DeliveryAddressForm = ({ onNext, formData, setFormData }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Nom Complet"
+              label="Full Name"
               type="text"
-              placeholder="Entrez votre nom complet"
+              placeholder="Enter your full name"
               value={formData.fullName || ''}
               onChange={(e) => handleInputChange('fullName', e.target.value)}
               error={errors.fullName}
@@ -151,9 +154,9 @@ const DeliveryAddressForm = ({ onNext, formData, setFormData }) => {
             />
             
             <Input
-              label="Numéro de Téléphone"
+              label="Phone Number"
               type="tel"
-              placeholder="+237 6XX XXX XXX"
+              placeholder="+237 6XX XXX XXX or 6XX XXX XXX"
               value={formData.phone || ''}
               onChange={(e) => handleInputChange('phone', e.target.value)}
               error={errors.phone}
@@ -162,9 +165,9 @@ const DeliveryAddressForm = ({ onNext, formData, setFormData }) => {
           </div>
 
           <Input
-            label="Adresse Complète"
+            label="Complete Address"
             type="text"
-            placeholder="Rue, quartier, point de repère"
+            placeholder="Street, neighborhood, landmark"
             value={formData.address || ''}
             onChange={(e) => handleInputChange('address', e.target.value)}
             error={errors.address}
@@ -173,7 +176,7 @@ const DeliveryAddressForm = ({ onNext, formData, setFormData }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
-              label="Ville"
+              label="City"
               type="text"
               placeholder="Yaoundé, Douala..."
               value={formData.city || ''}
@@ -183,8 +186,8 @@ const DeliveryAddressForm = ({ onNext, formData, setFormData }) => {
             />
             
             <Select
-              label="Région"
-              placeholder="Sélectionnez une région"
+              label="Region"
+              placeholder="Select a region"
               options={regions}
               value={formData.region || ''}
               onChange={(value) => handleInputChange('region', value)}
@@ -193,7 +196,7 @@ const DeliveryAddressForm = ({ onNext, formData, setFormData }) => {
             />
             
             <Input
-              label="Code Postal"
+              label="Postal Code"
               type="text"
               placeholder="999"
               value={formData.postalCode || ''}
@@ -204,9 +207,9 @@ const DeliveryAddressForm = ({ onNext, formData, setFormData }) => {
           </div>
 
           <Input
-            label="Instructions de Livraison (Optionnel)"
+            label="Delivery Instructions (Optional)"
             type="text"
-            placeholder="Informations supplémentaires pour le livreur"
+            placeholder="Additional information for the delivery person"
             value={formData.deliveryInstructions || ''}
             onChange={(e) => handleInputChange('deliveryInstructions', e.target.value)}
           />
@@ -219,7 +222,7 @@ const DeliveryAddressForm = ({ onNext, formData, setFormData }) => {
               iconPosition="right"
               className="min-w-32"
             >
-              Continuer
+              Continue
             </Button>
           </div>
         </form>

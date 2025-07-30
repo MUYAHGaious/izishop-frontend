@@ -132,6 +132,10 @@ const RegisterForm = ({ onRegister, isLoading }) => {
       if (formData.role === 'shop_owner') {
         if (!formData.shopName) {
           newErrors.shopName = 'Shop name is required';
+        } else if (formData.shopName.length < 2) {
+          newErrors.shopName = 'Shop name must be at least 2 characters long';
+        } else if (!/^[a-zA-Z0-9\s\-\'\&\.\(\)\[\]\_\,\!\@\#\%\+]+$/.test(formData.shopName.trim())) {
+          newErrors.shopName = 'Shop name contains invalid characters. Only letters, numbers, spaces, and common punctuation are allowed';
         }
         if (!formData.shopDescription) {
           newErrors.shopDescription = 'Shop description is required';

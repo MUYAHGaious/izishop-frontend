@@ -3,9 +3,11 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import { Checkbox } from '../../../components/ui/Checkbox';
 import Icon from '../../../components/AppIcon';
+import { useCart } from '../../../contexts/CartContext';
 
 
 const PaymentForm = ({ onBack, formData, setFormData }) => {
+  const { clearCart } = useCart();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [paymentDetails, setPaymentDetails] = useState({});
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -18,7 +20,7 @@ const PaymentForm = ({ onBack, formData, setFormData }) => {
       id: 'mtn-momo',
       name: 'MTN Mobile Money',
       icon: 'Smartphone',
-      description: 'Payez avec votre compte MTN MoMo',
+      description: 'Pay with your MTN MoMo account',
       logo: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=100',
       popular: true
     },
@@ -26,14 +28,14 @@ const PaymentForm = ({ onBack, formData, setFormData }) => {
       id: 'orange-money',
       name: 'Orange Money',
       icon: 'Smartphone',
-      description: 'Payez avec votre compte Orange Money',
+      description: 'Pay with your Orange Money account',
       logo: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=100'
     },
     {
       id: 'visa-card',
-      name: 'Carte Visa',
+      name: 'Visa Card',
       icon: 'CreditCard',
-      description: 'Cartes de crédit/débit internationales',
+      description: 'International credit/debit cards',
       logo: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=100'
     }
   ];
@@ -58,29 +60,29 @@ const PaymentForm = ({ onBack, formData, setFormData }) => {
     const newErrors = {};
 
     if (!selectedPaymentMethod) {
-      newErrors.paymentMethod = "Veuillez sélectionner un mode de paiement";
+      newErrors.paymentMethod = "Please select a payment method";
     }
 
     if (selectedPaymentMethod === 'mtn-momo' || selectedPaymentMethod === 'orange-money') {
       if (!paymentDetails.phoneNumber) {
-        newErrors.phoneNumber = "Numéro de téléphone requis";
+        newErrors.phoneNumber = "Phone number required";
       } else {
         const phoneRegex = /^(\+237|237)?[67]\d{8}$/;
         if (!phoneRegex.test(paymentDetails.phoneNumber.replace(/\s/g, ''))) {
-          newErrors.phoneNumber = "Format de téléphone invalide";
+          newErrors.phoneNumber = "Invalid phone format";
         }
       }
     }
 
     if (selectedPaymentMethod === 'visa-card') {
-      if (!paymentDetails.cardNumber) newErrors.cardNumber = "Numéro de carte requis";
-      if (!paymentDetails.expiryDate) newErrors.expiryDate = "Date d'expiration requise";
-      if (!paymentDetails.cvv) newErrors.cvv = "CVV requis";
-      if (!paymentDetails.cardName) newErrors.cardName = "Nom sur la carte requis";
+      if (!paymentDetails.cardNumber) newErrors.cardNumber = "Card number required";
+      if (!paymentDetails.expiryDate) newErrors.expiryDate = "Expiry date required";
+      if (!paymentDetails.cvv) newErrors.cvv = "CVV required";
+      if (!paymentDetails.cardName) newErrors.cardName = "Name on card required";
     }
 
     if (!termsAccepted) {
-      newErrors.terms = "Vous devez accepter les conditions générales";
+      newErrors.terms = "You must accept the terms and conditions";
     }
 
     setErrors(newErrors);
@@ -104,11 +106,18 @@ const PaymentForm = ({ onBack, formData, setFormData }) => {
         orderNotes
       });
       
+      // Clear cart after successful payment
+      clearCart();
+      
+      // Clear checkout data
+      localStorage.removeItem('checkoutData');
+      localStorage.removeItem('checkoutFormData');
+      
       // Redirect to success page
       window.location.href = '/order-success';
     } catch (error) {
       console.error('Payment failed:', error);
-      setErrors({ payment: 'Erreur de paiement. Veuillez réessayer.' });
+      setErrors({ payment: 'Payment error. Please try again.' });
     } finally {
       setIsProcessing(false);
     }
@@ -120,9 +129,9 @@ const PaymentForm = ({ onBack, formData, setFormData }) => {
         return (
           <div className="space-y-4">
             <Input
-              label="Numéro de Téléphone"
+              label="Phone Number"
               type="tel"
-              placeholder="+237 6XX XXX XXX"
+              placeholder="+237 6XX XXX XXX or 6XX XXX XXX"
               value={paymentDetails.phoneNumber || ''}
               onChange={(e) => setPaymentDetails(prev => ({ ...prev, phoneNumber: e.target.value }))}
               error={errors.phoneNumber}
@@ -131,10 +140,10 @@ const PaymentForm = ({ onBack, formData, setFormData }) => {
             <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
               <div className="flex items-center space-x-2 mb-2">
                 <Icon name="Info" size={16} className="text-primary" />
-                <span className="text-sm font-medium text-primary">Instructions de Paiement</span>
+                <span className="text-sm font-medium text-primary">Payment Instructions</span>
               </div>
               <p className="text-xs text-primary">
-                Vous recevrez un message de confirmation sur votre téléphone pour autoriser le paiement de {formatCurrency(total)}.
+                You will receive a confirmation message on your phone to authorize the payment of {formatCurrency(total)}.
               </p>
             </div>
           </div>
@@ -144,7 +153,7 @@ const PaymentForm = ({ onBack, formData, setFormData }) => {
         return (
           <div className="space-y-4">
             <Input
-              label="Numéro de Carte"
+              label="Card Number"
               type="text"
               placeholder="1234 5678 9012 3456"
               value={paymentDetails.cardNumber || ''}
@@ -154,7 +163,7 @@ const PaymentForm = ({ onBack, formData, setFormData }) => {
             />
             <div className="grid grid-cols-2 gap-4">
               <Input
-                label="Date d'Expiration"
+                label="Expiry Date"
                 type="text"
                 placeholder="MM/AA"
                 value={paymentDetails.expiryDate || ''}
@@ -173,7 +182,7 @@ const PaymentForm = ({ onBack, formData, setFormData }) => {
               />
             </div>
             <Input
-              label="Nom sur la Carte"
+              label="Name on Card"
               type="text"
               placeholder="JEAN BAPTISTE MBALLA"
               value={paymentDetails.cardName || ''}
@@ -192,11 +201,11 @@ const PaymentForm = ({ onBack, formData, setFormData }) => {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-surface rounded-lg border border-border p-6 elevation-1">
-        <h2 className="text-xl font-semibold text-foreground mb-6">Paiement</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-6">Payment</h2>
 
         {/* Payment Methods */}
         <div className="mb-6">
-          <h3 className="text-sm font-medium text-foreground mb-3">Choisissez votre mode de paiement</h3>
+          <h3 className="text-sm font-medium text-foreground mb-3">Choose your payment method</h3>
           <div className="space-y-3">
             {paymentMethods.map((method) => (
               <div
@@ -209,7 +218,7 @@ const PaymentForm = ({ onBack, formData, setFormData }) => {
               >
                 {method.popular && (
                   <div className="absolute -top-2 left-4 bg-accent text-accent-foreground text-xs px-2 py-1 rounded-full font-medium">
-                    Populaire
+                    Popular
                   </div>
                 )}
                 
@@ -245,7 +254,7 @@ const PaymentForm = ({ onBack, formData, setFormData }) => {
         {/* Payment Form */}
         {selectedPaymentMethod && (
           <div className="mb-6 p-4 bg-muted/50 rounded-lg border border-border">
-            <h4 className="font-medium text-foreground mb-4">Détails de Paiement</h4>
+            <h4 className="font-medium text-foreground mb-4">Payment Details</h4>
             {renderPaymentForm()}
           </div>
         )}
@@ -253,9 +262,9 @@ const PaymentForm = ({ onBack, formData, setFormData }) => {
         {/* Order Notes */}
         <div className="mb-6">
           <Input
-            label="Notes de Commande (Optionnel)"
+            label="Order Notes (Optional)"
             type="text"
-            placeholder="Instructions spéciales pour votre commande"
+            placeholder="Special instructions for your order"
             value={orderNotes}
             onChange={(e) => setOrderNotes(e.target.value)}
           />
@@ -265,17 +274,17 @@ const PaymentForm = ({ onBack, formData, setFormData }) => {
         <div className="mb-6 p-4 bg-success/10 rounded-lg border border-success/20">
           <div className="flex items-center space-x-2 mb-2">
             <Icon name="Shield" size={20} className="text-success" />
-            <span className="font-medium text-success">Protection Escrow</span>
+            <span className="font-medium text-success">Escrow Protection</span>
           </div>
           <p className="text-sm text-success">
-            Votre paiement est sécurisé par notre système d'escrow. Les fonds ne seront libérés au vendeur qu'après confirmation de la livraison.
+            Your payment is secured by our escrow system. Funds will only be released to the seller after delivery confirmation.
           </p>
         </div>
 
         {/* Terms and Conditions */}
         <div className="mb-6">
           <Checkbox
-            label="J'accepte les conditions générales et la politique de confidentialité"
+            label="I accept the terms and conditions and privacy policy"
             checked={termsAccepted}
             onChange={(e) => setTermsAccepted(e.target.checked)}
             error={errors.terms}
@@ -286,7 +295,7 @@ const PaymentForm = ({ onBack, formData, setFormData }) => {
         {/* Order Total */}
         <div className="mb-6 p-4 bg-muted/50 rounded-lg border border-border">
           <div className="flex justify-between items-center">
-            <span className="text-lg font-semibold text-foreground">Total à Payer</span>
+            <span className="text-lg font-semibold text-foreground">Total to Pay</span>
             <span className="text-2xl font-bold text-primary">{formatCurrency(total)}</span>
           </div>
         </div>
@@ -295,15 +304,15 @@ const PaymentForm = ({ onBack, formData, setFormData }) => {
         <div className="flex items-center justify-center space-x-4 mb-6">
           <div className="flex items-center space-x-1 text-xs text-muted-foreground">
             <Icon name="Lock" size={14} />
-            <span>SSL Sécurisé</span>
+            <span>SSL Secured</span>
           </div>
           <div className="flex items-center space-x-1 text-xs text-muted-foreground">
             <Icon name="Shield" size={14} />
-            <span>Tranzak Certifié</span>
+            <span>Tranzak Certified</span>
           </div>
           <div className="flex items-center space-x-1 text-xs text-muted-foreground">
             <Icon name="CheckCircle" size={14} />
-            <span>Paiement Sécurisé</span>
+            <span>Secure Payment</span>
           </div>
         </div>
 
@@ -321,7 +330,7 @@ const PaymentForm = ({ onBack, formData, setFormData }) => {
             iconName="ArrowLeft"
             iconPosition="left"
           >
-            Retour
+            Back
           </Button>
           
           <Button
@@ -333,7 +342,7 @@ const PaymentForm = ({ onBack, formData, setFormData }) => {
             iconPosition="left"
             className="min-w-40"
           >
-            {isProcessing ? 'Traitement...' : 'Finaliser la Commande'}
+            {isProcessing ? 'Processing...' : 'Complete Order'}
           </Button>
         </div>
       </div>

@@ -108,8 +108,8 @@ const Checkout = () => {
     <>
       <Helmet>
         <title>Checkout - IziShop</title>
-        <meta name="description" content="Finalisez votre commande en toute sécurité avec IziShop. Paiement sécurisé avec escrow et livraison rapide au Cameroun." />
-        <meta name="keywords" content="checkout, paiement, livraison, Cameroun, MTN MoMo, Orange Money" />
+        <meta name="description" content="Complete your order securely with IziShop. Secure escrow payment and fast delivery in Cameroon." />
+        <meta name="keywords" content="checkout, payment, delivery, Cameroon, MTN MoMo, Orange Money" />
       </Helmet>
 
       <div className="min-h-screen bg-background">
@@ -118,23 +118,30 @@ const Checkout = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center space-x-3">
+                <button 
+                  onClick={() => window.history.back()}
+                  className="p-2 hover:bg-muted rounded-lg transition-micro"
+                  title="Go back"
+                >
+                  <Icon name="ArrowLeft" size={20} className="text-muted-foreground" />
+                </button>
                 <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                   <Icon name="ShoppingBag" size={20} color="white" />
                 </div>
                 <div>
                   <h1 className="text-lg font-semibold text-foreground">IziShop</h1>
-                  <p className="text-xs text-muted-foreground">Checkout Sécurisé</p>
+                  <p className="text-xs text-muted-foreground">Secure Checkout</p>
                 </div>
               </div>
               
               <div className="flex items-center space-x-4">
                 <div className="hidden sm:flex items-center space-x-2 text-sm text-muted-foreground">
                   <Icon name="Shield" size={16} className="text-success" />
-                  <span>Paiement Sécurisé</span>
+                  <span>Secure Payment</span>
                 </div>
                 <div className="hidden sm:flex items-center space-x-2 text-sm text-muted-foreground">
                   <Icon name="Lock" size={16} className="text-success" />
-                  <span>SSL Crypté</span>
+                  <span>SSL Encrypted</span>
                 </div>
               </div>
             </div>
@@ -156,11 +163,11 @@ const Checkout = () => {
               <div className="flex items-center space-x-6">
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                   <Icon name="Shield" size={16} className="text-success" />
-                  <span>Protection Escrow</span>
+                  <span>Escrow Protection</span>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                   <Icon name="Truck" size={16} className="text-primary" />
-                  <span>Livraison Rapide</span>
+                  <span>Fast Delivery</span>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                   <Icon name="Headphones" size={16} className="text-secondary" />
@@ -169,7 +176,7 @@ const Checkout = () => {
               </div>
               
               <div className="flex items-center space-x-4">
-                <span className="text-xs text-muted-foreground">Partenaires de Paiement:</span>
+                <span className="text-xs text-muted-foreground">Payment Partners:</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-8 h-5 bg-muted rounded flex items-center justify-center">
                     <span className="text-xs font-bold text-muted-foreground">MTN</span>
@@ -186,7 +193,7 @@ const Checkout = () => {
             
             <div className="mt-4 pt-4 border-t border-border text-center">
               <p className="text-xs text-muted-foreground">
-                © {new Date().getFullYear()} IziShop. Tous droits réservés. Paiements sécurisés par Tranzak.
+                © {new Date().getFullYear()} IziShop. All rights reserved. Secure payments by Tranzak.
               </p>
             </div>
           </div>

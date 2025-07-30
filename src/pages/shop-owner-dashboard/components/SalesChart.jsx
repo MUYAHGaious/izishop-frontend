@@ -1,34 +1,57 @@
-import React, { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import React, { useState, useEffect } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from 'recharts';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import api from '../../../services/api';
+import { showToast } from '../../../components/ui/Toast';
 
-const SalesChart = () => {
+const SalesChart = ({ timeRange = '7d' }) => {
   const [chartType, setChartType] = useState('revenue');
-  const [timeRange, setTimeRange] = useState('7days');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [salesData, setSalesData] = useState([]);
 
-  const revenueData = [
-    { name: 'Mon', value: 125000, orders: 8 },
-    { name: 'Tue', value: 89000, orders: 6 },
-    { name: 'Wed', value: 156000, orders: 12 },
-    { name: 'Thu', value: 203000, orders: 15 },
-    { name: 'Fri', value: 178000, orders: 11 },
-    { name: 'Sat', value: 234000, orders: 18 },
-    { name: 'Sun', value: 198000, orders: 14 }
-  ];
+  // Load sales data from API
+  useEffect(() => {
+    const loadSalesData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const data = await api.getShopOwnerSalesData(timeRange);
+        console.log('Sales chart data:', data);
+        
+        // Process data for chart display
+        const processedData = data.map(item => ({
+          name: new Date(item.date).toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric' 
+          }),
+          value: item.sales,
+          orders: item.orders,
+          date: item.date
+        }));
+        
+        setSalesData(processedData);
+        
+      } catch (error) {
+        console.error('Error loading sales data:', error);
+        setError(error.message || 'Failed to load sales data');
+        showToast({
+          type: 'error',
+          message: 'Failed to load sales chart data',
+          duration: 3000
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const monthlyData = [
-    { name: 'Jan', value: 2450000, orders: 156 },
-    { name: 'Feb', value: 2890000, orders: 189 },
-    { name: 'Mar', value: 3120000, orders: 203 },
-    { name: 'Apr', value: 2780000, orders: 178 },
-    { name: 'May', value: 3450000, orders: 234 },
-    { name: 'Jun', value: 3890000, orders: 267 },
-    { name: 'Jul', value: 4120000, orders: 289 }
-  ];
+    loadSalesData();
+  }, [timeRange]);
 
   const getCurrentData = () => {
-    return timeRange === '7days' ? revenueData : monthlyData;
+    return salesData;
   };
 
   const formatValue = (value) => {
@@ -40,15 +63,23 @@ const SalesChart = () => {
     return value.toString();
   };
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('fr-CM', {
+      style: 'currency',
+      currency: 'XAF',
+      minimumFractionDigits: 0
+    }).format(amount);
+  };
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-surface border border-border rounded-lg p-3 elevation-2">
-          <p className="text-sm font-medium text-foreground mb-1">{label}</p>
-          <p className="text-sm text-primary">
-            Revenue: {payload[0].value.toLocaleString()} XAF
+        <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg">
+          <p className="text-sm font-medium text-gray-900 mb-1">{label}</p>
+          <p className="text-sm text-blue-600">
+            Revenue: {formatCurrency(payload[0].value)}
           </p>
-          <p className="text-sm text-secondary">
+          <p className="text-sm text-green-600">
             Orders: {payload[0].payload.orders}
           </p>
         </div>
@@ -70,38 +101,60 @@ const SalesChart = () => {
     }
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200">
+        <div className="p-6 animate-pulse">
+          <div className="flex items-center justify-between mb-6">
+            <div className="h-6 bg-gray-200 rounded w-32"></div>
+            <div className="h-8 bg-gray-200 rounded w-24"></div>
+          </div>
+          <div className="h-80 bg-gray-200 rounded mb-4"></div>
+          <div className="flex justify-between">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="text-center">
+                <div className="h-4 bg-gray-200 rounded w-16 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-12"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200">
+        <div className="p-6 text-center">
+          <Icon name="AlertTriangle" size={48} className="text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-red-800 mb-2">Failed to Load Sales Chart</h3>
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-surface rounded-lg border border-border elevation-1">
-      <div className="p-6 border-b border-border">
+    <div className="bg-white rounded-lg border border-gray-200">
+      <div className="p-6 border-b border-gray-200">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div className="flex items-center space-x-2">
-            <Icon name={chartConfig[chartType].icon} size={20} className="text-primary" />
-            <h3 className="text-lg font-semibold text-foreground">{chartConfig[chartType].title}</h3>
+            <Icon name={chartConfig[chartType].icon} size={20} className="text-blue-600" />
+            <h3 className="text-lg font-semibold text-gray-900">{chartConfig[chartType].title}</h3>
           </div>
           
           <div className="flex items-center space-x-2">
-            {/* Time Range Selector */}
-            <div className="flex items-center bg-muted rounded-lg p-1">
-              <Button
-                variant={timeRange === '7days' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setTimeRange('7days')}
-                className="text-xs"
-              >
-                7 Days
-              </Button>
-              <Button
-                variant={timeRange === 'monthly' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setTimeRange('monthly')}
-                className="text-xs"
-              >
-                Monthly
-              </Button>
-            </div>
-
             {/* Chart Type Selector */}
-            <div className="flex items-center bg-muted rounded-lg p-1">
+            <div className="flex items-center bg-gray-100 rounded-lg p-1">
               <Button
                 variant={chartType === 'revenue' ? 'default' : 'ghost'}
                 size="sm"
@@ -125,111 +178,134 @@ const SalesChart = () => {
 
       <div className="p-6">
         {/* Chart Summary */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="text-center p-3 bg-primary/10 rounded-lg">
-            <div className="text-lg font-bold text-primary mb-1">
-              {formatValue(getCurrentData().reduce((sum, item) => sum + item.value, 0))} XAF
+        {salesData.length > 0 && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="text-center p-3 bg-blue-50 rounded-lg">
+              <div className="text-lg font-bold text-blue-600 mb-1">
+                {formatCurrency(getCurrentData().reduce((sum, item) => sum + item.value, 0))}
+              </div>
+              <div className="text-xs text-gray-600">Total Revenue</div>
             </div>
-            <div className="text-xs text-muted-foreground">Total Revenue</div>
-          </div>
-          <div className="text-center p-3 bg-secondary/10 rounded-lg">
-            <div className="text-lg font-bold text-secondary mb-1">
-              {getCurrentData().reduce((sum, item) => sum + item.orders, 0)}
+            <div className="text-center p-3 bg-green-50 rounded-lg">
+              <div className="text-lg font-bold text-green-600 mb-1">
+                {getCurrentData().reduce((sum, item) => sum + item.orders, 0)}
+              </div>
+              <div className="text-xs text-gray-600">Total Orders</div>
             </div>
-            <div className="text-xs text-muted-foreground">Total Orders</div>
-          </div>
-          <div className="text-center p-3 bg-success/10 rounded-lg">
-            <div className="text-lg font-bold text-success mb-1">
-              {formatValue(getCurrentData().reduce((sum, item) => sum + item.value, 0) / getCurrentData().length)} XAF
+            <div className="text-center p-3 bg-purple-50 rounded-lg">
+              <div className="text-lg font-bold text-purple-600 mb-1">
+                {formatCurrency(getCurrentData().reduce((sum, item) => sum + item.value, 0) / getCurrentData().length)}
+              </div>
+              <div className="text-xs text-gray-600">Avg Daily</div>
             </div>
-            <div className="text-xs text-muted-foreground">Avg Daily</div>
-          </div>
-          <div className="text-center p-3 bg-warning/10 rounded-lg">
-            <div className="text-lg font-bold text-warning mb-1">
-              {Math.round(getCurrentData().reduce((sum, item) => sum + item.orders, 0) / getCurrentData().length)}
+            <div className="text-center p-3 bg-orange-50 rounded-lg">
+              <div className="text-lg font-bold text-orange-600 mb-1">
+                {Math.round(getCurrentData().reduce((sum, item) => sum + item.orders, 0) / getCurrentData().length)}
+              </div>
+              <div className="text-xs text-gray-600">Avg Orders</div>
             </div>
-            <div className="text-xs text-muted-foreground">Avg Orders</div>
           </div>
-        </div>
+        )}
 
         {/* Chart */}
         <div className="h-80 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            {chartType === 'revenue' ? (
-              <BarChart data={getCurrentData()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: '#6B7280' }}
-                />
-                <YAxis 
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: '#6B7280' }}
-                  tickFormatter={formatValue}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar 
-                  dataKey="value" 
-                  fill={chartConfig[chartType].color}
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            ) : (
-              <LineChart data={getCurrentData()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: '#6B7280' }}
-                />
-                <YAxis 
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: '#6B7280' }}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Line 
-                  type="monotone" 
-                  dataKey="orders" 
-                  stroke={chartConfig[chartType].color}
-                  strokeWidth={3}
-                  dot={{ fill: chartConfig[chartType].color, strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, stroke: chartConfig[chartType].color, strokeWidth: 2 }}
-                />
-              </LineChart>
-            )}
-          </ResponsiveContainer>
+          {salesData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              {chartType === 'revenue' ? (
+                <BarChart data={getCurrentData()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: '#6B7280' }}
+                  />
+                  <YAxis 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: '#6B7280' }}
+                    tickFormatter={formatValue}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar 
+                    dataKey="value" 
+                    fill="#3B82F6"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              ) : (
+                <LineChart data={getCurrentData()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: '#6B7280' }}
+                  />
+                  <YAxis 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: '#6B7280' }}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="orders" 
+                    stroke="#7C3AED"
+                    strokeWidth={3}
+                    dot={{ fill: "#7C3AED", strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, stroke: "#7C3AED", strokeWidth: 2 }}
+                  />
+                </LineChart>
+              )}
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center bg-gray-50 rounded-lg h-full">
+              <div className="text-center">
+                <Icon name="BarChart3" size={48} className="text-gray-400 mx-auto mb-2" />
+                <p className="text-gray-500">No sales data available for the selected period</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Chart Actions */}
-        <div className="mt-6 pt-4 border-t border-border">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              variant="outline"
-              fullWidth
-              onClick={() => console.log('Export chart data')}
-              iconName="Download"
-              iconPosition="left"
-              iconSize={16}
-            >
-              Export Data
-            </Button>
-            <Button
-              variant="secondary"
-              fullWidth
-              onClick={() => console.log('View detailed analytics')}
-              iconName="BarChart3"
-              iconPosition="left"
-              iconSize={16}
-            >
-              Detailed Analytics
-            </Button>
+        {salesData.length > 0 && (
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                variant="outline"
+                fullWidth
+                onClick={() => {
+                  const data = {
+                    timeRange,
+                    salesData: getCurrentData(),
+                    exportDate: new Date().toISOString()
+                  };
+                  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `sales-chart-${timeRange}-${new Date().toISOString().split('T')[0]}.json`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                  showToast({
+                    type: 'success',
+                    message: 'Sales chart data exported successfully',
+                    duration: 3000
+                  });
+                }}
+                iconName="Download"
+                iconPosition="left"
+                iconSize={16}
+              >
+                Export Data
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

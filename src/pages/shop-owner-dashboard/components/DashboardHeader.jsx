@@ -1,15 +1,27 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Store, Package } from 'lucide-react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 
 const DashboardHeader = ({ shopData, notifications }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="bg-surface border-b border-border p-6">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         {/* Shop Info */}
         <div className="flex items-center space-x-4">
           <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center overflow-hidden">
-            <Icon name="Store" size={32} className="text-primary" />
+            {shopData.profile_photo ? (
+              <img
+                src={`http://localhost:8000${shopData.profile_photo}`}
+                alt={`${shopData.name} profile`}
+                className="w-full h-full object-cover rounded-xl"
+              />
+            ) : (
+              <Package size={32} className="text-primary" />
+            )}
           </div>
           <div>
             <h1 className="text-2xl font-bold text-text-primary">{shopData.name}</h1>
@@ -29,20 +41,20 @@ const DashboardHeader = ({ shopData, notifications }) => {
 
         {/* Actions */}
         <div className="flex items-center space-x-3">
-          <div className="relative">
-            <Button variant="ghost" size="icon">
-              <Icon name="Bell" size={20} />
-            </Button>
-            {notifications.unread > 0 && (
-              <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center">
-                {notifications.unread}
-              </span>
-            )}
-          </div>
-          <Button variant="outline" iconName="Settings" iconPosition="left">
+          <Button 
+            variant="outline" 
+            iconName="Settings" 
+            iconPosition="left"
+            onClick={() => navigate('/my-shop-profile')}
+          >
             Shop Settings
           </Button>
-          <Button variant="default" iconName="Plus" iconPosition="left">
+          <Button 
+            variant="default" 
+            iconName="Plus" 
+            iconPosition="left"
+            onClick={() => navigate('/add-product')}
+          >
             Add Product
           </Button>
         </div>

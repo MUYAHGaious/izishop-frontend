@@ -134,15 +134,12 @@ const NotificationCenter = () => {
       <div className="p-6 border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="relative">
-              <Icon name="Bell" size={20} className="text-primary" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-error rounded-full text-xs flex items-center justify-center text-white">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </div>
             <h3 className="text-lg font-semibold text-foreground">Notifications</h3>
+            {unreadCount > 0 && (
+              <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full font-medium">
+                {unreadCount} unread
+              </span>
+            )}
           </div>
           
           {unreadCount > 0 && (

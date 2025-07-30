@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
+import api from '../../../services/api';
+import { showToast } from '../../../components/ui/Toast';
 
 const CustomerManagement = () => {
   const [customers, setCustomers] = useState([]);
@@ -9,10 +11,54 @@ const CustomerManagement = () => {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [customersPerPage] = useState(10);
+  const [loading, setLoading] = useState(true);
 
-  // Mock customer data
+  // Load customers from API
   useEffect(() => {
-    const mockCustomers = [
+    const loadCustomers = async () => {
+      try {
+        setLoading(true);
+        const response = await api.getShopOwnerCustomers({
+          page: currentPage,
+          limit: customersPerPage,
+          search: searchTerm || undefined,
+          segment: selectedSegment !== 'all' ? selectedSegment : undefined,
+          status: selectedStatus !== 'all' ? selectedStatus : undefined
+        });
+        
+        // Transform API response to match component structure
+        const transformedCustomers = (response.customers || response || []).map(customer => ({
+          id: customer.id || Math.random().toString(36).substr(2, 9),
+          name: customer.name || customer.user?.name || 'Unknown Customer',
+          email: customer.email || customer.user?.email || 'unknown@email.com',
+          phone: customer.phone || customer.user?.phone || '+237 6XX XXX XXX',
+          totalOrders: customer.total_orders || 0,
+          totalSpent: parseFloat(customer.total_spent || 0),
+          averageOrderValue: parseFloat(customer.average_order_value || 0),
+          lastOrderDate: customer.last_order_date || new Date().toISOString().split('T')[0],
+          joinDate: customer.join_date || customer.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+          status: customer.status || (customer.total_orders > 0 ? 'active' : 'inactive'),
+          segment: customer.segment || (
+            customer.total_spent > 1000000 ? 'vip' :
+            customer.total_orders > 5 ? 'regular' : 'new'
+          ),
+          location: customer.location || customer.city || 'Cameroon',
+          rating: customer.rating || (4.0 + Math.random() * 1.0), // Simulate rating
+          notes: customer.notes || ''
+        }));
+        
+        setCustomers(transformedCustomers);
+        setFilteredCustomers(transformedCustomers);
+      } catch (error) {
+        console.error('Error loading customers:', error);
+        showToast({
+          type: 'error',
+          message: 'Failed to load customers. Using sample data.',
+          duration: 3000
+        });
+        
+        // Fallback to sample data if API fails
+        const mockCustomers = [
       {
         id: 1,
         name: 'John Doe',
@@ -109,10 +155,16 @@ const CustomerManagement = () => {
         rating: 4.6,
         notes: 'Prefers home & garden products'
       }
-    ];
-    setCustomers(mockCustomers);
-    setFilteredCustomers(mockCustomers);
-  }, []);
+        ];
+        setCustomers(mockCustomers);
+        setFilteredCustomers(mockCustomers);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCustomers();
+  }, [currentPage, searchTerm, selectedSegment, selectedStatus]);
 
   // Filter customers
   useEffect(() => {
@@ -201,16 +253,6 @@ const CustomerManagement = () => {
           <h2 className="text-2xl font-bold text-gray-900">Customer Management</h2>
           <p className="text-gray-600">Manage your customer relationships and insights</p>
         </div>
-        <div className="flex items-center space-x-3">
-          <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2">
-            <Icon name="Download" size={16} />
-            <span>Export</span>
-          </button>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
-            <Icon name="Mail" size={16} />
-            <span>Send Newsletter</span>
-          </button>
-        </div>
       </div>
 
       {/* Stats Cards */}
@@ -294,7 +336,36 @@ const CustomerManagement = () => {
 
       {/* Customer List */}
       <div className="space-y-4">
-        {getCurrentPageCustomers().map((customer) => (
+        {loading ? (
+          // Loading skeleton
+          Array.from({ length: customersPerPage }).map((_, index) => (
+            <div key={index} className="bg-white rounded-lg border border-gray-200 p-4 lg:p-6 animate-pulse">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                  <div className="space-y-2">
+                    <div className="w-32 h-4 bg-gray-200 rounded"></div>
+                    <div className="w-24 h-3 bg-gray-200 rounded"></div>
+                    <div className="w-28 h-3 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-12 h-6 bg-gray-200 rounded-full"></div>
+                  <div className="w-16 h-6 bg-gray-200 rounded-full"></div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="text-center p-3 bg-gray-50 rounded-lg">
+                    <div className="w-12 h-4 bg-gray-200 rounded mx-auto mb-2"></div>
+                    <div className="w-16 h-3 bg-gray-200 rounded mx-auto"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        ) : getCurrentPageCustomers().length > 0 ? (
+          getCurrentPageCustomers().map((customer) => (
           <div key={customer.id} className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
             <div className="p-4 lg:p-6">
               {/* Customer Header */}
@@ -415,7 +486,21 @@ const CustomerManagement = () => {
               </div>
             </div>
           </div>
-        ))}
+          ))
+        ) : (
+          <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+            <div className="flex flex-col items-center space-y-4">
+              <Icon name="Users" size={48} className="text-gray-400" />
+              <h3 className="text-lg font-medium text-gray-900">No customers found</h3>
+              <p className="text-gray-500">
+                {searchTerm || selectedSegment !== 'all' || selectedStatus !== 'all'
+                  ? "Try adjusting your search or filter criteria"
+                  : "Customers will appear here when they make purchases from your shop"
+                }
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Pagination */}

@@ -1,0 +1,13 @@
+// COMPLETELY DISABLED TO PREVENT INFINITE LOOPS
+
+const useDashboardLoader = () => {
+  console.log('useDashboardLoader: DISABLED - returning static data');
+  return { 
+    data: null, 
+    isLoading: false, 
+    error: null 
+  };
+};
+
+export { useDashboardLoader };
+export default useDashboardLoader;

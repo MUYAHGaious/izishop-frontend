@@ -274,17 +274,6 @@ const Header = () => {
             </div>
           ) : (
             <Button 
-              variant="ghost" 
-              iconName="User" 
-              size="sm"
-              onClick={() => navigate('/authentication-login-register')}
-            >
-              Sign In
-            </Button>
-          )}
-          
-          {!isAuthenticated() && (
-            <Button 
               variant="default" 
               iconName="Plus" 
               size="sm"
@@ -457,21 +446,6 @@ const Header = () => {
                   </button>
                 </div>
               ) : (
-                <Button
-                  variant="ghost"
-                  fullWidth
-                  iconName="User"
-                  iconPosition="left"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    navigate('/authentication-login-register');
-                  }}
-                >
-                  Sign In
-                </Button>
-              )}
-              
-              {!isAuthenticated() && (
                 <Button
                   variant="default"
                   fullWidth

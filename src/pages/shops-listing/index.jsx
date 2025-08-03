@@ -38,7 +38,7 @@ const ShopsListing = () => {
   // API functions for fetching shops data
   const fetchShops = useCallback(async (params = {}) => {
     try {
-      const { page = 1, limit = 20, search = '', category = '', sort = 'relevance', ...filters } = params;
+      const { page = 1, limit = 100, search = '', category = '', sort = 'relevance', ...filters } = params;
       console.log('Fetching shops with params:', { page, limit, search, category, sort, filters });
       
       const response = await api.getAllShops(page, limit, search, category, sort, filters);

@@ -458,7 +458,7 @@ class ApiService {
     return this.request(`/shops/${shopId}`);
   }
 
-  async getAllShops(page = 1, limit = 20, search = '', category = '', sort = 'relevance', filters = {}) {
+  async getAllShops(page = 1, limit = 100, search = '', category = '', sort = 'relevance', filters = {}) {
     try {
       const params = new URLSearchParams();
       
@@ -480,7 +480,14 @@ class ApiService {
         }
       });
       
-      return this.request(`/shops/?${params}`, {}, false); // false = no auth required
+      const url = `/shops?${params.toString()}`;
+      console.log('=== API CALL DEBUG ===');
+      console.log('Full URL:', `${this.baseURL}${url}`);
+      console.log('Params:', Object.fromEntries(params));
+      
+      return await this.request(url, {
+        method: 'GET'
+      });
     } catch (error) {
       console.warn('API not available for shops:', error.message);
       
@@ -963,16 +970,11 @@ class ApiService {
     }
   }
 
-  async getShopOwnerOrders(filters = {}) {
-    try {
-      const queryParams = new URLSearchParams(filters).toString();
-      return await this.request(`/shop-owner/orders${queryParams ? `?${queryParams}` : ''}`, {
-        method: 'GET'
-      });
-    } catch (error) {
-      console.warn('Failed to fetch shop owner orders:', error);
-      return [];
-    }
+  async createOrder(orderData) {
+    return await this.request('/orders/create', {
+      method: 'POST',
+      body: JSON.stringify(orderData)
+    });
   }
 
   async updateOrderStatus(orderId, status) {
@@ -1749,6 +1751,78 @@ class ApiService {
 
   async getUnreadNotificationCount() {
     return this.request('/notifications/unread-count', {
+      method: 'GET'
+    });
+  }
+
+  // Orders API methods
+  async getShopOwnerOrders(params = {}) {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page);
+    if (params.limit) queryParams.append('limit', params.limit);
+    if (params.status) queryParams.append('status', params.status);
+    if (params.search) queryParams.append('search', params.search);
+
+    return this.request(`/orders/shop-owner/orders?${queryParams}`, {
+      method: 'GET'
+    });
+  }
+
+  async getOrderStats() {
+    return this.request('/orders/shop-owner/orders/stats', {
+      method: 'GET'
+    });
+  }
+
+  async updateOrderStatus(orderId, status, trackingNumber = null) {
+    const body = { status };
+    if (trackingNumber) body.tracking_number = trackingNumber;
+
+    return this.request(`/orders/${orderId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(body)
+    });
+  }
+
+  async getOrderDetails(orderId) {
+    return this.request(`/orders/${orderId}`, {
+      method: 'GET'
+    });
+  }
+
+  async createOrder(orderData) {
+    return this.request('/orders/create', {
+      method: 'POST',
+      body: JSON.stringify(orderData)
+    });
+  }
+
+  // Shop Owner Dashboard API methods
+  async getShopOwnerTodayStats() {
+    return this.request('/shop-owner/dashboard/today-stats', {
+      method: 'GET'
+    });
+  }
+
+  async getMyShop() {
+    return this.request('/shops/my-shop', {
+      method: 'GET'
+    });
+  }
+
+  async getMyProductStats() {
+    return this.request('/products/my-stats', {
+      method: 'GET'
+    });
+  }
+
+  async getMyProducts(skip = 0, limit = 100, activeOnly = true) {
+    const params = new URLSearchParams();
+    params.append('skip', skip);
+    params.append('limit', limit);
+    if (activeOnly !== undefined) params.append('active_only', activeOnly);
+
+    return this.request(`/products/my-products?${params}`, {
       method: 'GET'
     });
   }

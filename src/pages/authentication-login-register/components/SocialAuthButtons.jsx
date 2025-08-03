@@ -12,10 +12,10 @@ const SocialAuthButtons = ({ onSocialLogin, isLoading }) => {
       textColor: 'text-white'
     },
     {
-      id: 'github',
-      name: 'GitHub',
-      icon: 'Github',
-      color: 'bg-gray-900 hover:bg-gray-800',
+      id: 'facebook',
+      name: 'Facebook',
+      icon: 'Facebook',
+      color: 'bg-blue-600 hover:bg-blue-700',
       textColor: 'text-white'
     }
   ];

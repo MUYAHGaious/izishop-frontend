@@ -120,13 +120,24 @@ export const useDashboardData = (dashboardType = 'shop-owner') => {
     await Promise.all(promises);
   }, [getFetchers, dashboardType, user?.id, preloadData]);
 
-  // Set up real-time subscriptions
+  // Set up real-time subscriptions - THROTTLED TO PREVENT LOOPS
   const setupRealTimeUpdates = useCallback((onUpdate) => {
+    if (!subscribeToDashboardUpdates) return () => {}; // Guard clause
+    
     const subscriptions = [];
+    let lastUpdate = 0;
+    const THROTTLE_MS = 5000; // 5 second minimum between updates
 
-    // Dashboard updates
+    // Dashboard updates - THROTTLED
     subscriptions.push(
       subscribeToDashboardUpdates((data) => {
+        const now = Date.now();
+        if (now - lastUpdate < THROTTLE_MS) {
+          console.log('Dashboard update throttled - too frequent');
+          return;
+        }
+        lastUpdate = now;
+        
         console.log(`${dashboardType} dashboard update:`, data);
         
         // Invalidate relevant cache entries
@@ -138,10 +149,18 @@ export const useDashboardData = (dashboardType = 'shop-owner') => {
       })
     );
 
-    // Product updates (for shop owners and admins)
-    if (['shop-owner', 'admin'].includes(dashboardType)) {
+    // Product updates (for shop owners and admins) - THROTTLED
+    if (['shop-owner', 'admin'].includes(dashboardType) && subscribeToProductUpdates) {
+      let lastProductUpdate = 0;
       subscriptions.push(
         subscribeToProductUpdates((data) => {
+          const now = Date.now();
+          if (now - lastProductUpdate < THROTTLE_MS) {
+            console.log('Product update throttled - too frequent');
+            return;
+          }
+          lastProductUpdate = now;
+          
           console.log(`Product update for ${dashboardType}:`, data);
           
           // Invalidate product-related cache
@@ -154,19 +173,29 @@ export const useDashboardData = (dashboardType = 'shop-owner') => {
       );
     }
 
-    // Order updates
-    subscriptions.push(
-      subscribeToOrderUpdates((data) => {
-        console.log(`Order update for ${dashboardType}:`, data);
-        
-        // Invalidate order-related cache
-        invalidateData(['orders', 'dashboardOverview']);
-        
-        if (onUpdate) {
-          onUpdate('orders', data);
-        }
-      })
-    );
+    // Order updates - THROTTLED
+    if (subscribeToOrderUpdates) {
+      let lastOrderUpdate = 0;
+      subscriptions.push(
+        subscribeToOrderUpdates((data) => {
+          const now = Date.now();
+          if (now - lastOrderUpdate < THROTTLE_MS) {
+            console.log('Order update throttled - too frequent');
+            return;
+          }
+          lastOrderUpdate = now;
+          
+          console.log(`Order update for ${dashboardType}:`, data);
+          
+          // Invalidate order-related cache
+          invalidateData(['orders', 'dashboardOverview']);
+          
+          if (onUpdate) {
+            onUpdate('orders', data);
+          }
+        })
+      );
+    }
 
     // Return cleanup function
     return () => {

@@ -26,6 +26,8 @@ const OrdersTab = () => {
           search: searchQuery || undefined
         });
         
+        console.log('Orders API response:', response);
+        
         // Transform API response to match component structure
         const transformedOrders = (response.orders || response || []).map(order => ({
           id: order.id || `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 3)}`,

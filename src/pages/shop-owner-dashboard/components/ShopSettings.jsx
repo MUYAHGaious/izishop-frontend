@@ -190,7 +190,11 @@ const ShopSettings = ({ shopData, setShopData }) => {
       
     } catch (error) {
       console.error('Error saving settings:', error);
-      showToast.error('Failed to save settings. Please try again.');
+      showToast({
+        type: 'error',
+        message: 'Failed to save settings. Please try again.',
+        duration: 3000
+      });
     }
   };
 
@@ -700,7 +704,11 @@ const ShopSettings = ({ shopData, setShopData }) => {
                 await api.sendTestNotification('email');
                 showToast.success('Test email notification sent!');
               } catch (error) {
-                showToast.error('Failed to send test email');
+                showToast({
+                  type: 'error',
+                  message: 'Failed to send test email',
+                  duration: 3000
+                });
               }
             }}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
@@ -715,7 +723,11 @@ const ShopSettings = ({ shopData, setShopData }) => {
                 await api.sendTestNotification('sms');
                 showToast.success('Test SMS notification sent!');
               } catch (error) {
-                showToast.error('Failed to send test SMS');
+                showToast({
+                  type: 'error',
+                  message: 'Failed to send test SMS',
+                  duration: 3000
+                });
               }
             }}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
@@ -730,7 +742,11 @@ const ShopSettings = ({ shopData, setShopData }) => {
                 await api.markAllNotificationsAsRead();
                 showToast.success('All notifications marked as read');
               } catch (error) {
-                showToast.error('Failed to mark notifications as read');
+                showToast({
+                  type: 'error',
+                  message: 'Failed to mark notifications as read',
+                  duration: 3000
+                });
               }
             }}
             className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center space-x-2"

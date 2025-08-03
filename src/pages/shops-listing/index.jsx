@@ -39,68 +39,35 @@ const ShopsListing = () => {
   const fetchShops = useCallback(async (params = {}) => {
     try {
       const { page = 1, limit = 100, search = '', category = '', sort = 'relevance', ...filters } = params;
-      console.log('Fetching shops with params:', { page, limit, search, category, sort, filters });
+      console.log('=== FETCHING SHOPS DEBUG ===');
+      console.log('Params:', { page, limit, search, category, sort, filters });
+      console.log('API base URL:', 'http://localhost:8000/api');
+      console.log('Expected endpoint: /api/shops');
       
       const response = await api.getAllShops(page, limit, search, category, sort, filters);
-      console.log('API response for getAllShops:', response);
+      console.log('=== SHOPS API RESPONSE ===');
+      console.log('Response type:', typeof response);
+      console.log('Response is array:', Array.isArray(response));
+      console.log('Response length:', response?.length);
+      console.log('Full response:', response);
+      
+      // Also check shop count for debugging
+      try {
+        const countResponse = await fetch('http://localhost:8000/api/shops/debug/count');
+        const countData = await countResponse.json();
+        console.log('=== SHOP COUNT DEBUG ===');
+        console.log('Shop count data:', countData);
+      } catch (countError) {
+        console.log('Could not fetch shop count:', countError);
+      }
       
       return response;
     } catch (error) {
       console.error('Error fetching shops:', error);
       console.error('Error details:', error.message, error.response?.data);
       
-      // Return mock data as fallback
-      return {
-        shops: [
-          {
-            id: 1,
-            name: "TechHub Cameroon",
-            description: "Leading electronics and gadgets shop in Douala",
-            category: "electronics",
-            location: "Douala, Cameroon",
-            rating: 4.8,
-            isVerified: true,
-            isOnline: true,
-            isFollowing: false,
-            image_url: "/slideshow/pexels-quang-nguyen-vinh-222549-6871018.jpg",
-            owner_name: "Jean Mballa",
-            products_count: 156,
-            followers_count: 1247
-          },
-          {
-            id: 2,
-            name: "Fashion Forward",
-            description: "Trendy fashion and accessories for modern style",
-            category: "fashion",
-            location: "Yaoundé, Cameroon",
-            rating: 4.6,
-            isVerified: true,
-            isOnline: true,
-            isFollowing: false,
-            image_url: "/slideshow/pexels-mikhail-nilov-9301901.jpg",
-            owner_name: "Marie Fokou",
-            products_count: 89,
-            followers_count: 567
-          },
-          {
-            id: 3,
-            name: "Home & Garden Plus",
-            description: "Quality home improvement and garden supplies",
-            category: "home",
-            location: "Bafoussam, Cameroon",
-            rating: 4.4,
-            isVerified: false,
-            isOnline: true,
-            isFollowing: false,
-            image_url: "/slideshow/pexels-tima-miroshnichenko-5453848.jpg",
-            owner_name: "Paul Nkomo",
-            products_count: 234,
-            followers_count: 892
-          }
-        ],
-        total: 3,
-        count: 3
-      };
+      // Throw error instead of returning mock data - let the component handle empty states
+      throw error;
     }
   }, []);
 
@@ -114,39 +81,8 @@ const ShopsListing = () => {
       console.error('Error fetching featured shops:', error);
       console.error('Featured shops error details:', error.message, error.response?.data);
       
-      // Return mock featured shops data as fallback
-      return [
-        {
-          id: 1,
-          name: "TechHub Cameroon",
-          description: "Leading electronics and gadgets shop in Douala",
-          category: "electronics",
-          location: "Douala, Cameroon",
-          rating: 4.8,
-          isVerified: true,
-          isOnline: true,
-          isFollowing: false,
-          image_url: "/slideshow/pexels-quang-nguyen-vinh-222549-6871018.jpg",
-          owner_name: "Jean Mballa",
-          products_count: 156,
-          followers_count: 1247
-        },
-        {
-          id: 2,
-          name: "Fashion Forward",
-          description: "Trendy fashion and accessories for modern style",
-          category: "fashion",
-          location: "Yaoundé, Cameroon",
-          rating: 4.6,
-          isVerified: true,
-          isOnline: true,
-          isFollowing: false,
-          image_url: "/slideshow/pexels-mikhail-nilov-9301901.jpg",
-          owner_name: "Marie Fokou",
-          products_count: 89,
-          followers_count: 567
-        }
-      ];
+      // Throw error instead of returning mock data - let the component handle empty states
+      throw error;
     }
   }, []);
 
@@ -191,7 +127,7 @@ const ShopsListing = () => {
         // Load shops with caching - use static params to avoid dependency loops
         const shopsParams = {
           page: 1,
-          limit: 20,
+          limit: 100,
           search: query,
           category: category,
           sort: sort
@@ -203,14 +139,36 @@ const ShopsListing = () => {
         ]);
 
         if (shopsData) {
-          // Handle both possible response formats
-          const shops = shopsData.shops || shopsData || [];
-          const total = shopsData.total || shopsData.count || shops.length;
-          
-          setShops(shops);
-          setResultsCount(total);
-          setHasMore(shops.length >= 20);
-          setCurrentPage(1);
+          // Handle new standardized API response format
+          if (shopsData.success && shopsData.data) {
+            // Standard success response with data
+            const shops = Array.isArray(shopsData.data) ? shopsData.data : [];
+            const meta = shopsData.meta || {};
+            
+            setShops(shops);
+            setResultsCount(meta.total_count || shops.length);
+            setHasMore(meta.has_more || false);
+            setCurrentPage(meta.pagination?.page || 1);
+          } else if (shopsData.success === true && Array.isArray(shopsData.data) && shopsData.data.length === 0) {
+            // Empty data response
+            setShops([]);
+            setResultsCount(0);
+            setHasMore(false);
+            
+            // Show the reason if provided
+            if (shopsData.reason) {
+              console.log('No shops available:', shopsData.reason);
+              if (shopsData.suggestions) {
+                console.log('Suggestions:', shopsData.suggestions);
+              }
+            }
+          } else {
+            // Legacy format support
+            const shops = Array.isArray(shopsData) ? shopsData : (shopsData.shops || []);
+            setShops(shops);
+            setResultsCount(shops.length);
+            setHasMore(false);
+          }
         } else {
           setShops([]);
           setResultsCount(0);
@@ -224,8 +182,26 @@ const ShopsListing = () => {
 
       } catch (error) {
         console.error('Error loading shops data:', error);
-        setError('Failed to load shops. Please try again.');
-        showToast('Failed to load shops', 'error');
+        
+        // Check if it's a network error or API error
+        let errorMessage = 'Failed to load shops. Please try again.';
+        if (error.message && error.message.includes('fetch')) {
+          errorMessage = 'Unable to connect to server. Please check your internet connection.';
+        } else if (error.response?.status === 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (error.response?.status === 404) {
+          errorMessage = 'Shops service not available.';
+        }
+        
+        setError(errorMessage);
+        setShops([]); // Show empty state instead of mock data
+        setResultsCount(0);
+        
+        showToast({
+          type: 'error',
+          message: errorMessage,
+          duration: 5000
+        });
       } finally {
         setLoading(false);
       }
@@ -249,7 +225,11 @@ const ShopsListing = () => {
         }
         
         // Show a toast to let user know data has been updated
-        showToast('Shop data updated', 'info');
+        showToast({
+          type: 'info',
+          message: 'Shop data updated',
+          duration: 3000
+        });
       }
     });
 
@@ -278,7 +258,7 @@ const ShopsListing = () => {
       // Fetch new search results
       const shopsParams = {
         page: 1,
-        limit: 20,
+        limit: 100,
         search: searchQuery.trim(),
         category: searchParams.get('category') || '',
         sort: sortBy,
@@ -289,16 +269,21 @@ const ShopsListing = () => {
       const shopsData = await fetchWithCache('shops', () => fetchShops(shopsParams), shopsParams, true);
       
       if (shopsData) {
-        setShops(shopsData.shops || []);
-        setResultsCount(shopsData.total || 0);
-        setHasMore((shopsData.shops?.length || 0) >= 20);
+        const shops = Array.isArray(shopsData) ? shopsData : (shopsData.shops || []);
+        setShops(shops);
+        setResultsCount(shops.length);
+        setHasMore(false);
         setCurrentPage(1);
       }
 
     } catch (error) {
       console.error('Error searching shops:', error);
       setError('Search failed. Please try again.');
-      showToast('Search failed', 'error');
+      showToast({
+        type: 'error',
+        message: 'Search failed. Please try again.',
+        duration: 3000
+      });
     } finally {
       setLoading(false);
     }
@@ -321,7 +306,7 @@ const ShopsListing = () => {
       // Fetch filtered results
       const shopsParams = {
         page: 1,
-        limit: 20,
+        limit: 100,
         search: searchQuery,
         category: searchParams.get('category') || '',
         sort: sortBy,
@@ -331,9 +316,10 @@ const ShopsListing = () => {
       const shopsData = await fetchWithCache('shops', () => fetchShops(shopsParams), shopsParams, true);
       
       if (shopsData) {
-        setShops(shopsData.shops || []);
-        setResultsCount(shopsData.total || 0);
-        setHasMore((shopsData.shops?.length || 0) >= 20);
+        const shops = Array.isArray(shopsData) ? shopsData : (shopsData.shops || []);
+        setShops(shops);
+        setResultsCount(shops.length);
+        setHasMore(false);
         setCurrentPage(1);
       }
 
@@ -362,7 +348,7 @@ const ShopsListing = () => {
       // Fetch sorted results
       const shopsParams = {
         page: 1,
-        limit: 20,
+        limit: 100,
         search: searchQuery,
         category: searchParams.get('category') || '',
         sort: newSort,
@@ -372,9 +358,10 @@ const ShopsListing = () => {
       const shopsData = await fetchWithCache('shops', () => fetchShops(shopsParams), shopsParams, true);
       
       if (shopsData) {
-        setShops(shopsData.shops || []);
-        setResultsCount(shopsData.total || 0);
-        setHasMore((shopsData.shops?.length || 0) >= 20);
+        const shops = Array.isArray(shopsData) ? shopsData : (shopsData.shops || []);
+        setShops(shops);
+        setResultsCount(shops.length);
+        setHasMore(false);
         setCurrentPage(1);
       }
 
@@ -441,7 +428,7 @@ const ShopsListing = () => {
       const nextPage = currentPage + 1;
       const shopsParams = {
         page: nextPage,
-        limit: 20,
+        limit: 100,
         search: searchQuery,
         category: searchParams.get('category') || '',
         sort: sortBy,
@@ -760,9 +747,14 @@ const ShopsListing = () => {
                   <h3 className="text-lg font-semibold text-text-primary mb-2">
                     No shops found
                   </h3>
-                  <p className="text-text-secondary">
-                    Try adjusting your filters or search query
+                  <p className="text-text-secondary mb-4">
+                    {error ? error : "Try adjusting your filters or search query"}
                   </p>
+                  {!error && (
+                    <p className="text-text-tertiary text-sm">
+                      No shops have been created yet. Be the first to create a shop!
+                    </p>
+                  )}
                 </div>
               )}
             </div>

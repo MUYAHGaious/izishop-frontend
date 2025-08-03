@@ -56,7 +56,11 @@ const OrderManagement = () => {
       }
     } catch (error) {
       console.error('Failed to load orders:', error);
-      showToast.error('Failed to load orders. Please try again.');
+      showToast({
+        type: 'error',
+        message: 'Failed to load orders. Please try again.',
+        duration: 3000
+      });
       
       // Fallback to mock data if API fails
       const mockOrders = [
@@ -315,13 +319,21 @@ const OrderManagement = () => {
       await loadOrders();
     } catch (error) {
       console.error('Failed to update order:', error);
-      showToast.error('Failed to update order status. Please try again.');
+      showToast({
+        type: 'error',
+        message: 'Failed to update order status. Please try again.',
+        duration: 3000
+      });
     }
   };
 
   const handleBulkAction = async (action) => {
     if (selectedOrders.length === 0) {
-      showToast.error('Please select orders to perform bulk action');
+      showToast({
+        type: 'error',
+        message: 'Please select orders to perform bulk action',
+        duration: 3000
+      });
       return;
     }
 
@@ -357,7 +369,11 @@ const OrderManagement = () => {
       await loadOrders();
     } catch (error) {
       console.error('Failed to perform bulk action:', error);
-      showToast.error('Failed to update orders. Please try again.');
+      showToast({
+        type: 'error',
+        message: 'Failed to update orders. Please try again.',
+        duration: 3000
+      });
     }
   };
 

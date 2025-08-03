@@ -104,7 +104,11 @@ const ShopOwnerDashboard = () => {
       setSearchResults(results);
     } catch (error) {
       console.error('Search failed:', error);
-      showToast.error('Search failed. Please try again.');
+      showToast({
+        type: 'error',
+        message: 'Search failed. Please try again.',
+        duration: 3000
+      });
     } finally {
       setIsSearching(false);
     }

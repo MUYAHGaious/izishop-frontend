@@ -42,7 +42,7 @@ const ShopHero = ({ shop, onFollow, onContact, isOwner }) => {
       <div className="relative h-72 md:h-80 lg:h-96 overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700">
         {shop.background_image ? (
           <img
-            src={`http://localhost:8000${shop.background_image}`}
+            src={`http://localhost:8001${shop.background_image}`}
             alt={`${shop.name} background`}
             className="w-full h-full object-cover"
           />
@@ -95,7 +95,7 @@ const ShopHero = ({ shop, onFollow, onContact, isOwner }) => {
                 <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-3xl overflow-hidden border-4 border-white shadow-lg bg-gray-100">
                   {shop.profile_photo ? (
                     <img
-                      src={`http://localhost:8000${shop.profile_photo}`}
+                      src={`http://localhost:8001${shop.profile_photo}`}
                       alt={`${shop.name} profile`}
                       className="w-full h-full object-cover"
                     />

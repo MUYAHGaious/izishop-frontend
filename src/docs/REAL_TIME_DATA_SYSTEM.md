@@ -240,8 +240,8 @@ useEffect(() => {
 
 Add to your `.env` file:
 ```
-REACT_APP_WS_URL=ws://localhost:8000/ws
-REACT_APP_API_URL=http://localhost:8000/api
+REACT_APP_WS_URL=ws://localhost:8001/ws
+REACT_APP_API_URL=http://localhost:8001/api
 ```
 
 ## Monitoring and Debugging

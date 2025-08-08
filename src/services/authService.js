@@ -61,19 +61,38 @@ class AuthService {
     this.accessToken = null;
     this.refreshToken = null;
     
-    // Clear storage
+    // Clear storage - comprehensive cleanup
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     localStorage.removeItem('tokenTimestamp');
+    localStorage.removeItem('sessionId');
+    localStorage.removeItem('currentRole');
+    localStorage.removeItem('authBackup');
+    localStorage.removeItem('sessionStartTime');
     
     // Stop monitoring
     this.stopTokenMonitoring();
     
-    // Clear pending requests
-    this.pendingRequests = [];
-    this.isRefreshing = false;
-    this.retryAttempts = 0;
+    console.log('AuthService: All tokens and auth data cleared');
+  }
+
+  // Force clear expired tokens immediately - called when 401 errors detected
+  forceExpiredTokenCleanup() {
+    console.log('AuthService: Force clearing expired tokens due to authentication failure');
+    
+    // Check if current tokens are expired
+    if (this.accessToken && this.isTokenExpired(this.accessToken, -60)) {
+      console.log('AuthService: Access token confirmed expired, clearing all auth data');
+      this.clearTokens();
+      
+      // Dispatch immediate logout event
+      this.dispatchLogoutEvent();
+      
+      return true; // Indicates tokens were cleared
+    }
+    
+    return false; // Tokens not expired
   }
 
   // Get current access token

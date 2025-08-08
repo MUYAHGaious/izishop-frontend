@@ -210,7 +210,7 @@ const AuthenticationLoginRegister = () => {
               }, 500);
             } catch (loginError) {
               console.warn('Automatic login failed after shop creation:', loginError);
-              showToast.success('Registration and shop creation successful! Please log in to access your dashboard.');
+              showToast('Registration and shop creation successful! Please log in to access your dashboard.', 'success');
               setActiveTab('login');
             }
           }
@@ -348,7 +348,7 @@ const AuthenticationLoginRegister = () => {
                 } else {
                   console.warn('User not authenticated after automatic login, showing manual login');
                   setAutoLoginMessage('');
-                  showToast.success('Registration successful! Please log in to access your dashboard.');
+                  showToast('Registration successful! Please log in to access your dashboard.', 'success');
                   setActiveTab('login');
                 }
               }, 1000);
@@ -360,12 +360,12 @@ const AuthenticationLoginRegister = () => {
                 stack: loginError.stack
               });
               setAutoLoginMessage('');
-              showToast.success('Registration successful! Please log in to access your dashboard.');
+              showToast('Registration successful! Please log in to access your dashboard.', 'success');
               setActiveTab('login');
             }
           } else {
             // For other roles, show verification message
-            showToast.success('Registration successful! Please check your email for verification.');
+            showToast('Registration successful! Please check your email for verification.', 'success');
             setActiveTab('login');
           }
         }

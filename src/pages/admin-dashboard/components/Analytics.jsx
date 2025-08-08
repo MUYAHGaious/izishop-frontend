@@ -307,7 +307,7 @@ const Analytics = () => {
               <div className="ml-3">
                 <p className="text-sm text-red-700">
                   <strong>Backend API Error:</strong> There was an error connecting to the analytics API. 
-                  Please check that the backend server is running at <code>localhost:8000</code>.
+                  Please check that the backend server is running at <code>localhost:8001</code>.
                 </p>
                 <p className="text-xs text-red-600 mt-1">
                   Error: {error}

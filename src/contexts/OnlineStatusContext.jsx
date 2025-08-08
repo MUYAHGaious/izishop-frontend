@@ -34,7 +34,7 @@ export const OnlineStatusProvider = ({ children }) => {
         return;
       }
       
-      const wsUrl = `ws://localhost:8000/ws/online-status`;
+      const wsUrl = `ws://localhost:8001/ws/online-status`;
       console.log('Attempting WebSocket connection to:', wsUrl);
       wsRef.current = new WebSocket(wsUrl);
 

@@ -177,6 +177,15 @@ class ApiService {
 
       // Handle 401 responses
       if (response.status === 401 && !url.includes('/auth/')) {
+        // First check if tokens are expired and force cleanup
+        console.warn('Fetch interceptor: Received 401 error, checking token expiry');
+        const tokensCleared = this.authService.forceExpiredTokenCleanup();
+        if (tokensCleared) {
+          console.log('Fetch interceptor: Expired tokens cleared, redirecting to login');
+          window.location.href = '/authentication-login-register';
+          throw new Error('Authentication expired - please login again');
+        }
+
         if (this.isRefreshing) {
           return new Promise((resolve, reject) => {
             this.failedQueue.push({ resolve, reject });
@@ -251,6 +260,13 @@ class ApiService {
         
         // Handle different error types
         if (response.status === 401 && requireAuth) {
+          // Force clear expired tokens to stop auth loop
+          console.warn('API: Received 401 error, checking if tokens are expired');
+          const tokensCleared = this.authService.forceExpiredTokenCleanup();
+          if (tokensCleared) {
+            console.log('API: Expired tokens cleared, stopping retry loop');
+            throw new Error('Authentication expired - please login again');
+          }
           // This will be handled by the fetch interceptor
           throw new Error('Unauthorized');
         } else if (response.status === 401 && !requireAuth) {
@@ -830,7 +846,7 @@ class ApiService {
     if (params.unread_only) queryParams.append('unread_only', params.unread_only);
     if (params.type_filter) queryParams.append('type_filter', params.type_filter);
     
-    return await this.request(`/notifications?${queryParams.toString()}`, {
+    return await this.request(`/notifications/?${queryParams.toString()}`, {
       method: 'GET'
     });
   }
@@ -1074,7 +1090,7 @@ class ApiService {
   async getNotifications(filters = {}) {
     try {
       const queryParams = new URLSearchParams(filters).toString();
-      return await this.request(`/notifications${queryParams ? `?${queryParams}` : ''}`, {
+      return await this.request(`/notifications/${queryParams ? `?${queryParams}` : ''}`, {
         method: 'GET'
       });
     } catch (error) {
@@ -1720,7 +1736,7 @@ class ApiService {
       ...(options.type_filter && { type_filter: options.type_filter })
     });
 
-    return this.request(`/notifications/?${params}`, {
+    return this.request(`/notifications/${params ? `?${params}` : ''}`, {
       method: 'GET'
     });
   }

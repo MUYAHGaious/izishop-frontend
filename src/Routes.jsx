@@ -261,15 +261,13 @@ const AppRoutes = () => {
         } 
       />
       
-      {/* Shop profile - shop owners only */}
+      {/* Shop profile - public view with shop ID */}
       <Route 
-        path="/shop-profile/:shopId" 
-        element={
-          <ProtectedRoute requiredRole="SHOP_OWNER">
-            <MyShopProfile />
-          </ProtectedRoute>
-        } 
+        path="/my-shop-profile/:shopId" 
+        element={<MyShopProfile />} 
       />
+      
+      {/* Shop profile - private view for shop owners */}
       <Route 
         path="/my-shop-profile" 
         element={
@@ -277,12 +275,6 @@ const AppRoutes = () => {
             <MyShopProfile />
           </ProtectedRoute>
         } 
-      />
-      
-      {/* Public shop profile - anyone can view */}
-      <Route 
-        path="/shop/:shopId" 
-        element={<MyShopProfile />} 
       />
       
              {/* Demo route for testing wishlist */}

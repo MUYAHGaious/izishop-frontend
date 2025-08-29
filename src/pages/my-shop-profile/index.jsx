@@ -24,6 +24,14 @@ const MyShopProfile = () => {
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
+  const [imageUploads, setImageUploads] = useState({
+    profileImage: null,
+    backgroundImage: null,
+    profileImagePreview: null,
+    backgroundImagePreview: null,
+    uploadingProfile: false,
+    uploadingBackground: false
+  });
   const [activeTab, setActiveTab] = useState('overview');
   
   // Real data states
@@ -170,6 +178,106 @@ const MyShopProfile = () => {
     }));
   };
 
+  const handleImageSelect = (e, imageType) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file', 'error');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Image size must be less than 5MB', 'error');
+      return;
+    }
+
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+    
+    setImageUploads(prev => ({
+      ...prev,
+      [imageType]: file,
+      [`${imageType}Preview`]: previewUrl
+    }));
+  };
+
+  const uploadImage = async (file, imageType) => {
+    if (!file) return null;
+
+    try {
+      setImageUploads(prev => ({
+        ...prev,
+        [`uploading${imageType.charAt(0).toUpperCase() + imageType.slice(1)}`]: true
+      }));
+
+      // Convert to base64 for upload
+      const base64 = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsDataURL(file);
+      });
+
+      // You can also upload to backend here if you have an upload endpoint
+      // const response = await api.uploadShopImage(file, imageType);
+      // return response.url;
+
+      // For now, return the base64 data URL
+      return base64;
+    } catch (error) {
+      console.error(`Error uploading ${imageType}:`, error);
+      showToast(`Failed to upload ${imageType}`, 'error');
+      return null;
+    } finally {
+      setImageUploads(prev => ({
+        ...prev,
+        [`uploading${imageType.charAt(0).toUpperCase() + imageType.slice(1)}`]: false
+      }));
+    }
+  };
+
+  const handleSaveWithImages = async () => {
+    try {
+      let updatedData = { ...editData };
+
+      // Upload profile image if selected
+      if (imageUploads.profileImage) {
+        const profileImageUrl = await uploadImage(imageUploads.profileImage, 'profileImage');
+        if (profileImageUrl) {
+          updatedData.profile_photo = profileImageUrl;
+        }
+      }
+
+      // Upload background image if selected
+      if (imageUploads.backgroundImage) {
+        const backgroundImageUrl = await uploadImage(imageUploads.backgroundImage, 'backgroundImage');
+        if (backgroundImageUrl) {
+          updatedData.background_image = backgroundImageUrl;
+        }
+      }
+
+      const updatedShop = await api.updateMyShop(updatedData);
+      setShop(updatedShop);
+      setIsEditing(false);
+      
+      // Clear image uploads
+      setImageUploads({
+        profileImage: null,
+        backgroundImage: null,
+        profileImagePreview: null,
+        backgroundImagePreview: null,
+        uploadingProfile: false,
+        uploadingBackground: false
+      });
+
+      showToast('Shop updated successfully!', 'success');
+    } catch (err) {
+      showToast(err.message || 'Failed to update shop', 'error');
+    }
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('fr-CM', {
       style: 'currency',
@@ -230,21 +338,84 @@ const MyShopProfile = () => {
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6 pt-20">
         {/* Shop Header - Modern Business Style */}
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden mb-8">
           {/* Hero Section */}
-          <div className="relative h-64 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800">
+          <div className="relative h-64 overflow-hidden">
+            {/* Background Image */}
+            {shop.background_image || imageUploads.backgroundImagePreview ? (
+              <img 
+                src={imageUploads.backgroundImagePreview || shop.background_image} 
+                alt="Shop background" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800"></div>
+            )}
+            
+            {/* Overlay */}
             <div className="absolute inset-0 bg-black bg-opacity-30"></div>
             <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+            
+            {/* Background Image Upload Button (Edit Mode) */}
+            {isEditing && (
+              <div className="absolute top-4 right-4">
+                <label className="cursor-pointer inline-flex items-center gap-2 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-800 px-3 py-2 rounded-lg transition-all shadow-lg">
+                  {imageUploads.uploadingBackground ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                  ) : (
+                    <Icon name="Camera" size={16} />
+                  )}
+                  <span className="text-sm font-medium">Change Background</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageSelect(e, 'backgroundImage')}
+                    className="hidden"
+                    disabled={imageUploads.uploadingBackground}
+                  />
+                </label>
+              </div>
+            )}
             
             {/* Shop Logo & Info */}
             <div className="absolute bottom-6 left-6 right-6">
               <div className="flex flex-col lg:flex-row lg:items-end gap-6">
                 <div className="flex items-center gap-4">
                   {/* Business Logo */}
-                  <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center shadow-2xl border-4 border-white">
-                    <Icon name="Store" size={40} className="text-blue-600" />
+                  <div className="relative">
+                    <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center shadow-2xl border-4 border-white overflow-hidden">
+                      {shop.profile_photo || imageUploads.profileImagePreview ? (
+                        <img 
+                          src={imageUploads.profileImagePreview || shop.profile_photo} 
+                          alt="Shop logo" 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Icon name="Store" size={40} className="text-blue-600" />
+                      )}
+                    </div>
+                    
+                    {/* Profile Image Upload Button (Edit Mode) */}
+                    {isEditing && (
+                      <div className="absolute -bottom-2 -right-2">
+                        <label className="cursor-pointer inline-flex items-center justify-center w-8 h-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all shadow-lg">
+                          {imageUploads.uploadingProfile ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          ) : (
+                            <Icon name="Camera" size={14} />
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageSelect(e, 'profileImage')}
+                            className="hidden"
+                            disabled={imageUploads.uploadingProfile}
+                          />
+                        </label>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Shop Details */}
@@ -288,11 +459,21 @@ const MyShopProfile = () => {
                         Cancel
                       </Button>
                       <Button
-                        onClick={handleSave}
-                        className="bg-green-600 text-white hover:bg-green-700 shadow-lg"
+                        onClick={handleSaveWithImages}
+                        disabled={imageUploads.uploadingProfile || imageUploads.uploadingBackground}
+                        className="bg-green-600 text-white hover:bg-green-700 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <Icon name="Save" size={16} className="mr-2" />
-                        Save Changes
+                        {(imageUploads.uploadingProfile || imageUploads.uploadingBackground) ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Icon name="Save" size={16} className="mr-2" />
+                            Save Changes
+                          </>
+                        )}
                       </Button>
                     </>
                   )}

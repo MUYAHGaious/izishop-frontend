@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes as RouterRoutes, Route, Navigate } from "react-router-dom";
+import { Routes as RouterRoutes, Route, Navigate } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useAuth } from "./contexts/AuthContext";
@@ -33,6 +33,8 @@ import AddProduct from "./pages/add-product";
 import UserProfile from "./pages/user-profile";
 import PublicProfile from "./pages/public-profile";
 import Wishlist from "./pages/wishlist";
+import WishlistDemo from "./components/ProductDisplay/WishlistDemo";
+import TagDemo from "./components/ProductDisplay/TagDemo";
 import SellerDashboard from "./pages/seller-dashboard";
 import MyProducts from "./pages/my-products";
 import OrderSuccess from "./pages/order-success";
@@ -277,6 +279,24 @@ const AppRoutes = () => {
         } 
       />
       
+      {/* Public shop profile - anyone can view */}
+      <Route 
+        path="/shop/:shopId" 
+        element={<MyShopProfile />} 
+      />
+      
+             {/* Demo route for testing wishlist */}
+       <Route
+         path="/wishlist-demo"
+         element={<WishlistDemo />}
+       />
+       
+       {/* Demo route for testing tagging system */}
+       <Route
+         path="/tag-demo"
+         element={<TagDemo />}
+       />
+      
       {/* Customer routes */}
       <Route 
         path="/wishlist" 
@@ -370,17 +390,10 @@ const AppRoutes = () => {
 
 const Routes = () => {
   return (
-    <BrowserRouter
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true
-      }}
-    >
-      <ErrorBoundary>
-        <ScrollToTop />
-        <AppRoutes />
-      </ErrorBoundary>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <ScrollToTop />
+      <AppRoutes />
+    </ErrorBoundary>
   );
 };
 

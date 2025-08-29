@@ -91,31 +91,56 @@ const MyShopProfile = () => {
     try {
       setIsLoadingStats(true);
       const shopIdToUse = currentShopId || shop?.id;
+      const isOwnerView = !shopId && user?.id === shop?.owner_id;
       
-      // Fetch all real data in parallel for better performance
-      const [productsResponse, ordersResponse, reviewsResponse] = await Promise.all([
-        api.getMyProducts(0, 5, true).catch(() => []),
-        api.getShopOwnerRecentOrders(5).catch(() => []),
-        api.getShopReviews(shopIdToUse || 'current', 1, 5).catch(() => ({ reviews: [] }))
-      ]);
+      let productsResponse = [];
+      let ordersResponse = [];
+      let allProducts = [];
+      
+      if (isOwnerView) {
+        // Owner view - use owner-specific APIs
+        const [products, orders, reviews] = await Promise.all([
+          api.getMyProducts(0, 5, true).catch(() => []),
+          api.getShopOwnerRecentOrders(5).catch(() => []),
+          api.getShopReviews(shopIdToUse || 'current', 1, 5).catch(() => ({ reviews: [] }))
+        ]);
+        productsResponse = products;
+        ordersResponse = orders;
+        
+        // Get all products for count
+        allProducts = await api.getMyProducts(0, 1000, false).catch(() => []);
+      } else {
+        // Public view - use public APIs  
+        const reviews = await api.getShopReviews(shopIdToUse || 'current', 1, 5).catch(() => ({ reviews: [] }));
+        
+        // For public view, we can't get detailed product/order stats
+        // We'll show basic stats from the shop object
+        productsResponse = [];
+        ordersResponse = [];
+        allProducts = [];
+      }
 
-      // Get real product stats
-      const allProducts = await api.getMyProducts(0, 1000, false).catch(() => []);
+      // Calculate statistics
       const totalProducts = Array.isArray(allProducts) ? allProducts.length : 0;
       const activeProducts = Array.isArray(allProducts) 
         ? allProducts.filter(p => p.is_active).length 
         : 0;
 
-      // Calculate real revenue from orders
-      const allOrders = await api.getShopOwnerOrders({ limit: 1000 }).catch(() => ({ orders: [] }));
-      const orders = allOrders.orders || allOrders || [];
-      const totalRevenue = orders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
-      const totalOrders = orders.length;
+      // Calculate revenue and orders (owner only)
+      let totalRevenue = 0;
+      let totalOrders = 0;
+      if (isOwnerView) {
+        const allOrders = await api.getShopOwnerOrders({ limit: 1000 }).catch(() => ({ orders: [] }));
+        const orders = allOrders.orders || allOrders || [];
+        totalRevenue = orders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+        totalOrders = orders.length;
+      }
 
-      // Calculate real rating from reviews
-      const reviews = reviewsResponse.reviews || [];
-      const averageRating = reviews.length > 0 
-        ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+      // Calculate rating from reviews
+      const reviews = await api.getShopReviews(shopIdToUse || 'current', 1, 5).catch(() => ({ reviews: [] }));
+      const reviewsList = reviews.reviews || [];
+      const averageRating = reviewsList.length > 0 
+        ? reviewsList.reduce((sum, review) => sum + review.rating, 0) / reviewsList.length 
         : 0;
 
       // Get shop followers count
@@ -127,13 +152,13 @@ const MyShopProfile = () => {
         totalOrders,
         totalRevenue,
         averageRating: averageRating.toFixed(1),
-        totalReviews: reviews.length,
+        totalReviews: reviewsList.length,
         followers: followersCount || 0
       });
 
       setRecentProducts(Array.isArray(productsResponse) ? productsResponse.slice(0, 4) : []);
       setRecentOrders(Array.isArray(ordersResponse) ? ordersResponse.slice(0, 4) : []);
-      setRecentReviews(reviews.slice(0, 3));
+      setRecentReviews(reviewsList.slice(0, 3));
 
     } catch (error) {
       console.warn('Error fetching shop statistics:', error);
@@ -339,53 +364,63 @@ const MyShopProfile = () => {
       <Header />
       
       <div className="container mx-auto px-4 py-6 pt-20">
-        {/* Shop Header - Modern Business Style */}
+        {/* Shop Header - Clean Profile Style */}
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden mb-8">
-          {/* Hero Section */}
-          <div className="relative h-64 overflow-hidden">
-            {/* Background Image */}
-            {shop.background_image || imageUploads.backgroundImagePreview ? (
-              <img 
-                src={imageUploads.backgroundImagePreview || shop.background_image} 
-                alt="Shop background" 
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800"></div>
-            )}
-            
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-black bg-opacity-30"></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
-            
-            {/* Background Image Upload Button (Edit Mode) */}
-            {isEditing && (
-              <div className="absolute top-4 right-4">
-                <label className="cursor-pointer inline-flex items-center gap-2 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-800 px-3 py-2 rounded-lg transition-all shadow-lg">
-                  {imageUploads.uploadingBackground ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-                  ) : (
-                    <Icon name="Camera" size={16} />
-                  )}
-                  <span className="text-sm font-medium">Change Background</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleImageSelect(e, 'backgroundImage')}
-                    className="hidden"
-                    disabled={imageUploads.uploadingBackground}
-                  />
-                </label>
-              </div>
-            )}
-            
-            {/* Shop Logo & Info */}
-            <div className="absolute bottom-6 left-6 right-6">
-              <div className="flex flex-col lg:flex-row lg:items-end gap-6">
-                <div className="flex items-center gap-4">
-                  {/* Business Logo */}
+          {/* Hero Section with centered layout */}
+          <div className="relative">
+            {/* Background Image/Gradient */}
+            <div className="relative h-80 overflow-hidden">
+              {shop.background_image || imageUploads.backgroundImagePreview ? (
+                <img 
+                  src={imageUploads.backgroundImagePreview || shop.background_image} 
+                  alt="Shop background" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800"></div>
+              )}
+              
+              {/* Centered placeholder icon for background */}
+              {!shop.background_image && !imageUploads.backgroundImagePreview && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-white opacity-30">
+                    <Icon name="Package" size={80} />
+                    <p className="text-center mt-4 text-lg font-medium">Business Background</p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Background Image Upload Button (Edit Mode) */}
+              {isEditing && (
+                <div className="absolute top-4 right-4">
+                  <label className="cursor-pointer inline-flex items-center gap-2 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-800 px-3 py-2 rounded-lg transition-all shadow-lg">
+                    {imageUploads.uploadingBackground ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                    ) : (
+                      <Icon name="Camera" size={16} />
+                    )}
+                    <span className="text-sm font-medium">Change Background</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageSelect(e, 'backgroundImage')}
+                      className="hidden"
+                      disabled={imageUploads.uploadingBackground}
+                    />
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {/* Profile Section - Overlapping the background */}
+            <div className="relative -mt-20 mx-6 bg-white rounded-3xl shadow-lg p-8">
+              {/* Profile Header */}
+              <div className="flex items-start justify-between mb-6">
+                {/* Profile Info */}
+                <div className="flex items-start gap-6">
+                  {/* Profile Image */}
                   <div className="relative">
-                    <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center shadow-2xl border-4 border-white overflow-hidden">
+                    <div className="w-32 h-32 bg-gray-100 rounded-3xl flex items-center justify-center shadow-lg border overflow-hidden">
                       {shop.profile_photo || imageUploads.profileImagePreview ? (
                         <img 
                           src={imageUploads.profileImagePreview || shop.profile_photo} 
@@ -393,18 +428,18 @@ const MyShopProfile = () => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <Icon name="Store" size={40} className="text-blue-600" />
+                        <Icon name="Store" size={48} className="text-blue-600" />
                       )}
                     </div>
                     
                     {/* Profile Image Upload Button (Edit Mode) */}
                     {isEditing && (
                       <div className="absolute -bottom-2 -right-2">
-                        <label className="cursor-pointer inline-flex items-center justify-center w-8 h-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all shadow-lg">
+                        <label className="cursor-pointer inline-flex items-center justify-center w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all shadow-lg">
                           {imageUploads.uploadingProfile ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                           ) : (
-                            <Icon name="Camera" size={14} />
+                            <Icon name="Camera" size={16} />
                           )}
                           <input
                             type="file"
@@ -418,32 +453,28 @@ const MyShopProfile = () => {
                     )}
                   </div>
                   
-                  {/* Shop Details */}
-                  <div className="text-white">
-                    <h1 className="text-3xl lg:text-4xl font-bold mb-2">{shop.name}</h1>
-                    <div className="flex flex-wrap gap-4 text-sm opacity-90">
-                      <div className="flex items-center gap-2">
-                        <Icon name="Calendar" size={16} />
-                        <span>Est. {new Date(shop.created_at).getFullYear()}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Icon name="MapPin" size={16} />
-                        <span>{shop.address || 'Cameroon'}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Icon name="Users" size={16} />
-                        <span>{shopStats.followers} followers</span>
-                      </div>
-                    </div>
+                  {/* Shop Info */}
+                  <div className="flex-1">
+                    <h1 className="text-4xl font-bold text-gray-900 mb-2">{shop.name}</h1>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mb-3 ${
+                      shop.is_active 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {shop.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                    <p className="text-gray-600 max-w-md">
+                      {shop.description || 'Tempor est voluptate'}
+                    </p>
                   </div>
                 </div>
                 
                 {/* Action Buttons */}
-                <div className="flex gap-3 lg:ml-auto">
+                <div className="flex gap-3">
                   {user?.id === shop.owner_id && !isEditing && (
                     <Button
                       onClick={handleEdit}
-                      className="bg-white text-blue-600 hover:bg-gray-100 shadow-lg"
+                      className="bg-blue-600 text-white hover:bg-blue-700 shadow-lg px-6"
                     >
                       <Icon name="Edit2" size={16} className="mr-2" />
                       Edit Shop
@@ -454,14 +485,14 @@ const MyShopProfile = () => {
                       <Button
                         onClick={handleCancelEdit}
                         variant="outline"
-                        className="bg-white text-gray-600 hover:bg-gray-100"
+                        className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
                       >
                         Cancel
                       </Button>
                       <Button
                         onClick={handleSaveWithImages}
                         disabled={imageUploads.uploadingProfile || imageUploads.uploadingBackground}
-                        className="bg-green-600 text-white hover:bg-green-700 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-green-600 text-white hover:bg-green-700 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed px-6"
                       >
                         {(imageUploads.uploadingProfile || imageUploads.uploadingBackground) ? (
                           <>
@@ -477,39 +508,79 @@ const MyShopProfile = () => {
                       </Button>
                     </>
                   )}
+                  {!isEditing && user?.id !== shop.owner_id && (
+                    <>
+                      <Button className="bg-blue-600 text-white hover:bg-blue-700 shadow-lg px-6">
+                        <Icon name="UserPlus" size={16} className="mr-2" />
+                        Follow
+                      </Button>
+                      <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6">
+                        Contact
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Statistics Row */}
+              <div className="grid grid-cols-4 gap-8 py-6 border-t border-b border-gray-100">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600 mb-1">
+                    {shopStats.totalOrders || 0}
+                  </div>
+                  <div className="text-sm text-gray-500">Total Sales</div>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Icon name="Star" size={20} className="text-yellow-400 fill-current" />
+                    <span className="text-3xl font-bold text-yellow-600">
+                      {shopStats.averageRating || 0}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-500">Rating</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-purple-600 mb-1">
+                    {shopStats.totalReviews || 0}
+                  </div>
+                  <div className="text-sm text-gray-500">Reviews</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-orange-600 mb-1">
+                    {shopStats.totalProducts || 0}
+                  </div>
+                  <div className="text-sm text-gray-500">Products</div>
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div className="flex items-center justify-center gap-8 py-6 text-sm text-gray-600">
+                {shop.address && (
+                  <div className="flex items-center gap-2">
+                    <Icon name="MapPin" size={16} />
+                    <span>{shop.address}</span>
+                  </div>
+                )}
+                {shop.phone && (
+                  <div className="flex items-center gap-2">
+                    <Icon name="Phone" size={16} />
+                    <span>{shop.phone}</span>
+                  </div>
+                )}
+                {shop.email && (
+                  <div className="flex items-center gap-2">
+                    <Icon name="Mail" size={16} />
+                    <span>{shop.email}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <Icon name="Calendar" size={16} />
+                  <span>Joined {new Date(shop.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Shop Status Bar */}
-          <div className="px-6 py-4 bg-gray-50 border-b">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(shop.is_active ? 'active' : 'inactive')}`}>
-                  {shop.is_active ? '✓ Active' : '⏸ Inactive'}
-                </span>
-                {shop.is_verified && (
-                  <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                    <Icon name="CheckCircle" size={14} className="inline mr-1" />
-                    Verified Business
-                  </span>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-6 text-sm text-gray-600">
-                <div className="flex items-center gap-1">
-                  <Icon name="Star" size={16} className="text-yellow-400 fill-current" />
-                  <span className="font-medium">{shopStats.averageRating}</span>
-                  <span>({shopStats.totalReviews} reviews)</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Icon name="TrendingUp" size={16} />
-                  <span>{formatCurrency(shopStats.totalRevenue)} revenue</span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Navigation Tabs */}

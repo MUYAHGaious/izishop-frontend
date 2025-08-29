@@ -100,7 +100,7 @@ const ShopSelector = ({ onShopSelect, showCreateOption = true, className = '' })
             <p className="text-xs text-green-700">Your active shop</p>
           </div>
           <button
-            onClick={() => navigate(`/shop-profile/${shops[0].id}`)}
+            onClick={() => navigate(`/my-shop-profile/${shops[0].id}`)}
             className="ml-2 p-1 hover:bg-green-100 rounded transition-colors"
             title="View shop"
           >

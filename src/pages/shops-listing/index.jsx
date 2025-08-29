@@ -411,7 +411,7 @@ const ShopsListing = () => {
 
   const handleVisitShop = useCallback((shopId) => {
     console.log('Visiting shop:', shopId);
-    navigate(`/shops/${shopId}`);
+    navigate(`/my-shop-profile/${shopId}`);
   }, [navigate]);
 
   const handleQuickPreview = useCallback((shopId) => {

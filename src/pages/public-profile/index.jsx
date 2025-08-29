@@ -555,7 +555,7 @@ const PublicProfile = () => {
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Shop</h3>
                   <button
-                    onClick={() => navigate(`/shops/${profileUser.shop_id || profileUser.id}`)}
+                    onClick={() => navigate(`/my-shop-profile/${profileUser.shop_id || profileUser.id}`)}
                     className="w-full flex items-center space-x-3 p-4 hover:bg-purple-50 rounded-lg transition-colors text-left active:scale-95"
                   >
                     <Icon name="Store" size={20} className="text-purple-600" />

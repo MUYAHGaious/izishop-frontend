@@ -377,6 +377,7 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       setLoading(true);
       
+      console.log('AuthContext register called with:', userData);
       const response = await api.register(userData);
       console.log('Registration API response:', response);
       console.log('User role from response:', response.user?.role);

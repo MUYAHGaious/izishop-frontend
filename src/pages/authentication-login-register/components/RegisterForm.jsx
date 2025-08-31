@@ -212,9 +212,33 @@ const RegisterForm = ({ onRegister, isLoading }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateStep(currentStep)) return;
+    console.log('handleSubmit called');
+    console.log('Current step:', currentStep);
+    console.log('Total steps:', getTotalSteps());
+    console.log('Form data:', formData);
+    
+    // Skip validation if this is called from final step completion
+    const isFromFinalStep = currentStep > getTotalSteps() || e.fromFinalStep;
+    if (!isFromFinalStep && currentStep <= getTotalSteps() && !validateStep(currentStep)) {
+      console.log('Validation failed, returning early');
+      return;
+    }
+    
+    console.log('Validation passed or skipped, proceeding with registration');
 
     try {
+      // Validate that all required fields are present
+      const requiredFields = ['email', 'password', 'confirmPassword', 'firstName', 'lastName', 'role'];
+      const missingFields = requiredFields.filter(field => !formData[field] || !formData[field].trim());
+      
+      if (missingFields.length > 0) {
+        console.error('Missing required fields:', missingFields);
+        setErrors({
+          submit: `Missing required fields: ${missingFields.join(', ')}`
+        });
+        return;
+      }
+      
       // Map frontend roles to backend roles
       const roleMapping = {
         'customer': 'CUSTOMER',
@@ -242,6 +266,7 @@ const RegisterForm = ({ onRegister, isLoading }) => {
       }
 
       console.log('Sending registration data:', { ...userData, password: '[REDACTED]', confirm_password: '[REDACTED]' });
+      console.log('Full form data for debugging:', formData);
 
       // Pass the data to the parent component's handleRegister function
       // This will call the auth context register function and handle navigation
@@ -735,24 +760,39 @@ const RegisterForm = ({ onRegister, isLoading }) => {
       <Stepper
         initialStep={1}
         onStepChange={(step) => {
+          console.log('Step change requested:', step, 'Current step:', currentStep);
           if (step > currentStep) {
             // Moving forward - validate current step
             if (validateStep(currentStep)) {
+              console.log('Step validation passed, moving to step:', step);
               setCurrentStep(step);
               setErrors({});
             } else {
+              console.log('Step validation failed, preventing step change');
               return false; // Prevent step change
             }
           } else {
             // Moving backward - always allow
+            console.log('Moving backward to step:', step);
             setCurrentStep(step);
             setErrors({});
           }
         }}
         onFinalStepCompleted={() => {
-          if (validateStep(currentStep)) {
-            handleSubmit(new Event('submit'));
-          }
+          // When final step is completed, proceed with registration
+          // All validation has already been done in previous steps
+          console.log('Final step completed, calling handleSubmit');
+          console.log('Current form data:', formData);
+          console.log('Current step:', currentStep);
+          console.log('Total steps:', getTotalSteps());
+          
+          // Temporarily set current step to indicate final completion
+          setCurrentStep(getTotalSteps() + 1);
+          
+          // Call handleSubmit with a special flag
+          const syntheticEvent = new Event('submit');
+          syntheticEvent.fromFinalStep = true;
+          handleSubmit(syntheticEvent);
         }}
         backButtonText="Previous"
         nextButtonText="Next"

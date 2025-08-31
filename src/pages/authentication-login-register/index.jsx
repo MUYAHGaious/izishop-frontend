@@ -146,6 +146,9 @@ const AuthenticationLoginRegister = () => {
     setIsLoading(true);
     try {
       console.log('handleRegister called with registrationData');
+      console.log('Registration data received:', registrationData);
+      console.log('User data:', registrationData);
+      console.log('Shop data:', registrationData.shopData);
       
       // Extract shop data if present
       const { shopData, ...userData } = registrationData;

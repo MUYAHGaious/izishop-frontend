@@ -28,10 +28,14 @@ export default function Stepper({
   const isLastStep = currentStep === totalSteps;
 
   const updateStep = (newStep) => {
+    console.log('updateStep called with:', newStep);
+    console.log('Total steps:', totalSteps);
     setCurrentStep(newStep);
     if (newStep > totalSteps) {
+      console.log('Calling onFinalStepCompleted');
       onFinalStepCompleted();
     } else {
+      console.log('Calling onStepChange with:', newStep);
       onStepChange(newStep);
     }
   };
@@ -51,6 +55,9 @@ export default function Stepper({
   };
 
   const handleComplete = () => {
+    console.log('Complete button clicked');
+    console.log('Current step:', currentStep);
+    console.log('Total steps:', totalSteps);
     setDirection(1);
     updateStep(totalSteps + 1);
   };

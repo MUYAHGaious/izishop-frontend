@@ -332,6 +332,7 @@ class ApiService {
 
   async register(userData) {
     console.log('API register called with:', { ...userData, password: '[REDACTED]', confirm_password: '[REDACTED]' });
+    console.log('Making POST request to /auth/register');
     
     const response = await this.request('/auth/register', {
       method: 'POST',

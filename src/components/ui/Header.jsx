@@ -96,32 +96,35 @@ const Header = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-b border-white/20 z-header shadow-sm">
+    <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-b border-white/20 z-50 shadow-sm">
       <div className="flex items-center justify-between h-18 px-6 lg:px-8">
         {/* Company Logo */}
-        <Link to="/product-catalog" className="flex items-center space-x-3 flex-shrink-0">
+        <Link to="/" className="flex items-center space-x-3 flex-shrink-0">
           <Icon name="Package" size={28} className="text-teal-600" />
           <span className="text-2xl font-bold text-gray-900 hidden sm:block">IziShopin</span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center space-x-8">
-          {navigationItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive(item.path)
-                  ? 'text-primary bg-primary/10' :'text-text-secondary hover:text-text-primary hover:bg-muted'
-              }`}
-            >
-              <Icon name={item.icon} size={16} />
-              <span>{item.label}</span>
-            </Link>
-          ))}
+        {/* Simplified Desktop Navigation */}
+        <nav className="hidden lg:flex items-center space-x-6">
+          <Link
+            to="/product-catalog"
+            className={`text-sm font-medium transition-colors hover:text-teal-600 ${
+              isActive('/product-catalog') ? 'text-teal-600' : 'text-gray-700'
+            }`}
+          >
+            Products
+          </Link>
+          <Link
+            to="/shops-listing"
+            className={`text-sm font-medium transition-colors hover:text-teal-600 ${
+              isActive('/shops-listing') ? 'text-teal-600' : 'text-gray-700'
+            }`}
+          >
+            Shops
+          </Link>
         </nav>
 
-        {/* Minimal Search Bar */}
+        {/* Search Bar */}
         <div className="flex-1 max-w-lg mx-8">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -142,14 +145,9 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Clean Right Section */}
-        <div className="flex items-center space-x-6">
-          {/* Clean Icons */}
-          <button className="p-2 hover:bg-gray-100/50 rounded-xl transition-colors">
-            <Icon name="Bell" size={20} className="text-gray-600" />
-          </button>
-          
-          {/* Wishlist/Heart Icon */}
+        {/* Simplified Right Section */}
+        <div className="flex items-center space-x-4">
+          {/* Wishlist Icon Only */}
           <Link to="/wishlist" className="p-2 hover:bg-gray-100/50 rounded-xl transition-colors relative">
             <Icon name="Heart" size={20} className="text-red-500" />
             {wishlistCount > 0 && (
@@ -158,12 +156,6 @@ const Header = () => {
               </span>
             )}
           </Link>
-          
-          {/* User Info */}
-          <div className="flex items-center space-x-3">
-            <span className="text-sm font-medium text-gray-700 hidden lg:block">
-              {user?.first_name || 'User'}
-            </span>
             
             {/* User Avatar */}
             {isAuthenticated() ? (
@@ -285,6 +277,7 @@ const Header = () => {
               iconName="Plus" 
               size="sm"
               onClick={() => navigate('/authentication-login-register')}
+              className="bg-teal-500 hover:bg-teal-600 text-white border-0 shadow-sm"
             >
               Get Started
             </Button>
@@ -480,6 +473,7 @@ const Header = () => {
                     setIsMenuOpen(false);
                     navigate('/authentication-login-register');
                   }}
+                  className="bg-teal-500 hover:bg-teal-600 text-white border-0 shadow-sm"
                 >
                   Get Started
                 </Button>
@@ -488,7 +482,6 @@ const Header = () => {
           </div>
         </div>
       )}
-      </div>
 
       <SettingsOverlay
         isOpen={isSettingsOpen}

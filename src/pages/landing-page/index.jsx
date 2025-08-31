@@ -11,6 +11,7 @@ import LogoLoop from '../../components/ui/LogoLoop';
 import CardSwap, { Card } from '../../components/ui/CardSwap';
 import GlassIcons from '../../components/ui/GlassIcons';
 import ScrollStack, { ScrollStackItem } from '../../components/ui/ScrollStack';
+import Footer from './components/Footer';
 
 
 const LandingPage = () => {
@@ -107,21 +108,21 @@ const LandingPage = () => {
       <div className="min-h-screen bg-white">
         {/* Header - Keep unchanged */}
         <ErrorBoundary>
-          <Header />
+        <Header />
         </ErrorBoundary>
-
+        
         {/* Main Content */}
-        <main className="pt-24">
+        <main className="pt-0">
           {/* Hero Section - Exact Reference Match */}
           <ErrorBoundary>
-            <section className="relative h-96 bg-gradient-to-r from-gray-400 to-gray-500 rounded-3xl mx-6 mb-12 overflow-hidden">
+            <section className="relative h-[500px] bg-gradient-to-r from-gray-400 to-gray-500 rounded-3xl mx-6 mb-12 overflow-hidden">
               {/* Background Gradient */}
               <div className="absolute inset-0 bg-gradient-to-r from-gray-400 via-gray-500 to-gray-600">
                 <div className="absolute inset-0 bg-black/20"></div>
               </div>
 
               {/* Image positioned directly on hero section */}
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-96 h-96 sm:w-104 sm:h-96 lg:w-112 lg:h-96 rounded-2xl overflow-hidden z-10">
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[480px] h-[480px] sm:w-[520px] sm:h-[480px] lg:w-[560px] lg:h-[480px] rounded-2xl overflow-hidden z-10">
                 <img 
                   src="/2.png" 
                   alt="Fashion Model" 
@@ -136,11 +137,14 @@ const LandingPage = () => {
                     backfaceVisibility: 'hidden',
                     willChange: 'transform'
                   }}
-                />
-              </div>
+                    />
+                  </div>
 
               {/* Content Overlay */}
               <div className="absolute inset-0 flex items-start">
+                {/* Large Left Blur Circle - Positioned relative to entire hero section */}
+                <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-white/20 rounded-full -translate-y-10 -translate-x-48 pointer-events-none z-10"></div>
+                
                 <div className="container mx-auto px-8">
                   <div className="grid grid-cols-1 lg:grid-cols-2 items-start">
                     {/* Left Content */}
@@ -149,7 +153,7 @@ const LandingPage = () => {
                       <div className="inline-block mb-6 mt-16 sm:mt-20 lg:mt-24">
                         <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
                           <span className="text-white text-sm font-medium">IZISHOPIN</span>
-                        </div>
+                    </div>
                       </div>
 
                       <BlurText
@@ -165,7 +169,11 @@ const LandingPage = () => {
 
                     {/* Right Content */}
                     <div className="flex justify-end">
-                      <div style={{ height: '400px', position: 'relative', marginTop: '-50px' }}>
+                      <div style={{ height: '300px', position: 'relative', marginTop: '200px' }}>
+                        {/* Circular Design Elements - Similar to Customer Card */}
+                        <div className="absolute top-0 left-0 w-80 h-80 bg-white/10 rounded-full -translate-y-40 -translate-x-40 pointer-events-none z-10"></div>
+                        <div className="absolute bottom-0 right-0 w-64 h-64 bg-white/5 rounded-full translate-y-32 translate-x-32 pointer-events-none z-10"></div>
+                        
                         <CardSwap
                           cardDistance={40}
                           verticalDistance={50}
@@ -205,16 +213,16 @@ const LandingPage = () => {
 
           {/* Shop by Category */}
           <ErrorBoundary>
-            <section className="px-6 mb-12">
+            <section className="px-6 mb-4">
               <div className="container mx-auto">
-                <div className="flex items-center justify-between mb-8">
+                                  <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-gray-900">Shop by Category</h2>
                   <button className="text-teal-600 hover:text-teal-700 font-medium">
                     See all
                   </button>
                 </div>
 
-                <div className="flex justify-center">
+                <div className="flex justify-center -mt-2">
                   <GlassIcons 
                     items={categories.map((category, index) => ({
                       icon: <Icon name={category.icon} size={24} className="text-white" />,
@@ -231,7 +239,7 @@ const LandingPage = () => {
 
           {/* New Arrivals */}
           <ErrorBoundary>
-            <section className="px-6 mb-12">
+            <section className="px-6 mb-2">
               <div className="container mx-auto">
                 <div className="flex items-center justify-between mb-8">
                   <h2 className="text-2xl font-bold text-gray-900">New Arrivals</h2>
@@ -250,15 +258,15 @@ const LandingPage = () => {
                       {/* Product Image - Exact match to reference */}
                       <div className="relative aspect-[3/4] bg-gray-100 rounded-lg mb-3 overflow-hidden">
                         {product.image ? (
-                          <img 
-                            src={product.image} 
-                            alt={product.name}
+                        <img 
+                          src={product.image} 
+                          alt={product.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <Icon name="Package" size={48} className="text-gray-400" />
-                          </div>
+                        </div>
                         )}
                       </div>
 
@@ -278,17 +286,9 @@ const LandingPage = () => {
             </section>
           </ErrorBoundary>
 
-          
-
-
-
-
-
-
-
           {/* Featured Stack */}
           <ErrorBoundary>
-            <ScrollStack
+                        <ScrollStack
               itemDistance={150}
               itemScale={0.05}
               itemStackDistance={40}
@@ -298,23 +298,26 @@ const LandingPage = () => {
               rotationAmount={2}
               blurAmount={1}
             >
-              <ScrollStackItem itemClassName="bg-gradient-to-br from-teal-400 to-teal-600 text-white mx-6">
-                <div className="flex flex-col justify-between h-full relative overflow-hidden">
+              <ScrollStackItem itemClassName="bg-gradient-to-br from-teal-400 to-teal-600 text-white mx-6 relative overflow-hidden">
+                {/* Blur Circle Effects for this card */}
+                <div className="absolute top-0 left-0 w-48 h-48 bg-white/15 rounded-full -translate-y-24 -translate-x-24 pointer-events-none"></div>
+                <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 translate-x-16 pointer-events-none"></div>
+                
+                <div className="flex flex-col justify-between h-full relative z-10">
                   <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-6">
                       <Icon name="Package" size={24} />
-                      <span className="font-medium text-xl">Siriia</span>
+                      <span className="text-xl font-medium">Siriia</span>
                     </div>
-                    <h3 className="text-4xl font-bold mb-6 leading-tight">
-                      Your Style,<br />
-                      Delivered.<br />
-                      Exclusively<br />
-                      Online.
+                    <h3 className="text-3xl font-bold mb-4 leading-tight">
+                      Your Style, Delivered.<br />
+                      Exclusively Online.
                     </h3>
-                    <button className="bg-white text-teal-600 px-8 py-4 rounded-full font-semibold hover:bg-gray-50 transition-colors text-lg">
+                    <button className="bg-white text-teal-600 px-8 py-4 rounded-full font-semibold hover:bg-gray-50 transition-colors text-lg shadow-lg">
                       Shop now
                     </button>
                   </div>
+                  
                   <div className="absolute right-8 top-1/2 transform -translate-y-1/2 w-40 h-48 bg-white/10 rounded-2xl overflow-hidden">
                     <img 
                       src="https://images.unsplash.com/photo-1556157382-97eda2d62296?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80" 
@@ -325,8 +328,13 @@ const LandingPage = () => {
                 </div>
               </ScrollStackItem>
 
-              <ScrollStackItem itemClassName="bg-gray-900 text-white mx-6">
-                <div className="flex flex-col justify-between h-full relative overflow-hidden">
+              <ScrollStackItem itemClassName="bg-gray-900 text-white mx-6 relative overflow-hidden">
+                {/* Blur Circle Effects for this card */}
+                <div className="absolute top-0 left-0 w-48 h-48 bg-white/15 rounded-full -translate-y-24 -translate-x-24 pointer-events-none"></div>
+                <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 translate-x-16 pointer-events-none"></div>
+                
+                <div className="flex flex-col justify-between h-full relative z-10">
+                  
                   <div className="relative z-10">
                     <span className="text-teal-400 mb-4 block text-lg">Explore Collection</span>
                     <h3 className="text-4xl font-bold mb-6 leading-tight">
@@ -335,20 +343,25 @@ const LandingPage = () => {
                     </h3>
                     <button className="bg-teal-500 text-white px-8 py-4 rounded-full font-semibold hover:bg-teal-600 transition-colors text-lg">
                       Shop Now
-                    </button>
-                  </div>
+                          </button>
+                        </div>
                   <div className="absolute right-8 top-1/2 transform -translate-y-1/2 w-32 h-32 bg-white/10 rounded-2xl overflow-hidden">
                     <img 
                       src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=989&q=80" 
                       alt="Watch accessories"
                       className="w-full h-full object-cover"
                     />
-                  </div>
-                </div>
+                          </div>
+                        </div>
               </ScrollStackItem>
 
-              <ScrollStackItem itemClassName="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900 mx-6">
-                <div className="flex flex-col justify-between h-full relative overflow-hidden">
+              <ScrollStackItem itemClassName="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900 mx-6 relative overflow-hidden">
+                {/* Blur Circle Effects for this card */}
+                <div className="absolute top-0 left-0 w-48 h-48 bg-white/15 rounded-full -translate-y-24 -translate-x-24 pointer-events-none"></div>
+                <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 translate-x-16 pointer-events-none"></div>
+                
+                <div className="flex flex-col justify-between h-full relative z-10">
+                  
                   <div className="relative z-10">
                     <span className="text-gray-600 mb-4 block text-lg">Find your perfect pair</span>
                     <h3 className="text-4xl font-bold mb-6 leading-tight">
@@ -357,29 +370,33 @@ const LandingPage = () => {
                     </h3>
                     <button className="bg-teal-500 text-white px-8 py-4 rounded-full font-semibold hover:bg-teal-600 transition-colors text-lg">
                       Shop Now
-                    </button>
-                  </div>
+                        </button>
+                      </div>
                   <div className="absolute right-8 top-1/2 transform -translate-y-1/2 w-32 h-32 bg-white/50 rounded-2xl overflow-hidden">
                     <img 
                       src="https://images.unsplash.com/photo-1549298916-b41d501d3772?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=812&q=80" 
                       alt="Sneakers collection"
                       className="w-full h-full object-cover"
                     />
-                  </div>
+                    </div>
                 </div>
-              </ScrollStackItem>
-            </ScrollStack>
-          </ErrorBoundary>
+                                                              </ScrollStackItem>
+                </ScrollStack>
+              </ErrorBoundary>
 
           {/* Featured Deals */}
           <ErrorBoundary>
-            <section className="px-6 mb-12">
+            <section className="px-6 mb-8">
               <div className="container mx-auto">
                 <h2 className="text-2xl font-bold text-gray-900 mb-8">Featured Deals</h2>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Exclusive Deals */}
                   <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-3xl p-8 text-white relative overflow-hidden">
+                    {/* Blur Circle Effects */}
+                    <div className="absolute top-0 left-0 w-48 h-48 bg-white/15 rounded-full -translate-y-24 -translate-x-24 pointer-events-none"></div>
+                    <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 translate-x-16 pointer-events-none"></div>
+                    
                     <div className="relative z-10">
                       <div className="flex items-center gap-2 mb-6">
                         <Icon name="Package" size={20} />
@@ -397,7 +414,7 @@ const LandingPage = () => {
                       <button className="bg-white text-blue-600 px-6 py-2 rounded-full font-semibold hover:bg-gray-50 transition-colors">
                         Shop Now
                       </button>
-                    </div>
+                </div>
                     {/* Fashion person image */}
                     <div className="absolute right-4 top-1/2 transform -translate-y-1/2 w-32 h-40 bg-white/10 rounded-2xl overflow-hidden">
                       <img 
@@ -410,6 +427,10 @@ const LandingPage = () => {
 
                   {/* Welcome Offer */}
                   <div className="bg-gradient-to-r from-teal-400 to-teal-500 rounded-3xl p-8 text-white relative overflow-hidden">
+                    {/* Blur Circle Effects */}
+                    <div className="absolute top-0 left-0 w-48 h-48 bg-white/15 rounded-full -translate-y-24 -translate-x-24 pointer-events-none"></div>
+                    <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 translate-x-16 pointer-events-none"></div>
+                    
                     <div className="relative z-10">
                       <h3 className="text-2xl font-bold mb-4">
                         Welcome offer just<br />
@@ -472,6 +493,10 @@ const LandingPage = () => {
                   {/* Athletic Outfits */}
                   <div className="lg:col-span-2">
                     <div className="bg-gradient-to-r from-gray-400 to-gray-500 rounded-3xl p-8 h-80 text-white relative overflow-hidden">
+                      {/* Blur Circle Effects */}
+                      <div className="absolute top-0 left-0 w-48 h-48 bg-white/15 rounded-full -translate-y-24 -translate-x-24 pointer-events-none"></div>
+                      <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 translate-x-16 pointer-events-none"></div>
+                      
                       <div className="relative z-10">
                         <span className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">Outfit</span>
                         <h3 className="text-3xl font-bold mt-4 mb-4 leading-tight">
@@ -479,7 +504,7 @@ const LandingPage = () => {
                           outfits for active<br />
                           lifestyles
                         </h3>
-                      </div>
+                </div>
                       {/* Athletic people image */}
                       <div className="absolute right-8 bottom-8 w-32 h-32 bg-white/10 rounded-2xl overflow-hidden">
                         <img 
@@ -487,13 +512,17 @@ const LandingPage = () => {
                           alt="Athletic people"
                           className="w-full h-full object-cover"
                         />
+                        </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
 
                   {/* Modern Fashion */}
                   <div>
                     <div className="bg-gradient-to-r from-teal-400 to-teal-500 rounded-3xl p-6 h-80 text-white relative overflow-hidden">
+                      {/* Blur Circle Effects */}
+                      <div className="absolute top-0 left-0 w-48 h-48 bg-white/15 rounded-full -translate-y-24 -translate-x-24 pointer-events-none"></div>
+                      <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 translate-x-16 pointer-events-none"></div>
+                      
                       <div className="relative z-10">
                         <span className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">Style</span>
                         <h3 className="text-xl font-bold mt-4 leading-tight">
@@ -521,7 +550,11 @@ const LandingPage = () => {
           <ErrorBoundary>
             <section className="px-6 mb-12">
               <div className="container mx-auto">
-                <div className="bg-gray-50 rounded-3xl p-8">
+                <div className="bg-gray-50 rounded-3xl p-8 relative overflow-hidden">
+                  {/* Blur Circle Effects */}
+                  <div className="absolute top-0 left-0 w-64 h-64 bg-white/20 rounded-full -translate-y-32 -translate-x-32 pointer-events-none"></div>
+                  <div className="absolute bottom-0 right-0 w-48 h-48 bg-white/15 rounded-full translate-y-24 translate-x-24 pointer-events-none"></div>
+                  
                   <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">We're always here to help</h2>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -530,13 +563,13 @@ const LandingPage = () => {
                         <Icon name="Headphones" size={24} className="text-white" />
                       </div>
                       <h3 className="font-semibold text-gray-900 mb-2">Real-time support</h3>
-                    </div>
+                          </div>
                     <div className="text-center">
                       <div className="w-16 h-16 bg-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <Icon name="Users" size={24} className="text-white" />
-                      </div>
+                        </div>
                       <h3 className="font-semibold text-gray-900 mb-2">Buying concierge</h3>
-                    </div>
+                        </div>
                     <div className="text-center">
                       <div className="w-16 h-16 bg-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <Icon name="Shield" size={24} className="text-white" />
@@ -548,118 +581,352 @@ const LandingPage = () => {
               </div>
             </section>
           </ErrorBoundary>
+
+          {/* Why Choose IziShopin */}
+          <ErrorBoundary>
+            <section className="px-6 mb-8 bg-gray-50 py-8 relative overflow-hidden">
+              {/* Blur Circle Effects */}
+              <div className="absolute top-0 left-0 w-80 h-80 bg-white/15 rounded-full -translate-y-40 -translate-x-40 pointer-events-none"></div>
+              <div className="absolute bottom-0 right-0 w-64 h-64 bg-white/10 rounded-full translate-y-32 translate-x-32 pointer-events-none"></div>
+              
+              <div className="container mx-auto">
+                <div className="text-center mb-8">
+                  <ShinyText
+                    text="Why Choose IziShopin?"
+                    className="text-3xl font-bold text-gray-900 mb-3"
+                    shimmerWidth={100}
+                  />
+                  <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Experience the best online marketplace in Cameroon with unmatched convenience, 
+                    security, and local expertise.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                  <div className="text-center group">
+                    <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                      <Icon name="Truck" size={28} className="text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">Fast Delivery</h3>
+                    <p className="text-gray-600 leading-relaxed text-sm">
+                      Get your orders delivered within 24-48 hours across major cities in Cameroon.
+                    </p>
+                  </div>
+
+                  <div className="text-center group">
+                    <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                      <Icon name="Shield" size={28} className="text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">Secure Payments</h3>
+                    <p className="text-gray-600 leading-relaxed text-sm">
+                      Pay safely with MTN MoMo, Orange Money, or international cards with full buyer protection.
+                    </p>
+                  </div>
+
+                  <div className="text-center group">
+                    <div className="w-16 h-16 bg-gradient-to-br from-gray-600 to-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                      <Icon name="Users" size={28} className="text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">Verified Sellers</h3>
+                    <p className="text-gray-600 leading-relaxed text-sm">
+                      Shop with confidence from thousands of verified local and international sellers.
+                    </p>
+                  </div>
+
+                  <div className="text-center group">
+                    <div className="w-16 h-16 bg-gradient-to-br from-teal-600 to-teal-700 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                      <Icon name="Headphones" size={28} className="text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">24/7 Support</h3>
+                    <p className="text-gray-600 leading-relaxed text-sm">
+                      Get help whenever you need it with our dedicated customer support team.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </ErrorBoundary>
+
+          {/* Success Stats */}
+          <ErrorBoundary>
+            <section className="px-6 mb-8">
+              <div className="container mx-auto">
+                <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-3xl p-8 md:p-12 text-white relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
+                  <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 -translate-x-24"></div>
+                  
+                  <div className="relative z-10">
+                    <div className="text-center mb-8">
+                  <h2 className="text-3xl font-bold mb-4">Join Thousands of Happy Customers</h2>
+                      <p className="text-teal-100 text-lg">
+                        Experience the difference with Cameroon's most trusted marketplace
+                      </p>
+                </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                      <div className="text-center">
+                    <div className="text-4xl font-bold mb-2">50K+</div>
+                    <div className="text-teal-100">Active Users</div>
+                  </div>
+                      <div className="text-center">
+                        <div className="text-4xl font-bold mb-2">15K+</div>
+                        <div className="text-teal-100">Products Sold</div>
+                  </div>
+                      <div className="text-center">
+                        <div className="text-4xl font-bold mb-2">2K+</div>
+                    <div className="text-teal-100">Verified Sellers</div>
+                  </div>
+                      <div className="text-center">
+                        <div className="text-4xl font-bold mb-2">98%</div>
+                        <div className="text-teal-100">Satisfaction Rate</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </ErrorBoundary>
+
+          {/* Customer Testimonials */}
+          <ErrorBoundary>
+            <section className="px-6 mb-8 relative overflow-hidden">
+              {/* Blur Circle Effects */}
+              <div className="absolute top-0 left-0 w-72 h-72 bg-white/10 rounded-full -translate-y-36 -translate-x-36 pointer-events-none"></div>
+              <div className="absolute bottom-0 right-0 w-56 h-56 bg-white/8 rounded-full translate-y-28 translate-x-28 pointer-events-none"></div>
+              
+              <div className="container mx-auto">
+                <div className="text-center mb-8">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-3">What Our Customers Say</h2>
+                  <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Don't just take our word for it - hear from our satisfied customers across Cameroon.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+                    <div className="flex items-center mb-4">
+                      {[...Array(5)].map((_, i) => (
+                        <Icon key={i} name="Star" size={16} className="text-yellow-400 fill-current" />
+                      ))}
+                    </div>
+                    <p className="text-gray-600 mb-6 leading-relaxed">
+                      "IziShopin has transformed how I shop online. Fast delivery, genuine products, 
+                      and excellent customer service. Highly recommended!"
+                    </p>
+                    <div className="flex items-center">
+                      <div className="w-12 h-12 rounded-full overflow-hidden">
+                        <img 
+                          src="https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80" 
+                          alt="Marie Kamga"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="ml-4">
+                        <div className="font-semibold text-gray-900">Marie Kamga</div>
+                        <div className="text-sm text-gray-500">Douala, Cameroon</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+                    <div className="flex items-center mb-4">
+                      {[...Array(5)].map((_, i) => (
+                                <Icon key={i} name="Star" size={16} className="text-yellow-400 fill-current" />
+                              ))}
+                            </div>
+                    <p className="text-gray-600 mb-6 leading-relaxed">
+                      "As a seller, IziShopin has helped me reach customers I never could before. 
+                      The platform is user-friendly and payments are always on time."
+                    </p>
+                    <div className="flex items-center">
+                      <div className="w-12 h-12 rounded-full overflow-hidden">
+                        <img 
+                          src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80" 
+                          alt="Jean Nkomo"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="ml-4">
+                        <div className="font-semibold text-gray-900">Jean Nkomo</div>
+                        <div className="text-sm text-gray-500">Yaoundé, Cameroon</div>
+                            </div>
+                          </div>
+                        </div>
+
+                  <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+                    <div className="flex items-center mb-4">
+                      {[...Array(5)].map((_, i) => (
+                        <Icon key={i} name="Star" size={16} className="text-yellow-400 fill-current" />
+                      ))}
+                    </div>
+                    <p className="text-gray-600 mb-6 leading-relaxed">
+                      "The variety of products is amazing! I found everything I needed for my home 
+                      renovation project at competitive prices."
+                    </p>
+                    <div className="flex items-center">
+                      <div className="w-12 h-12 rounded-full overflow-hidden">
+                        <img 
+                          src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80" 
+                          alt="Amina Tchoua"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="ml-4">
+                        <div className="font-semibold text-gray-900">Amina Tchoua</div>
+                        <div className="text-sm text-gray-500">Bamenda, Cameroon</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </ErrorBoundary>
+
+          {/* How It Works */}
+          <ErrorBoundary>
+            <section className="px-6 mb-8 bg-gray-50 py-8 relative overflow-hidden">
+              {/* Blur Circle Effects */}
+              <div className="absolute top-0 right-0 w-80 h-80 bg-white/15 rounded-full -translate-y-40 translate-x-40 pointer-events-none"></div>
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full translate-y-32 -translate-x-32 pointer-events-none"></div>
+              
+              <div className="container mx-auto">
+                <div className="text-center mb-8">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-3">How IziShopin Works</h2>
+                  <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Getting started is simple. Follow these easy steps to begin your shopping journey.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                  <div className="text-center relative">
+                    <div className="w-20 h-20 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                      <Icon name="UserPlus" size={32} className="text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3">Create Account</h3>
+                    <p className="text-gray-600 leading-relaxed">
+                      Sign up in minutes with your phone number or email. It's completely free!
+                    </p>
+                  </div>
+
+                  <div className="text-center relative">
+                    <div className="w-20 h-20 bg-gradient-to-br from-teal-400 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                      <Icon name="Search" size={32} className="text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3">Browse Products</h3>
+                    <p className="text-gray-600 leading-relaxed">
+                      Explore thousands of products from verified sellers across all categories.
+                    </p>
+                  </div>
+
+                  <div className="text-center relative">
+                    <div className="w-20 h-20 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                      <Icon name="Shield" size={32} className="text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3">Secure Payment</h3>
+                    <p className="text-gray-600 leading-relaxed">
+                      Pay safely with MTN MoMo, Orange Money, or card with full buyer protection.
+                    </p>
+                  </div>
+
+                  <div className="text-center">
+                    <div className="w-20 h-20 bg-gradient-to-br from-teal-600 to-teal-700 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                      <Icon name="Truck" size={32} className="text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3">Fast Delivery</h3>
+                    <p className="text-gray-600 leading-relaxed">
+                      Receive your orders quickly with our reliable delivery network nationwide.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </ErrorBoundary>
+
+          {/* Mobile App Download */}
+          <ErrorBoundary>
+            <section className="px-6 mb-8">
+              <div className="container mx-auto">
+                <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-3xl p-8 md:p-12 text-white overflow-hidden relative">
+                  <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 rounded-full -translate-y-48 translate-x-48"></div>
+                  
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center relative z-10">
+                    <div>
+                      <h2 className="text-3xl font-bold mb-6">Shop Anytime, Anywhere</h2>
+                      <p className="text-gray-300 text-lg mb-8 leading-relaxed">
+                        Download the IziShopin mobile app for the ultimate shopping experience. 
+                        Get exclusive mobile-only deals, push notifications for your favorite items, 
+                        and shop on the go.
+                      </p>
+                      
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <button className="flex items-center space-x-3 bg-white text-gray-900 px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors">
+                          <div className="w-8 h-8 bg-gray-900 rounded flex items-center justify-center">
+                            <Icon name="Smartphone" size={16} className="text-white" />
+                          </div>
+                          <div className="text-left">
+                            <div className="text-xs text-gray-600">Download on the</div>
+                            <div className="text-sm font-semibold">App Store</div>
+                          </div>
+                  </button>
+
+                        <button className="flex items-center space-x-3 bg-white text-gray-900 px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors">
+                          <div className="w-8 h-8 bg-gray-900 rounded flex items-center justify-center">
+                            <Icon name="Smartphone" size={16} className="text-white" />
+                          </div>
+                          <div className="text-left">
+                            <div className="text-xs text-gray-600">Get it on</div>
+                            <div className="text-sm font-semibold">Google Play</div>
+                          </div>
+                  </button>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-center">
+                      <div className="w-64 h-64 bg-teal-500/20 rounded-full flex items-center justify-center">
+                        <Icon name="Smartphone" size={80} className="text-teal-400" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </ErrorBoundary>
+
+          {/* Final CTA */}
+          <ErrorBoundary>
+            <section className="px-6 mb-12">
+              <div className="container mx-auto">
+                <div className="text-center bg-gradient-to-br from-teal-50 to-blue-50 rounded-3xl p-8 md:p-12">
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+                    Ready to Start Shopping?
+                  </h2>
+                  <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+                    Join thousands of satisfied customers and discover why IziShopin is 
+                    Cameroon's favorite online marketplace.
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button 
+                      onClick={() => navigate('/product-catalog')}
+                      className="bg-teal-500 hover:bg-teal-600 text-white font-bold py-4 px-8 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                    >
+                      Start Shopping Now
+                    </button>
+                    <button 
+                      onClick={() => navigate('/authentication-login-register')}
+                      className="bg-white hover:bg-gray-50 text-teal-600 font-bold py-4 px-8 rounded-xl border-2 border-teal-500 transition-all duration-200 hover:shadow-lg"
+                    >
+                      Create Account
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </ErrorBoundary>
         </main>
 
         {/* Footer */}
-        <ErrorBoundary>
-          <footer className="bg-gray-50 border-t border-gray-200">
-            <div className="container mx-auto px-6 py-16">
-              {/* Main Footer Content */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
-                {/* Brand Section */}
-                <div className="md:col-span-2 lg:col-span-1">
-                  <div className="flex items-center gap-2 mb-6">
-                    <Icon name="Package" size={28} className="text-teal-600" />
-                    <span className="font-bold text-2xl text-gray-900">IziShopin</span>
-                  </div>
-                  <p className="text-gray-600 mb-6 leading-relaxed max-w-sm">
-                    Cameroon's leading marketplace connecting buyers and sellers across the country. Shop with confidence using secure payments via MTN MoMo, Orange Money & Visa.
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <button className="p-3 hover:bg-white rounded-full transition-all duration-200 shadow-sm hover:shadow-md">
-                      <Icon name="Instagram" size={20} className="text-gray-600 hover:text-pink-600" />
-                    </button>
-                    <button className="p-3 hover:bg-white rounded-full transition-all duration-200 shadow-sm hover:shadow-md">
-                      <Icon name="Twitter" size={20} className="text-gray-600 hover:text-blue-500" />
-                    </button>
-                    <button className="p-3 hover:bg-white rounded-full transition-all duration-200 shadow-sm hover:shadow-md">
-                      <Icon name="Facebook" size={20} className="text-gray-600 hover:text-blue-600" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Quick Links */}
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-gray-900 mb-6 text-lg">Menu</h4>
-                  <ul className="space-y-3">
-                    <li><button className="text-gray-600 hover:text-teal-600 transition-colors duration-200 text-left">Live Page</button></li>
-                    <li><button className="text-gray-600 hover:text-teal-600 transition-colors duration-200 text-left">Shop</button></li>
-                    <li><button className="text-gray-600 hover:text-teal-600 transition-colors duration-200 text-left">New Arrivals</button></li>
-                    <li><button className="text-gray-600 hover:text-teal-600 transition-colors duration-200 text-left">Featured Deals</button></li>
-                    <li><button className="text-gray-600 hover:text-teal-600 transition-colors duration-200 text-left">Categories</button></li>
-                  </ul>
-                </div>
-
-                {/* Policy Links */}
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-gray-900 mb-6 text-lg">Policy</h4>
-                  <ul className="space-y-3">
-                    <li><button className="text-gray-600 hover:text-teal-600 transition-colors duration-200 text-left">Terms of Service</button></li>
-                    <li><button className="text-gray-600 hover:text-teal-600 transition-colors duration-200 text-left">Privacy Policy</button></li>
-                    <li><button className="text-gray-600 hover:text-teal-600 transition-colors duration-200 text-left">Cookie Policy</button></li>
-                    <li><button className="text-gray-600 hover:text-teal-600 transition-colors duration-200 text-left">Return Policy</button></li>
-                    <li><button className="text-gray-600 hover:text-teal-600 transition-colors duration-200 text-left">Shipping Info</button></li>
-                  </ul>
-                </div>
-
-                {/* App Download & Newsletter */}
-                <div className="md:col-span-2 lg:col-span-1">
-                  <h4 className="font-semibold text-gray-900 mb-6 text-lg">Stay Connected</h4>
-                  
-                  {/* Newsletter Signup */}
-                  <div className="mb-8">
-                    <p className="text-gray-600 mb-4">Get updates on new arrivals and exclusive deals</p>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <input 
-                        type="email" 
-                        placeholder="Enter your email" 
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
-                      />
-                      <button className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors duration-200 whitespace-nowrap">
-                        Subscribe
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* App Download */}
-                  <div>
-                    <p className="text-gray-600 mb-4">Download our app</p>
-                    <div className="flex flex-col gap-3">
-                      <button className="bg-black text-white px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md">
-                        <Icon name="Smartphone" size={24} />
-                        <div className="text-left">
-                          <div className="text-xs opacity-80">Download on the</div>
-                          <div className="font-semibold">App Store</div>
-                        </div>
-                      </button>
-                      <button className="bg-black text-white px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md">
-                        <Icon name="Play" size={24} />
-                        <div className="text-left">
-                          <div className="text-xs opacity-80">Get it on</div>
-                          <div className="font-semibold">Google Play</div>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer Bottom */}
-              <div className="pt-8 border-t border-gray-300">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                  <p className="text-gray-500 text-center md:text-left">
-                    © 2024 IziShopin. All rights reserved.
-                  </p>
-                  <div className="flex items-center gap-6 text-sm">
-                    <button className="text-gray-500 hover:text-teal-600 transition-colors duration-200">Help Center</button>
-                    <button className="text-gray-500 hover:text-teal-600 transition-colors duration-200">Contact Us</button>
-                    <button className="text-gray-500 hover:text-teal-600 transition-colors duration-200">Accessibility</button>
-                </div>
-                </div>
-              </div>
-            </div>
-          </footer>
-        </ErrorBoundary>
+        <Footer />
       </div>
     </>
   );

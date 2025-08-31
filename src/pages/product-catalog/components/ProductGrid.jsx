@@ -100,7 +100,7 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
 
             {/* Price */}
             <div className="flex items-center space-x-2 mb-3">
-              <span className="text-xl font-bold text-orange-600">
+              <span className="text-xl font-bold text-teal-600">
                 {formatPrice(product.price)} XAF
               </span>
               {product.originalPrice > product.price && (
@@ -126,7 +126,7 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
               <Button
                 onClick={handleAddToCart}
                 disabled={isLoading}
-                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white h-10"
+                className="flex-1 bg-teal-500 hover:bg-teal-600 text-white h-10"
               >
                 {isLoading ? (
                   <Icon name="Loader2" size={16} className="animate-spin" />
@@ -139,7 +139,7 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
               </Button>
               <Button
                 variant="outline"
-                className="px-4 h-10 border-gray-300 hover:border-orange-500 hover:text-orange-500"
+                className="px-4 h-10 border-gray-300 hover:border-teal-500 hover:text-teal-500"
               >
                 <Icon name="Eye" size={16} />
               </Button>
@@ -212,7 +212,7 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
 
         {/* Stock indicator */}
         {product.stock <= 5 && (
-          <div className="absolute bottom-3 left-3 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+          <div className="absolute bottom-3 left-3 bg-teal-500 text-white text-xs font-bold px-2 py-1 rounded-full">
             Only {product.stock} left!
           </div>
         )}
@@ -221,7 +221,7 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
       {/* Product Info */}
       <div className="p-4">
         {/* Product Name */}
-        <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 mb-2 leading-tight group-hover:text-orange-600 transition-colors duration-200">
+        <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 mb-2 leading-tight group-hover:text-teal-600 transition-colors duration-200">
           {product.name}
         </h3>
 
@@ -242,7 +242,7 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
 
         {/* Price */}
         <div className="flex items-center space-x-2 mb-3">
-          <span className="text-lg font-bold text-orange-600">
+          <span className="text-lg font-bold text-teal-600">
             {formatPrice(product.price)} XAF
           </span>
           {product.originalPrice > product.price && (
@@ -276,7 +276,7 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
         <Button
           onClick={handleAddToCart}
           disabled={isLoading}
-          className="w-full bg-orange-500 hover:bg-orange-600 text-white h-9 text-sm font-medium"
+          className="w-full bg-teal-500 hover:bg-teal-600 text-white h-9 text-sm font-medium"
         >
           {isLoading ? (
             <Icon name="Loader2" size={14} className="animate-spin" />
@@ -382,7 +382,7 @@ const ProductGrid = ({
             disabled={loadingMore}
             size="lg"
             variant="outline"
-            className="px-8 py-3 border-orange-500 text-orange-500 hover:bg-orange-50"
+            className="px-8 py-3 border-teal-500 text-teal-500 hover:bg-teal-50"
           >
             {loadingMore ? (
               <>
@@ -422,7 +422,7 @@ const ProductGrid = ({
           </div>
           <Button
             variant="outline"
-            className="mt-4 border-orange-500 text-orange-500 hover:bg-orange-50"
+            className="mt-4 border-teal-500 text-teal-500 hover:bg-teal-50"
           >
             <Icon name="RotateCcw" size={16} className="mr-2" />
             Clear Filters

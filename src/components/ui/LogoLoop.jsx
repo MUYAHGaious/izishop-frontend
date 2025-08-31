@@ -150,7 +150,7 @@ const useAnimationLoop = (
 
 export const LogoLoop = memo(
   ({
-    logos,
+    logos = [],
     speed = 120,
     direction = "left",
     width = "100%",

@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import GlassIcons from '../../../components/ui/GlassIcons';
 
 const CategoryNavigation = ({ categories, selectedCategory, onCategoryChange }) => {
   const scrollRef = useRef(null);
@@ -29,43 +30,18 @@ const CategoryNavigation = ({ categories, selectedCategory, onCategoryChange }) 
             <Icon name="ChevronLeft" size={16} className="text-gray-600" />
           </button>
 
-          {/* Categories Container */}
-          <div
-            ref={scrollRef}
-            className="flex gap-4 overflow-x-auto scrollbar-hide px-10 scroll-smooth"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => onCategoryChange(category.id)}
-                className={`flex-shrink-0 flex flex-col items-center p-4 rounded-xl transition-all duration-200 min-w-[100px] ${
-                  selectedCategory === category.id
-                    ? 'bg-gradient-to-br from-orange-500 to-pink-500 text-white shadow-lg transform scale-105'
-                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100 hover:shadow-md'
-                }`}
-              >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${
-                  selectedCategory === category.id
-                    ? 'bg-white/20'
-                    : 'bg-white'
-                }`}>
-                  <Icon 
-                    name={category.icon} 
-                    size={16} 
-                    className={selectedCategory === category.id ? 'text-white' : 'text-orange-500'} 
-                  />
-                </div>
-                <span className="text-sm font-medium text-center leading-tight">
-                  {category.name}
-                </span>
-                <span className={`text-xs mt-1 ${
-                  selectedCategory === category.id ? 'text-white/80' : 'text-gray-500'
-                }`}>
-                  {category.count.toLocaleString()}
-                </span>
-              </button>
-            ))}
+          {/* Categories Container - Glass Icons */}
+          <div className="flex justify-center px-10">
+            <GlassIcons 
+              items={categories.map((category) => ({
+                icon: <Icon name={category.icon} size={24} className="text-white" />,
+                color: 'teal',
+                label: `${category.name} (${category.count})`,
+                customClass: `cursor-pointer ${selectedCategory === category.id ? 'selected' : ''}`,
+                onClick: () => onCategoryChange(category.id)
+              }))} 
+              className="category-navigation"
+            />
           </div>
 
           {/* Scroll Right Button */}
@@ -79,7 +55,7 @@ const CategoryNavigation = ({ categories, selectedCategory, onCategoryChange }) 
       </div>
 
       {/* Category Quick Stats */}
-      <div className="bg-gradient-to-r from-orange-50 to-pink-50 border-t border-gray-100">
+      <div className="bg-gradient-to-r from-teal-50 to-emerald-50 border-t border-gray-100">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-center gap-8 text-sm">
             <div className="flex items-center gap-2">

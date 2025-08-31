@@ -181,6 +181,9 @@ const HeroSection = () => {
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
+      {/* Circular Design Elements - Similar to Customer Card */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32 pointer-events-none z-10"></div>
+      <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 -translate-x-24 pointer-events-none z-10"></div>
       {/* Background Slideshow */}
       <div className="absolute inset-0">
         {heroSlides.map((slide, index) => (

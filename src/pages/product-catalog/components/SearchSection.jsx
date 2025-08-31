@@ -72,7 +72,7 @@ const SearchSection = ({ searchParams, setSearchParams }) => {
   }, []);
 
   return (
-    <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-pink-500 pt-16">
+    <div className="bg-gradient-to-r from-teal-500 via-teal-600 to-emerald-500 pt-16">
       <div className="container mx-auto px-4 py-8">
         {/* Search Bar */}
         <div className="max-w-4xl mx-auto relative" ref={searchRef}>
@@ -90,7 +90,7 @@ const SearchSection = ({ searchParams, setSearchParams }) => {
               {/* Search Button */}
               <Button
                 type="submit"
-                className="absolute right-2 h-10 px-6 bg-orange-500 hover:bg-orange-600 text-white rounded-xl"
+                className="absolute right-2 h-10 px-6 bg-teal-500 hover:bg-teal-600 text-white rounded-xl"
               >
                 <Icon name="Search" size={20} />
                 <span className="hidden sm:inline ml-2">Search</span>
@@ -130,9 +130,9 @@ const SearchSection = ({ searchParams, setSearchParams }) => {
                           onClick={() => handleSuggestionClick(suggestion)}
                           className="w-full flex items-center px-3 py-2 hover:bg-gray-50 rounded-lg text-left"
                         >
-                          <Icon name={suggestion.icon} size={16} className="text-orange-500 mr-3" />
+                          <Icon name={suggestion.icon} size={16} className="text-teal-500 mr-3" />
                           <span className="text-gray-700">{suggestion.text}</span>
-                          <span className="ml-auto text-xs text-orange-500 font-medium">Trending</span>
+                          <span className="ml-auto text-xs text-teal-500 font-medium">Trending</span>
                         </button>
                       ))}
                     </div>

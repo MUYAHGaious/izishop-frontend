@@ -77,10 +77,8 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Brand Section */}
           <div className="lg:col-span-1">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Icon name="ShoppingBag" size={20} color="white" />
-              </div>
+            <div className="flex items-center space-x-3 mb-4">
+              <Icon name="Package" size={28} className="text-teal-600" />
               <span className="text-xl font-bold text-primary">IziShopin</span>
             </div>
             <p className="text-sm text-background/80 mb-6 leading-relaxed">
@@ -201,9 +199,7 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             {/* Copyright */}
             <div className="text-sm text-background/80">
-              © {currentYear} IziShopin. All rights reserved. Made with{' '}
-              <Icon name="Heart" size={14} className="inline text-error mx-1" />
-              in Cameroon.
+              © {currentYear} IziShopin. All rights reserved.
             </div>
 
             {/* Legal Links */}

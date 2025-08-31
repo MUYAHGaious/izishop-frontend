@@ -7,19 +7,19 @@ const FeaturedShops = ({ shops, onVisitShop, onFollowShop }) => {
 
   return (
     <div className="bg-surface border-b border-border">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-text-primary">Featured Shops</h2>
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-text-primary">Featured Shops</h2>
           <Button variant="ghost" iconName="ArrowRight" iconPosition="right">
             View All
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {shops.map((shop) => (
             <div
               key={shop.id}
-              className="bg-background border border-border rounded-xl overflow-hidden hover:shadow-elevated transition-all duration-200 group"
+              className="bg-background border border-border rounded-xl overflow-hidden hover:shadow-elevated transition-all duration-150 group"
             >
               {/* Shop Banner */}
               <div className="relative h-24 bg-gradient-to-r from-primary/20 to-secondary/20">

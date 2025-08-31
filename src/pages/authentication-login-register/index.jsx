@@ -152,230 +152,62 @@ const AuthenticationLoginRegister = () => {
       
       // First, create the user account
       const response = await register(userData);
-      console.log('User registration successful, user role:', response.user.role);
+      console.log('User registration response:', response);
+      console.log('Response type:', typeof response);
+      console.log('Response keys:', response ? Object.keys(response) : 'No response');
+      console.log('User object:', response?.user);
+      console.log('Access token present:', !!response?.access_token);
+      console.log('Refresh token present:', !!response?.refresh_token);
       
-      // Check if user is authenticated after registration
-      const isNowAuthenticated = isAuthenticated();
-      console.log('User authenticated after registration:', isNowAuthenticated);
-      console.log('Response includes access_token:', !!response.access_token);
-      console.log('Response includes user:', !!response.user);
-      console.log('User role:', response.user?.role);
-      
-      // If user is shop owner and shop data was provided, create the shop
-      if ((response.user.role === 'SHOP_OWNER' || response.user.role === 'shop_owner') && shopData) {
-        try {
-          console.log('Creating shop automatically after registration...');
+      // Check if registration was successful
+      if (response && response.user) {
+        console.log('Registration successful, user created:', response.user);
+        
+        // Check if user was auto-logged in (has access token)
+        if (response.access_token) {
+          console.log('Auto-login successful, user role:', response.user.role);
+          console.log('User authenticated after registration:', isAuthenticated());
           
-          // Prepare shop data with required fields based on backend schema
-          const shopCreateData = {
-            name: shopData.name,
-            description: shopData.description,
-            address: shopData.address,
-            phone: shopData.phone || null,
-            email: shopData.email || null
-          };
+          // Store tokens and user data for auto-login
+          localStorage.setItem('accessToken', response.access_token);
+          localStorage.setItem('refreshToken', response.refresh_token);
+          localStorage.setItem('user', JSON.stringify(response.user));
           
-          console.log('Shop creation data prepared:', shopCreateData);
-          console.log('Auth token available:', !!localStorage.getItem('authToken'));
-          
-          // Create shop using API service
-          const shopResponse = await api.createShop(shopCreateData);
-          console.log('Shop created successfully:', shopResponse);
-          
-          // Show success message for both user and shop creation
-          if (isAuthenticated()) {
-            console.log('Shop owner is authenticated, redirecting to dashboard');
+          // Redirect to dashboard immediately
             redirectToDashboard(response.user.role);
-          } else {
-            console.log('Shop owner registered but not authenticated, attempting automatic login');
-            try {
-              setAutoLoginMessage('Setting up your shop...');
-              await new Promise(resolve => setTimeout(resolve, 500));
-              
-              setAutoLoginMessage('Logging you in...');
-              const loginResponse = await login({
-                email: userData.email,
-                password: userData.password
-              });
-              console.log('Automatic login successful after shop creation:', loginResponse);
-              
-              setAutoLoginMessage('Redirecting to dashboard...');
-              // Double-check authentication and force redirect if needed
-              setTimeout(() => {
-                if (isAuthenticated()) {
-                  redirectToDashboard(response.user.role);
-                } else {
-                  setAutoLoginMessage('');
-                }
-              }, 500);
-            } catch (loginError) {
-              console.warn('Automatic login failed after shop creation:', loginError);
-              showToast('Registration and shop creation successful! Please log in to access your dashboard.', 'success');
-              setActiveTab('login');
-            }
-          }
           setIsLoading(false);
-          
-        } catch (shopError) {
-          console.error('Shop creation failed after user registration:', shopError);
-          console.error('Shop creation error details:', {
-            message: shopError.message,
-            response: shopError.response?.data,
-            status: shopError.response?.status
-          });
-          
-          // Show specific validation error to user
-          let errorMessage = 'Failed to create shop. ';
-          if (shopError.response?.status === 422) {
-            const validationErrors = shopError.response?.data?.detail?.errors || [];
-            if (validationErrors.length > 0) {
-              errorMessage += validationErrors.join('. ');
-            } else if (shopError.response?.data?.detail) {
-              errorMessage += shopError.response.data.detail;
+          return;
+          } else {
+          // No auto-login, show success message and redirect to login
+          console.log('Registration successful but no auto-login');
+          showToast('Registration successful! Please log in to access your dashboard.', 'success');
+              setActiveTab('login');
+          setIsLoading(false);
+          return;
             }
           } else {
-            errorMessage += shopError.message || 'Please try again.';
-          }
-          
-          showToast({
-            type: 'error',
-            message: errorMessage,
-            duration: 5000
-          });
-          
-          // For validation errors, don't auto-login, let user fix the error
-          if (shopError.response?.status === 422) {
-            console.log('Shop creation validation error, staying on registration to let user fix it');
+        // Registration failed
+        console.log('Registration failed:', response);
+        const errorMessage = response?.error || response?.detail || 'Registration failed. Please try again.';
+        showToast(errorMessage, 'error');
             setIsLoading(false);
-            setAutoLoginMessage('');
-            // User data is still in the form, they can correct the shop name and retry
             return;
           }
           
-          // For other errors, user was created successfully but shop creation failed
-          // Still redirect to dashboard but show a warning
-          if (isAuthenticated()) {
-            redirectToDashboard(response.user.role);
-          } else {
-            // Try automatic login for shop owners for non-validation errors
-            try {
-              console.log('Attempting automatic login for shop owner after shop creation error');
-              
-              setAutoLoginMessage('Setting up your account...');
-              await new Promise(resolve => setTimeout(resolve, 500));
-              
-              setAutoLoginMessage('Logging you in...');
-              const loginResponse = await login({
-                email: userData.email,
-                password: userData.password
-              });
-              console.log('Automatic login successful after shop error:', loginResponse);
-              
-              setAutoLoginMessage('Redirecting to dashboard...');
-              setTimeout(() => {
-                if (isAuthenticated()) {
-                  redirectToDashboard(response.user.role);
-                } else {
-                  setAutoLoginMessage('');
-                }
-              }, 500);
-            } catch (loginError) {
-              console.warn('Automatic login failed after shop creation failure:', loginError);
-              showToast({
-                type: 'warning',
-                message: 'Registration successful! Please log in to access your dashboard.',
-                duration: 4000
-              });
-              setActiveTab('login');
-            }
-          }
-          setIsLoading(false);
-        }
-      } else {
-        // Regular user (not shop owner) or no shop data
-        console.log('No shop creation needed for this user type');
-        
-        // Force redirect if user is authenticated
-        if (isAuthenticated()) {
-          console.log('User is authenticated, redirecting to dashboard');
-          redirectToDashboard(response.user.role);
-        } else {
-          // User registered but not authenticated
-          console.log('User registered but not authenticated');
-          
-          // For delivery agents and customers, try to log them in automatically
-          if (response.user.role === 'DELIVERY_AGENT' || response.user.role === 'CUSTOMER') {
-            try {
-              console.log('=== DELIVERY AGENT REGISTRATION DEBUG ===');
-              console.log('User role:', response.user.role);
-              console.log('User created:', response.user);
-              console.log('Tokens in response:', { 
-                access_token: !!response.access_token, 
-                refresh_token: !!response.refresh_token 
-              });
-              
-              setAutoLoginMessage('Setting up your account...');
-              await new Promise(resolve => setTimeout(resolve, 500));
-              
-              setAutoLoginMessage('Logging you in...');
-              const loginResponse = await login({
-                email: userData.email,
-                password: userData.password
-              });
-              console.log('Automatic login response:', loginResponse);
-              console.log('Auth state after login:', {
-                isAuthenticated: isAuthenticated(),
-                accessToken: !!localStorage.getItem('accessToken'),
-                user: localStorage.getItem('user')
-              });
-              
-              setAutoLoginMessage('Redirecting to dashboard...');
-              // Immediate redirect attempt
-              console.log('Attempting immediate redirect...');
-              redirectToDashboard(response.user.role);
-              
-              // Backup check after delay
-              setTimeout(() => {
-                console.log('Backup redirect check - Auth state:', {
-                  isAuthenticated: isAuthenticated(),
-                  accessToken: !!localStorage.getItem('accessToken'),
-                  currentPath: window.location.pathname
-                });
-                
-                if (isAuthenticated()) {
-                  console.log('User is authenticated, forcing redirect...');
-                  redirectToDashboard(response.user.role);
-                } else {
-                  console.warn('User not authenticated after automatic login, showing manual login');
-                  setAutoLoginMessage('');
-                  showToast('Registration successful! Please log in to access your dashboard.', 'success');
-                  setActiveTab('login');
-                }
-              }, 1000);
-            } catch (loginError) {
-              console.error('=== AUTOMATIC LOGIN FAILED ===');
-              console.error('Login error:', loginError);
-              console.error('Error details:', {
-                message: loginError.message,
-                stack: loginError.stack
-              });
-              setAutoLoginMessage('');
-              showToast('Registration successful! Please log in to access your dashboard.', 'success');
-              setActiveTab('login');
-            }
-          } else {
-            // For other roles, show verification message
-            showToast('Registration successful! Please check your email for verification.', 'success');
-            setActiveTab('login');
-          }
-        }
-        setIsLoading(false);
-      }
-      
     } catch (error) {
       console.error('Registration error:', error);
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      // Extract error message from different error formats
+      if (error.response && error.response.data) {
+        errorMessage = error.response.data.detail || error.response.data.error || errorMessage;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      showToast(errorMessage, 'error');
       setIsLoading(false);
-      throw error; // Re-throw to allow form to handle the error
+      return;
     }
   };
 
@@ -461,10 +293,8 @@ const AuthenticationLoginRegister = () => {
                 {/* Logo and Brand */}
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-2 mb-8">
-                    <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-teal-600 rounded-lg flex items-center justify-center">
-                      <Icon name="ShoppingBag" size={16} className="text-white" />
-                    </div>
-                    <span className="text-xl font-bold text-gray-900">IZISHOPIN</span>
+                    <Icon name="Package" size={28} className="text-teal-600" />
+                    <span className="text-2xl font-bold text-gray-900">IziShopin</span>
                   </div>
                   
                   <h1 className="text-2xl font-semibold text-gray-900 mb-2">
@@ -548,16 +378,16 @@ const AuthenticationLoginRegister = () => {
                   </p>
                 </div>
 
-                {/* Footer */}
-                <div className="flex items-center justify-between text-xs text-gray-500 pt-4">
-                  <button className="hover:text-gray-700 transition-colors">Privacy Policy</button>
-                  <span>Copyright 2024</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Right: Content Panel - Teal background */}
+                                 {/* Footer */}
+                 <div className="flex items-center justify-between text-xs text-gray-500 pt-4">
+                   <button className="hover:text-gray-700 transition-colors">Privacy Policy</button>
+                   <span>Copyright 2025</span>
+                 </div>
+               </div>
+             </div>
+           </div>
+           
+           {/* Right: Content Panel - Teal background */}
           <div className="w-1/2 bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center p-8">
             <div className="w-full max-w-md text-white">
               <div className="space-y-8">
@@ -628,10 +458,8 @@ const AuthenticationLoginRegister = () => {
                 {/* Logo and Brand */}
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-2 mb-8">
-                    <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-teal-600 rounded-lg flex items-center justify-center">
-                      <Icon name="ShoppingBag" size={16} className="text-white" />
-                    </div>
-                    <span className="text-xl font-bold text-gray-900">IZISHOPIN</span>
+                    <Icon name="Package" size={28} className="text-teal-600" />
+                    <span className="text-2xl font-bold text-gray-900">IziShopin</span>
                   </div>
                   
                   <h1 className="text-2xl font-semibold text-gray-900 mb-2">
@@ -715,16 +543,16 @@ const AuthenticationLoginRegister = () => {
                   </p>
                 </div>
 
-                {/* Footer */}
-                <div className="flex items-center justify-between text-xs text-gray-500 pt-4">
-                  <button className="hover:text-gray-700 transition-colors">Privacy Policy</button>
-                  <span>Copyright 2024</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+                                 {/* Footer */}
+                 <div className="flex items-center justify-between text-xs text-gray-500 pt-4">
+                   <button className="hover:text-gray-700 transition-colors">Privacy Policy</button>
+                   <span>Copyright 2025</span>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
       
       {/* Enhanced mobile-first styles */}
       <style>{`

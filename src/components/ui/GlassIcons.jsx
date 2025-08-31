@@ -29,6 +29,7 @@ const GlassIcons = ({ items, className }) => {
           className={`icon-btn ${item.customClass || ""}`}
           aria-label={item.label}
           type="button"
+          onClick={item.onClick}
         >
           <span
             className="icon-btn__back"

@@ -16,13 +16,15 @@
   perspective: 24em;
   transform-style: preserve-3d;
   -webkit-tap-highlight-color: transparent;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .icon-btn__back,
 .icon-btn__front,
 .icon-btn__label {
-  transition: opacity 0.3s cubic-bezier(0.83, 0, 0, 0.17, 1),
-    transform 0.3s cubic-bezier(0.83, 0, 0, 0.17, 1);
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
 }
 
 .icon-btn__back,

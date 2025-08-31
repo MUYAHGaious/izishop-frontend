@@ -4,10 +4,11 @@ import { useCart } from '../../contexts/CartContext';
 import Header from '../../components/ui/Header';
 import MobileBottomTab from '../../components/ui/MobileBottomTab';
 import FilterPanel from './components/FilterPanel';
-import { ProductGrid } from '../../components/ProductDisplay';
+import ProductGrid from './components/ProductGrid';
 import CategoryNavigation from './components/CategoryNavigation';
 import FlashSaleHero from './components/FlashSaleHero';
 import SearchSection from './components/SearchSection';
+import Footer from '../landing-page/components/Footer';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
 import api from '../../services/api';
@@ -27,29 +28,22 @@ const ProductCatalog = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
 
-  // Dynamic categories based on real data
+  // Dynamic categories based on real data - matching landing page icons
   const [categories, setCategories] = useState([
     { id: 'all', name: 'All Categories', icon: 'Grid3X3', count: 0 },
     { id: 'electronics', name: 'Electronics', icon: 'Smartphone', count: 0 },
     { id: 'fashion', name: 'Fashion', icon: 'Shirt', count: 0 },
     { id: 'sports', name: 'Sports', icon: 'Dumbbell', count: 0 },
-    { id: 'home', name: 'Home & Garden', icon: 'Home', count: 0 },
-    { id: 'beauty', name: 'Beauty', icon: 'Sparkles', count: 0 },
-    { id: 'books', name: 'Books', icon: 'Book', count: 0 },
+    { id: 'home', name: 'Home & Living', icon: 'Home', count: 0 },
+    { id: 'beauty', name: 'Health & Beauty', icon: 'Heart', count: 0 },
+    { id: 'food', name: 'Food & Agriculture', icon: 'Apple', count: 0 },
     { id: 'automotive', name: 'Automotive', icon: 'Car', count: 0 }
   ]);
 
-  // Initialize with mock products as fallback
+  // Load real products from API on component mount
   useEffect(() => {
     console.log('ProductCatalog component mounted');
-    const mockProducts = generateMockProducts('');
-    console.log('Generated mock products:', mockProducts);
-    const transformedProducts = mockProducts.map(transformProduct);
-    console.log('Transformed products:', transformedProducts);
-    setProducts(transformedProducts);
-    setResultsCount(transformedProducts.length);
-    setLoading(false);
-    console.log('State set - products:', transformedProducts.length, 'loading:', false);
+    loadProducts(''); // Load all products initially
   }, []);
 
   // Handle URL params and search
@@ -128,12 +122,12 @@ const ProductCatalog = () => {
       shopName: "Shop Owner",
       shopId: product.seller_id,
       isNew: isNew,
-      discount: 0,
+      discount: Math.random() > 0.7 ? Math.floor(Math.random() * 30) + 10 : 0,
       category: "general",
-      brand: "generic",
+      brand: "generic", 
       isWishlisted: false,
       isFreeShipping: Math.random() > 0.5,
-      isFlashSale: false,
+      isFlashSale: Math.random() > 0.8,
       badges: product.stock_quantity > 0 ? 
         (isNew ? ['In Stock', 'New'] : ['In Stock']) : 
         ['Out of Stock']
@@ -143,53 +137,52 @@ const ProductCatalog = () => {
   const loadProducts = async (searchQuery = '') => {
     try {
       setLoading(true);
-      console.log('Starting to load products...');
+      console.log('Starting to load products with query:', searchQuery);
       
-      // Fetch products from API with fallback
-      let response;
+      // First try to fetch real products from API
       try {
-        console.log('Attempting to fetch products from API...');
-        response = await api.getAllProducts(0, 100, true, searchQuery);
-        console.log('API response received:', response);
+        console.log('Fetching real products from API...');
+        const response = await api.getAllProducts(0, 100, true, searchQuery);
+        console.log('Real API response received:', response);
+        
+        if (Array.isArray(response) && response.length > 0) {
+          console.log(`Successfully loaded ${response.length} real products from API`);
+          const transformedProducts = response.map(transformProduct);
+          setProducts(transformedProducts);
+          setResultsCount(transformedProducts.length);
+          updateCategoryCounts(transformedProducts);
+          return; // Successfully loaded real data, exit early
+        } else if (Array.isArray(response) && response.length === 0) {
+          console.log('API returned empty array - no products found');
+          setProducts([]);
+          setResultsCount(0);
+          updateCategoryCounts([]);
+          return;
+        } else {
+          console.warn('API response is not a valid array:', typeof response);
+          throw new Error('Invalid API response format');
+        }
+        
       } catch (apiError) {
-        console.warn('API not available, using mock data:', apiError);
-        // Fallback to mock data when API is not available
-        response = generateMockProducts(searchQuery);
-        console.log('Using mock data:', response);
-      }
-      
-      // Ensure response is an array
-      if (!Array.isArray(response)) {
-        console.warn('API response is not an array, using mock data');
-        response = generateMockProducts(searchQuery);
-      }
-      
-      // Transform API response using shared transform function
-      const transformedProducts = response.map(transformProduct);
-      console.log('Transformed products:', transformedProducts);
-      
-      setProducts(transformedProducts);
-      setResultsCount(transformedProducts.length);
-      
-      // Update category counts dynamically
-      updateCategoryCounts(transformedProducts);
-      
-    } catch (error) {
-      console.error('Error loading products:', error);
-      // Fallback to mock data on any error
-      try {
-        console.log('Falling back to mock data due to error...');
+        console.warn('API call failed:', apiError.message);
+        console.log('Falling back to mock data as demonstration...');
+        
+        // Only use mock data as a demonstration fallback
         const mockResponse = generateMockProducts(searchQuery);
         const transformedMockProducts = mockResponse.map(transformProduct);
         setProducts(transformedMockProducts);
         setResultsCount(transformedMockProducts.length);
         updateCategoryCounts(transformedMockProducts);
-        console.log('Fallback to mock data successful');
-      } catch (mockError) {
-        console.error('Even mock data failed:', mockError);
-        setProducts([]);
-        setResultsCount(0);
+        
+        // Add a visual indicator that this is mock data
+        console.warn('Currently displaying mock/demo data. Real products will appear when API is available.');
       }
+      
+    } catch (error) {
+      console.error('Critical error loading products:', error);
+      setProducts([]);
+      setResultsCount(0);
+      updateCategoryCounts([]);
     } finally {
       setLoading(false);
     }
@@ -314,7 +307,7 @@ const ProductCatalog = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 animate-fadeIn">
       <Header />
       
       {/* Enhanced Search Section */}
@@ -323,9 +316,6 @@ const ProductCatalog = () => {
         setSearchParams={setSearchParams}
       />
       
-      {/* Flash Sale Hero Section */}
-      <FlashSaleHero products={products.filter(p => p.isFlashSale)} />
-      
       {/* Category Navigation */}
       <CategoryNavigation 
         categories={categories}
@@ -333,28 +323,51 @@ const ProductCatalog = () => {
         onCategoryChange={handleCategoryChange}
       />
       
-      <div className="flex min-h-screen">
+      
+      <div className="flex h-screen">
+        {/* Desktop Filter Sidebar */}
+        <div className="hidden lg:block w-80 bg-white border-r border-gray-200 h-full">
+          <FilterPanel
+            isOpen={true}
+            onClose={() => {}}
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            onClearAll={handleClearAllFilters}
+          />
+        </div>
+
         {/* Main Content Area */}
-        <div className="flex-1">
+        <div className="flex-1 flex flex-col overflow-hidden">
           {/* Toolbar Section */}
-          <div className="bg-white border-b border-gray-200 sticky top-16 z-10">
+          <div className="bg-white border-b border-gray-200 z-10 backdrop-blur-md bg-white/95 transition-all duration-300">
             <div className="px-4 py-4">
               <div className="flex items-center justify-between">
-                {/* Filter Button - Works on both mobile and desktop */}
-                <div>
+                {/* Filter Button - Mobile only */}
+                <div className="lg:hidden">
                   <Button
                     variant="outline"
                     onClick={() => setIsFilterOpen(true)}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-lg"
                   >
                     <Icon name="Filter" size={16} />
                     Filters
                     {Object.keys(filters).length > 0 && (
-                      <span className="bg-orange-500 text-white text-xs rounded-full px-2 py-1 ml-1">
+                      <span className="bg-teal-500 text-white text-xs rounded-full px-2 py-1 ml-1">
                         {Object.keys(filters).length}
                       </span>
                     )}
                   </Button>
+                </div>
+
+                {/* Desktop Filter Summary */}
+                <div className="hidden lg:block">
+                  {Object.keys(filters).length > 0 ? (
+                    <span className="text-sm text-gray-600">
+                      {Object.keys(filters).length} filter{Object.keys(filters).length > 1 ? 's' : ''} active
+                    </span>
+                  ) : (
+                    <span className="text-sm text-gray-600">All products</span>
+                  )}
                 </div>
 
                 {/* Results Count */}
@@ -368,7 +381,7 @@ const ProductCatalog = () => {
                   <select
                     value={sortBy}
                     onChange={(e) => handleSortChange(e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-300 hover:shadow-md"
                   >
                     <option value="relevance">Most Relevant</option>
                     <option value="price-low">Price: Low to High</option>
@@ -379,16 +392,16 @@ const ProductCatalog = () => {
                   </select>
 
                   {/* View Mode Toggle */}
-                  <div className="hidden md:flex border border-gray-300 rounded-lg overflow-hidden">
+                  <div className="hidden md:flex border border-gray-300 rounded-lg overflow-hidden shadow-sm">
                     <button
                       onClick={() => setViewMode('grid')}
-                      className={`p-2 ${viewMode === 'grid' ? 'bg-orange-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                      className={`p-2 transition-all duration-300 ${viewMode === 'grid' ? 'bg-teal-500 text-white scale-105' : 'bg-white text-gray-600 hover:bg-gray-50 hover:scale-102'}`}
                     >
                       <Icon name="Grid3X3" size={16} />
                     </button>
                     <button
                       onClick={() => setViewMode('list')}
-                      className={`p-2 ${viewMode === 'list' ? 'bg-orange-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                      className={`p-2 transition-all duration-300 ${viewMode === 'list' ? 'bg-teal-500 text-white scale-105' : 'bg-white text-gray-600 hover:bg-gray-50 hover:scale-102'}`}
                     >
                       <Icon name="List" size={16} />
                     </button>
@@ -403,12 +416,12 @@ const ProductCatalog = () => {
                     Array.isArray(values) ? values.map(value => (
                       <span 
                         key={`${key}-${value}`}
-                        className="inline-flex items-center px-3 py-1 bg-orange-100 text-orange-800 text-sm rounded-full"
+                        className="inline-flex items-center px-3 py-1 bg-teal-100 text-teal-800 text-sm rounded-full transition-all duration-300 hover:scale-105 hover:bg-teal-200 animate-fadeIn"
                       >
                         {value}
                         <button
                           onClick={() => handleRemoveFilter(key, value)}
-                          className="ml-2 hover:text-orange-600"
+                          className="ml-2 hover:text-teal-600 transition-all duration-200 hover:scale-110"
                         >
                           <Icon name="X" size={12} />
                         </button>
@@ -417,7 +430,7 @@ const ProductCatalog = () => {
                   )}
                   <button
                     onClick={handleClearAllFilters}
-                    className="text-sm text-gray-500 hover:text-gray-700 underline"
+                    className="text-sm text-gray-500 hover:text-gray-700 underline transition-all duration-200 hover:scale-105"
                   >
                     Clear all
                   </button>
@@ -426,17 +439,30 @@ const ProductCatalog = () => {
             </div>
           </div>
 
-          {/* Product Grid */}
-          {console.log('Rendering ProductGrid with products:', products, 'loading:', loading)}
-          <ProductGrid
-            products={products}
-            loading={loading}
-            onLoadMore={handleLoadMore}
-            hasMore={hasMore}
-            onAddToCart={handleAddToCart}
-            onToggleWishlist={handleToggleWishlist}
-            viewMode={viewMode}
-          />
+          {/* Product Grid - Natural Scrolling */}
+          <div 
+            className="flex-1 overflow-y-auto product-grid-scroll"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none'
+            }}
+          >
+            <style>{`
+              .product-grid-scroll::-webkit-scrollbar {
+                display: none !important;
+              }
+            `}</style>
+            {console.log('Rendering ProductGrid with products:', products, 'loading:', loading)}
+            <ProductGrid
+              products={products}
+              loading={loading}
+              onLoadMore={handleLoadMore}
+              hasMore={hasMore}
+              onAddToCart={handleAddToCart}
+              onToggleWishlist={handleToggleWishlist}
+              viewMode={viewMode}
+            />
+          </div>
         </div>
 
         {/* Filter Panel Overlay */}
@@ -449,90 +475,8 @@ const ProductCatalog = () => {
         />
       </div>
 
-      {/* Enhanced Footer */}
-      <footer className="bg-gray-900 text-white mt-16">
-        <div className="container mx-auto px-4 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* Company Info */}
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-pink-500 rounded-lg flex items-center justify-center">
-                  <Icon name="ShoppingBag" size={20} color="white" />
-                </div>
-                <span className="text-xl font-bold bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
-                  IziShop
-                </span>
-              </div>
-              <p className="text-gray-300 text-sm mb-4">
-                Your trusted marketplace for quality products in Cameroon. Shop with confidence and discover amazing deals.
-              </p>
-              <div className="flex space-x-4">
-                <a href="#" className="text-gray-400 hover:text-orange-400 transition-colors">
-                  <Icon name="Facebook" size={20} />
-                </a>
-                <a href="#" className="text-gray-400 hover:text-orange-400 transition-colors">
-                  <Icon name="Twitter" size={20} />
-                </a>
-                <a href="#" className="text-gray-400 hover:text-orange-400 transition-colors">
-                  <Icon name="Instagram" size={20} />
-                </a>
-                <a href="#" className="text-gray-400 hover:text-orange-400 transition-colors">
-                  <Icon name="Linkedin" size={20} />
-                </a>
-              </div>
-            </div>
-
-            {/* Quick Links */}
-            <div>
-              <h3 className="font-semibold text-white mb-4">Quick Links</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">About Us</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">Contact</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">Help Center</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">Terms of Service</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">Privacy Policy</a></li>
-              </ul>
-            </div>
-
-            {/* Categories */}
-            <div>
-              <h3 className="font-semibold text-white mb-4">Categories</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">Electronics</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">Fashion</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">Sports</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">Home & Garden</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-sm">Books</a></li>
-              </ul>
-            </div>
-
-            {/* Contact Info */}
-            <div>
-              <h3 className="font-semibold text-white mb-4">Contact Info</h3>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <Icon name="MapPin" size={16} className="text-gray-400" />
-                  <span className="text-gray-300 text-sm">Douala, Cameroon</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Icon name="Phone" size={16} className="text-gray-400" />
-                  <span className="text-gray-300 text-sm">+237 6XX XXX XXX</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Icon name="Mail" size={16} className="text-gray-400" />
-                  <span className="text-gray-300 text-sm">support@izishopin.cm</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center">
-            <p className="text-gray-400 text-sm">
-              © 2025 IziShop. All rights reserved. Made with ❤️ in Cameroon.
-            </p>
-          </div>
-        </div>
-      </footer>
+      {/* Footer */}
+      <Footer />
 
       <MobileBottomTab />
     </div>

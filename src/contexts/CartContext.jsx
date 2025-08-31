@@ -6,8 +6,12 @@ const CartContext = createContext();
 export const useCart = () => {
   const context = useContext(CartContext);
   if (!context) {
+    console.error('useCart must be used within a CartProvider. Current component tree:', 
+      new Error().stack);
     throw new Error('useCart must be used within a CartProvider');
   }
+  
+
   return context;
 };
 
@@ -15,6 +19,16 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [savedItems, setSavedItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+
+
+  // Helper function to schedule toasts for next tick to avoid render phase issues
+  const scheduleToast = (options) => {
+    setTimeout(() => {
+      showToast(options);
+    }, 0);
+  };
 
   // Initialize cart from localStorage
   useEffect(() => {
@@ -31,11 +45,16 @@ export const CartProvider = ({ children }) => {
         const parsedSavedItems = JSON.parse(savedForLaterItems);
         setSavedItems(Array.isArray(parsedSavedItems) ? parsedSavedItems : []);
       }
+      
+      // Mark as initialized
+      setIsInitialized(true);
     } catch (error) {
       console.error('Error loading cart from localStorage:', error);
       // Clear corrupted data
       localStorage.removeItem('cartItems');
       localStorage.removeItem('savedForLaterItems');
+      // Still mark as initialized even if there's an error
+      setIsInitialized(true);
     }
   }, []);
 
@@ -48,12 +67,15 @@ export const CartProvider = ({ children }) => {
     localStorage.setItem('cartItemCount', totalItems.toString());
     
     // Dispatch cart update event for components that need to listen
-    window.dispatchEvent(new CustomEvent('cartUpdated', {
-      detail: { 
-        itemCount: totalItems,
-        cartItems: cartItems
-      }
-    }));
+    // Use setTimeout to avoid potential render phase issues
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('cartUpdated', {
+        detail: { 
+          itemCount: totalItems,
+          cartItems: cartItems
+        }
+      }));
+    }, 0);
   }, [cartItems]);
 
   // Save saved items to localStorage
@@ -74,7 +96,7 @@ export const CartProvider = ({ children }) => {
           const maxStock = product.stock || product.maxStock || 999;
           
           if (newQuantity > maxStock) {
-            showToast({
+            scheduleToast({
               type: 'warning',
               message: `Cannot add more items. Maximum stock is ${maxStock}`,
               duration: 3000
@@ -82,7 +104,7 @@ export const CartProvider = ({ children }) => {
             return prevItems;
           }
           
-          showToast({
+          scheduleToast({
             type: 'success',
             message: `Updated ${product.name} quantity to ${newQuantity}`,
             duration: 2000
@@ -112,7 +134,7 @@ export const CartProvider = ({ children }) => {
             freeDelivery: product.freeDelivery || false
           };
           
-          showToast({
+          scheduleToast({
             type: 'success',
             message: `${product.name} added to cart`,
             duration: 2000
@@ -123,7 +145,7 @@ export const CartProvider = ({ children }) => {
       });
     } catch (error) {
       console.error('Error adding to cart:', error);
-      showToast({
+      scheduleToast({
         type: 'error',
         message: 'Failed to add item to cart',
         duration: 3000
@@ -138,7 +160,7 @@ export const CartProvider = ({ children }) => {
     setCartItems(prevItems => {
       const item = prevItems.find(item => item.id === itemId);
       if (item) {
-        showToast({
+        scheduleToast({
           type: 'info',
           message: `${item.name} removed from cart`,
           duration: 2000
@@ -160,7 +182,7 @@ export const CartProvider = ({ children }) => {
         if (item.id === itemId) {
           const maxStock = item.maxStock || 999;
           if (newQuantity > maxStock) {
-            showToast({
+            scheduleToast({
               type: 'warning',
               message: `Maximum stock is ${maxStock}`,
               duration: 3000
@@ -177,7 +199,7 @@ export const CartProvider = ({ children }) => {
   // Clear cart
   const clearCart = () => {
     setCartItems([]);
-    showToast({
+    scheduleToast({
       type: 'info',
       message: 'Cart cleared',
       duration: 2000
@@ -196,7 +218,7 @@ export const CartProvider = ({ children }) => {
       setSavedItems(prevItems => [...prevItems, savedItem]);
       removeFromCart(itemId);
       
-      showToast({
+      scheduleToast({
         type: 'info',
         message: `${item.name} saved for later`,
         duration: 2000
@@ -215,7 +237,7 @@ export const CartProvider = ({ children }) => {
       const { savedDate, ...cartItem } = savedItem;
       setCartItems(prevItems => [...prevItems, cartItem]);
       
-      showToast({
+      scheduleToast({
         type: 'success',
         message: `${savedItem.name} moved to cart`,
         duration: 2000
@@ -228,7 +250,7 @@ export const CartProvider = ({ children }) => {
     const item = savedItems.find(item => item.id === savedItemId);
     if (item) {
       setSavedItems(prevItems => prevItems.filter(item => item.id !== savedItemId));
-      showToast({
+      scheduleToast({
         type: 'info',
         message: `${item.name} removed from saved items`,
         duration: 2000
@@ -279,6 +301,18 @@ export const CartProvider = ({ children }) => {
     isInCart,
     getItemQuantity
   };
+
+  // Don't render children until initialized to prevent context errors
+  if (!isInitialized) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-text-secondary">Initializing cart...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <CartContext.Provider value={value}>

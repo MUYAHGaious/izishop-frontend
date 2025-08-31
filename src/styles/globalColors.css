@@ -1,0 +1,127 @@
+/* IziShopin Global Color System - Based on ScrollStack Design */
+/* This file applies the color palette globally using CSS custom properties */
+
+:root {
+  /* Primary Brand Colors (from ScrollStack) */
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  
+  /* Neutral Colors (from ScrollStack) */
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-900: #111827;
+  
+  /* Gradients (from ScrollStack cards) */
+  --gradient-teal: linear-gradient(135deg, #2dd4bf, #0d9488);
+  --gradient-blue: linear-gradient(135deg, #3b82f6, #2563eb);
+  --gradient-gray-light: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  --gradient-gray-dark: linear-gradient(135deg, #9ca3af, #6b7280);
+  
+  /* Background Colors */
+  --color-bg-white: #ffffff;
+  --color-bg-light: #f9fafb;
+  --color-bg-dark: #111827;
+  
+  /* Text Colors */
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-white: #ffffff;
+  --color-text-light: #f3f4f6;
+  
+  /* Border Colors */
+  --color-border-light: #e5e7eb;
+  --color-border-medium: #d1d5db;
+  --color-border-dark: #9ca3af;
+  
+  /* Shadow Colors */
+  --color-shadow-light: rgba(0, 0, 0, 0.1);
+  --color-shadow-medium: rgba(0, 0, 0, 0.15);
+  --color-shadow-dark: rgba(0, 0, 0, 0.25);
+  
+  /* UI Component CSS Variables (required by Select, Input, etc.) */
+  --background: #ffffff;
+  --foreground: #111827;
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+  --primary: #0d9488;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f4f6;
+  --secondary-foreground: #111827;
+  --muted: #f9fafb;
+  --muted-foreground: #6b7280;
+  --accent: #f3f4f6;
+  --accent-foreground: #111827;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #0d9488;
+  --radius: 0.5rem;
+}
+
+/* Utility classes for easy use */
+.bg-brand-teal {
+  background: var(--gradient-teal);
+}
+
+.bg-brand-blue {
+  background: var(--gradient-blue);
+}
+
+.bg-brand-gray-light {
+  background: var(--gradient-gray-light);
+}
+
+.bg-brand-gray-dark {
+  background: var(--gradient-gray-dark);
+}
+
+.text-brand-primary {
+  color: var(--color-text-primary);
+}
+
+.text-brand-secondary {
+  color: var(--color-text-secondary);
+}
+
+.border-brand-light {
+  border-color: var(--color-border-light);
+}
+
+.border-brand-medium {
+  border-color: var(--color-border-medium);
+}
+
+.shadow-brand-light {
+  box-shadow: 0 4px 6px -1px var(--color-shadow-light);
+}
+
+.shadow-brand-medium {
+  box-shadow: 0 10px 15px -3px var(--color-shadow-medium);
+}
+
+/* Hover states */
+.hover\:bg-brand-teal:hover {
+  background: var(--gradient-teal);
+}
+
+.hover\:bg-brand-blue:hover {
+  background: var(--gradient-blue);
+}
+
+.hover\:text-brand-primary:hover {
+  color: var(--color-text-primary);
+}
+
+.hover\:border-brand-medium:hover {
+  border-color: var(--color-border-medium);
+}

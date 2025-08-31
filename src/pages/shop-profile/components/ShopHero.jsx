@@ -37,39 +37,198 @@ const ShopHero = ({ shop, onFollow, onContact, isOwner }) => {
   };
 
   return (
-    <div className="relative">
-      {/* Shop Background Banner */}
-      <div className="relative h-72 md:h-80 lg:h-96 overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700">
-        {shop.background_image ? (
-          <img
-            src={`http://localhost:8001${shop.background_image}`}
-            alt={`${shop.name} background`}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center">
-            <div className="text-center text-white/60">
-              <Package size={64} className="mx-auto mb-4" />
-              <p className="text-lg font-medium">Business Background</p>
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+      {/* Decorative Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl" />
+        <div className="absolute top-1/3 -left-40 w-96 h-96 bg-gradient-to-br from-indigo-400/15 to-cyan-400/15 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-gradient-to-br from-pink-400/10 to-orange-400/10 rounded-full blur-2xl" />
+      </div>
+
+      {/* Main Content Container */}
+      <div className="relative z-10 container mx-auto px-6 py-12">
+        {/* Header with Brand Identity */}
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-slate-200/50 mb-6">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            <span className="text-sm font-medium text-slate-600">Shop Active</span>
+          </div>
+          <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 bg-clip-text text-transparent mb-6">
+            {shop.name}
+          </h1>
+          <div className="flex items-center justify-center gap-8 text-slate-600 mb-8">
+            <div className="flex items-center gap-2">
+              <Star className="w-5 h-5 text-yellow-500 fill-current" />
+              <span className="font-semibold">{shop.rating || "5.0"}</span>
+              <span className="text-sm">({shop.total_reviews || "48"} reviews)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              <span className="text-sm">{shop.address || "Business Location"}</span>
             </div>
           </div>
-        )}
-        
-        {/* Background Upload Button for Owner */}
+          
+          {!isOwner && (
+            <div className="flex items-center justify-center gap-4">
+              <button
+                onClick={handleFollow}
+                className={`px-8 py-4 rounded-2xl font-semibold text-lg transition-all transform hover:scale-105 ${
+                  isFollowing
+                    ? 'bg-slate-800 text-white shadow-2xl shadow-slate-800/25'
+                    : 'bg-gradient-to-r from-slate-900 to-slate-700 text-white hover:shadow-2xl hover:shadow-slate-800/25'
+                }`}
+              >
+                <Users size={20} className="inline mr-2" />
+                {isFollowing ? 'Following' : 'Follow Shop'}
+              </button>
+              <button
+                onClick={() => onContact('general')}
+                className="px-6 py-4 bg-white/90 backdrop-blur-sm border border-slate-200 text-slate-800 rounded-2xl font-semibold hover:bg-white hover:shadow-lg transition-all"
+              >
+                Contact
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Featured Product Hero */}
+        <div className="relative mb-20">
+          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-[2.5rem] p-12 md:p-16 text-white overflow-hidden relative">
+            {/* Decorative circles */}
+            <div className="absolute top-8 right-8 w-24 h-24 bg-white/10 rounded-full" />
+            <div className="absolute top-16 right-16 w-16 h-16 bg-white/5 rounded-full" />
+            <div className="absolute bottom-8 left-8 w-32 h-32 bg-white/5 rounded-full" />
+            <div className="absolute bottom-16 left-16 w-20 h-20 bg-white/10 rounded-full" />
+
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              {/* Left Content */}
+              <div>
+                <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20 mb-6">
+                  <Package className="w-4 h-4" />
+                  <span className="text-sm font-medium">Premium Collection</span>
+                </div>
+                
+                <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+                  {shop.description || "Discover Quality Products"}
+                </h2>
+                
+                <p className="text-xl text-slate-300 mb-8 leading-relaxed">
+                  Experience premium quality and exceptional service. Browse our carefully curated collection designed for your lifestyle.
+                </p>
+
+                <button className="inline-flex items-center gap-2 bg-gradient-to-r from-lime-400 to-green-500 text-slate-900 px-8 py-4 rounded-2xl font-bold text-lg hover:shadow-2xl hover:shadow-lime-400/25 transition-all transform hover:scale-105">
+                  View All Products
+                  <div className="w-8 h-8 bg-slate-900/20 rounded-full flex items-center justify-center">
+                    <Plus size={16} />
+                  </div>
+                </button>
+
+                {/* Social Links */}
+                <div className="flex items-center gap-4 mt-8">
+                  <span className="text-sm text-slate-400">Follow us on:</span>
+                  <div className="flex gap-2">
+                    {['twitter', 'instagram', 'facebook', 'youtube'].map((social) => (
+                      <button key={social} className="w-8 h-8 bg-white/10 hover:bg-white/20 rounded-full transition-colors" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Content - Featured Product */}
+              <div className="relative">
+                <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-3xl p-8 border border-white/20">
+                  <div className="w-full h-80 bg-gradient-to-br from-slate-700 to-slate-600 rounded-2xl flex items-center justify-center mb-6">
+                    <Package size={80} className="text-slate-400" />
+                  </div>
+                  
+                  <div className="text-center">
+                    <h3 className="text-2xl font-bold mb-2">Featured Product</h3>
+                    <p className="text-slate-300 mb-4">Premium quality guaranteed</p>
+                    <div className="flex items-center justify-center gap-2 text-lime-400 font-semibold">
+                      <Star className="w-4 h-4 fill-current" />
+                      <span>5.0</span>
+                      <span className="text-slate-400">({shop.total_reviews || "48"} reviews)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Popular Colors Palette */}
+        <div className="mb-16">
+          <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/50">
+            <h3 className="text-xl font-bold text-slate-800 mb-6">Popular Colors</h3>
+            <div className="flex gap-4">
+              {[
+                'bg-blue-500',
+                'bg-orange-500', 
+                'bg-green-500',
+                'bg-red-500',
+                'bg-cyan-500'
+              ].map((color, index) => (
+                <button key={index} className={`w-12 h-12 ${color} rounded-full hover:scale-110 transition-transform shadow-lg`} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Product Categories */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+          {/* New Gen Category */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/50 hover:shadow-2xl transition-all group">
+            <h4 className="text-lg font-bold text-slate-800 mb-4">New Gen Products</h4>
+            <div className="w-full h-48 bg-gradient-to-br from-slate-200 to-slate-100 rounded-2xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <Package size={48} className="text-slate-400" />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-600">{shop.product_count || 24} items</span>
+              <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center">
+                <Plus size={16} className="text-white" />
+              </div>
+            </div>
+          </div>
+
+          {/* Premium Category */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/50 hover:shadow-2xl transition-all group">
+            <h4 className="text-lg font-bold text-slate-800 mb-4">Premium Collection</h4>
+            <div className="w-full h-48 bg-gradient-to-br from-amber-100 to-orange-100 rounded-2xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <Shield size={48} className="text-amber-500" />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-600">{Math.ceil((shop.product_count || 24) * 0.3)} items</span>
+              <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center">
+                <Plus size={16} className="text-white" />
+              </div>
+            </div>
+          </div>
+
+          {/* Latest Category */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/50 hover:shadow-2xl transition-all group">
+            <h4 className="text-lg font-bold text-slate-800 mb-4">Latest Arrivals</h4>
+            <div className="w-full h-48 bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <Star size={48} className="text-green-500" />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-600">{Math.ceil((shop.product_count || 24) * 0.2)} items</span>
+              <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center">
+                <Plus size={16} className="text-white" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Profile Upload Areas for Owner */}
         {isOwner && (
-          <div className="absolute top-4 right-4">
-            <button
-              onClick={() => backgroundFileRef.current?.click()}
-              disabled={isUploadingBackground}
-              className="bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-colors backdrop-blur-sm"
-              title="Change background image"
-            >
-              {isUploadingBackground ? (
-                <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
-              ) : (
-                <Camera size={20} />
-              )}
-            </button>
+          <>
+            <input
+              ref={profileFileRef}
+              type="file"
+              accept="image/*"
+              onChange={handleProfileUpload}
+              className="hidden"
+            />
             <input
               ref={backgroundFileRef}
               type="file"
@@ -77,186 +236,17 @@ const ShopHero = ({ shop, onFollow, onContact, isOwner }) => {
               onChange={handleBackgroundUpload}
               className="hidden"
             />
-          </div>
-        )}
-
-        {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-      </div>
-
-      {/* Shop Information Container */}
-      <div className="relative -mt-32 mx-4 md:mx-6 lg:mx-8">
-        <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
-          {/* Main Shop Info */}
-          <div className="p-6 md:p-8">
-            <div className="flex flex-col lg:flex-row lg:items-start gap-6">
-              {/* Shop Profile Photo */}
-              <div className="relative flex-shrink-0">
-                <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-3xl overflow-hidden border-4 border-white shadow-lg bg-gray-100">
-                  {shop.profile_photo ? (
-                    <img
-                      src={`http://localhost:8001${shop.profile_photo}`}
-                      alt={`${shop.name} profile`}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
-                      <Package size={48} className="text-blue-400" />
-                    </div>
-                  )}
-                  
-                  {/* Profile Upload Button for Owner */}
-                  {isOwner && (
-                    <button
-                      onClick={() => profileFileRef.current?.click()}
-                      disabled={isUploadingProfile}
-                      className="absolute bottom-2 right-2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full transition-colors shadow-lg"
-                      title="Change profile photo"
-                    >
-                      {isUploadingProfile ? (
-                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                      ) : (
-                        <Camera size={16} />
-                      )}
-                    </button>
-                  )}
-                </div>
-
-                <input
-                  ref={profileFileRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleProfileUpload}
-                  className="hidden"
-                />
-
-                {/* Verification Badge */}
-                {shop.is_verified && (
-                  <div className="absolute -top-2 -right-2 bg-green-500 text-white p-2 rounded-full border-4 border-white shadow-lg">
-                    <Shield size={16} />
-                  </div>
-                )}
-              </div>
-
-              {/* Shop Details */}
-              <div className="flex-1 min-w-0">
-                {/* Shop Name and Status */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                  <div>
-                    <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-                      {shop.name}
-                    </h1>
-                    <div className="flex items-center gap-3 flex-wrap">
-                      {shop.is_verified && (
-                        <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                          <Shield size={14} />
-                          Verified Business
-                        </span>
-                      )}
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                        shop.is_active 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {shop.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  {!isOwner && (
-                    <div className="flex gap-3">
-                      <button
-                        onClick={handleFollow}
-                        className={`px-6 py-3 rounded-xl font-medium transition-colors ${
-                          isFollowing
-                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            : 'bg-blue-600 text-white hover:bg-blue-700'
-                        }`}
-                      >
-                        <Users size={18} className="inline mr-2" />
-                        {isFollowing ? 'Following' : 'Follow'}
-                      </button>
-                      <button
-                        onClick={() => onContact('general')}
-                        className="px-6 py-3 bg-white border-2 border-blue-600 text-blue-600 rounded-xl font-medium hover:bg-blue-50 transition-colors"
-                      >
-                        Contact
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Shop Description */}
-                {shop.description && (
-                  <p className="text-gray-600 text-lg mb-6 leading-relaxed">
-                    {shop.description}
-                  </p>
-                )}
-
-                {/* Business Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-blue-50 p-4 rounded-2xl text-center">
-                    <div className="text-2xl font-bold text-blue-600 mb-1">
-                      {shop.total_sales || 0}
-                    </div>
-                    <div className="text-sm text-gray-600">Total Sales</div>
-                  </div>
-                  
-                  <div className="bg-green-50 p-4 rounded-2xl text-center">
-                    <div className="flex items-center justify-center mb-1">
-                      <Star className="text-yellow-500 fill-current mr-1" size={20} />
-                      <span className="text-2xl font-bold text-green-600">
-                        {shop.rating || 0}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-600">Rating</div>
-                  </div>
-
-                  <div className="bg-purple-50 p-4 rounded-2xl text-center">
-                    <div className="text-2xl font-bold text-purple-600 mb-1">
-                      {shop.total_reviews || 0}
-                    </div>
-                    <div className="text-sm text-gray-600">Reviews</div>
-                  </div>
-
-                  <div className="bg-orange-50 p-4 rounded-2xl text-center">
-                    <div className="text-2xl font-bold text-orange-600 mb-1">
-                      {shop.product_count || 0}
-                    </div>
-                    <div className="text-sm text-gray-600">Products</div>
-                  </div>
-                </div>
-
-                {/* Contact Information */}
-                <div className="flex flex-wrap gap-6 text-sm text-gray-600">
-                  {shop.address && (
-                    <div className="flex items-center gap-2">
-                      <MapPin size={16} className="text-gray-400" />
-                      <span>{shop.address}</span>
-                    </div>
-                  )}
-                  {shop.phone && (
-                    <div className="flex items-center gap-2">
-                      <Phone size={16} className="text-gray-400" />
-                      <span>{shop.phone}</span>
-                    </div>
-                  )}
-                  {shop.email && (
-                    <div className="flex items-center gap-2">
-                      <Mail size={16} className="text-gray-400" />
-                      <span>{shop.email}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <Calendar size={16} className="text-gray-400" />
-                    <span>Joined {formatJoinDate(shop.created_at)}</span>
-                  </div>
-                </div>
-              </div>
+            <div className="fixed bottom-8 right-8 z-50">
+              <button
+                onClick={() => profileFileRef.current?.click()}
+                className="mb-4 bg-slate-900 hover:bg-slate-800 text-white p-4 rounded-full shadow-2xl transition-all"
+                title="Update shop images"
+              >
+                <Camera size={24} />
+              </button>
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -297,10 +297,10 @@ const ShopProfile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
       <Header />
       
-      <main className="pt-16 lg:pt-20 pb-20 lg:pb-8">
+      <main className="pb-20 lg:pb-8">
         {/* Shop Suspension Warning */}
         <ShopSuspensionWarning shop={shopData} isOwner={isOwner} />
         
@@ -312,36 +312,40 @@ const ShopProfile = () => {
           isOwner={isOwner}
         />
 
-        <div className="container mx-auto px-4 py-8">
-          <Breadcrumbs items={breadcrumbItems} />
+        <div className="container mx-auto px-6 py-12">
+          <div className="mb-8">
+            <Breadcrumbs items={breadcrumbItems} className="text-slate-600" />
+          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
             {/* Main Content */}
             <div className="lg:col-span-3">
-              {/* Tab Navigation */}
-              <div className="flex items-center border-b border-border mb-6 overflow-x-auto">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                      activeTab === tab.id
-                        ? 'border-primary text-primary' 
-                        : 'border-transparent text-text-secondary hover:text-text-primary'
-                    }`}
-                  >
-                    <span>{tab.label}</span>
-                    {tab.count !== undefined && (
-                      <span className={`px-2 py-1 rounded-full text-xs ${
+              {/* Modern Tab Navigation */}
+              <div className="bg-white/60 backdrop-blur-sm rounded-3xl p-2 border border-slate-200/50 mb-8 overflow-x-auto">
+                <div className="flex gap-2">
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all whitespace-nowrap ${
                         activeTab === tab.id
-                          ? 'bg-primary/10 text-primary' 
-                          : 'bg-muted text-text-secondary'
-                      }`}>
-                        {tab.count}
-                      </span>
-                    )}
-                  </button>
-                ))}
+                          ? 'bg-slate-900 text-white shadow-lg' 
+                          : 'text-slate-600 hover:bg-white/80 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>{tab.label}</span>
+                      {tab.count !== undefined && (
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                          activeTab === tab.id
+                            ? 'bg-white/20 text-white' 
+                            : 'bg-slate-200 text-slate-700'
+                        }`}>
+                          {tab.count}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Tab Content */}

@@ -1,10 +1,14 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Image from '../../../components/AppImage';
+import ChatInterfaceModal from '../../chat-interface-modal';
 
 const SellerCard = ({ seller }) => {
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const navigate = useNavigate();
+
   const formatResponseTime = (minutes) => {
     if (minutes < 60) return `${minutes} min`;
     if (minutes < 1440) return `${Math.floor(minutes / 60)} hr`;
@@ -38,6 +42,21 @@ const SellerCard = ({ seller }) => {
           color: 'text-text-secondary bg-muted'
         };
     }
+  };
+
+  const handleContactSeller = () => {
+    setIsChatOpen(true);
+  };
+
+  const handleViewShop = () => {
+    if (seller?.id) {
+      navigate(`/shop-profile?id=${seller.id}`);
+    }
+  };
+
+  const handleFollowShop = () => {
+    // TODO: Implement follow shop functionality
+    console.log('Follow shop:', seller?.id);
   };
 
   if (!seller) {
@@ -170,20 +189,18 @@ const SellerCard = ({ seller }) => {
 
       {/* Action Buttons */}
       <div className="space-y-2 pt-2 border-t border-border">
-        <Link to={`/shop-profile?seller=${seller.id}`}>
-          <Button variant="outline" fullWidth>
-            <Icon name="Store" size={16} className="mr-2" />
-            View Shop
-          </Button>
-        </Link>
+        <Button variant="outline" fullWidth onClick={handleViewShop}>
+          <Icon name="Store" size={16} className="mr-2" />
+          View Shop
+        </Button>
         
-        <Button variant="default" fullWidth>
+        <Button variant="default" fullWidth onClick={handleContactSeller}>
           <Icon name="MessageCircle" size={16} className="mr-2" />
           Contact Seller
         </Button>
         
         {seller.type === 'shop' && (
-          <Button variant="ghost" fullWidth>
+          <Button variant="ghost" fullWidth onClick={handleFollowShop}>
             <Icon name="Heart" size={16} className="mr-2" />
             Follow Shop
           </Button>
@@ -225,6 +242,16 @@ const SellerCard = ({ seller }) => {
           </div>
         </div>
       </div>
+
+      {/* Chat Interface Modal */}
+      {isChatOpen && (
+        <ChatInterfaceModal
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+          shop={seller}
+          currentProduct={null}
+        />
+      )}
     </div>
   );
 };

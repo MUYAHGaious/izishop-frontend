@@ -8,6 +8,7 @@ import { Checkbox } from '../../../components/ui/Checkbox';
 import Icon from '../../../components/AppIcon';
 import { showToast } from '../../../components/ui/Toast';
 import api from '../../../services/api';
+import Stepper, { Step } from '../../../components/ui/Stepper';
 
 const RegisterForm = ({ onRegister, isLoading }) => {
   const { register } = useAuth();
@@ -203,14 +204,9 @@ const RegisterForm = ({ onRegister, isLoading }) => {
     }
   };
 
-  const handleNext = () => {
-    if (validateStep(currentStep)) {
-      setCurrentStep(prev => prev + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    setCurrentStep(prev => prev - 1);
+  // Validation logic for stepper
+  const validateCurrentStep = () => {
+    return validateStep(currentStep);
   };
 
   const handleSubmit = async (e) => {
@@ -296,54 +292,12 @@ const RegisterForm = ({ onRegister, isLoading }) => {
     return 3;
   };
 
-  const renderProgressIndicator = () => {
-    const totalSteps = getTotalSteps();
-    
-    return (
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          {Array.from({ length: totalSteps }, (_, index) => (
-            <div key={index} className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium marketplace-transition ${
-                index + 1 < currentStep
-                  ? 'bg-primary text-primary-foreground'
-                  : index + 1 === currentStep
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-text-secondary'
-              }`}>
-                {index + 1 < currentStep ? (
-                  <Icon name="Check" size={16} />
-                ) : (
-                  index + 1
-                )}
-              </div>
-              {index < totalSteps - 1 && (
-                <div className={`flex-1 h-0.5 mx-2 ${
-                  index + 1 < currentStep ? 'bg-primary' : 'bg-muted'
-                }`} />
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="text-center">
-          <span className="text-sm text-text-secondary">
-            Step {currentStep} of {totalSteps}
-          </span>
-        </div>
-      </div>
-    );
-  };
 
   const renderStep1 = () => (
-    <div className="space-y-4">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-foreground mb-2">Join IziShopin</h2>
-        <p className="text-text-secondary">Choose your role to get started</p>
-      </div>
-
+    <div className="space-y-5">
       <Select
         label="I want to join as"
-        description="Select the role that best describes how you plan to use IziShopin"
+        description="Choose how you'd like to use IziShopin"
         options={roleOptions}
         value={formData.role}
         onChange={(value) => handleSelectChange('role', value)}
@@ -353,42 +307,89 @@ const RegisterForm = ({ onRegister, isLoading }) => {
       />
 
       {formData.role && (
-        <div className="p-4 bg-muted/50 rounded-lg">
-          <h3 className="font-medium text-foreground mb-2">
-            {roleOptions.find(r => r.value === formData.role)?.label} Benefits:
+        <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+          <h3 className="font-medium text-gray-900 mb-3">
+            {roleOptions.find(r => r.value === formData.role)?.label} Benefits
           </h3>
-          <ul className="text-sm text-text-secondary space-y-1">
+          <ul className="text-sm text-gray-600 space-y-2">
             {formData.role === 'customer' && (
               <>
-                <li>• Browse thousands of products</li>
-                <li>• Secure payment options</li>
-                <li>• Order tracking and delivery</li>
-                <li>• Customer support</li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+                  Browse thousands of products
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+                  Secure payment options
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+                  Order tracking and delivery
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+                  24/7 customer support
+                </li>
               </>
             )}
             {formData.role === 'shop_owner' && (
               <>
-                <li>• Create your online shop instantly</li>
-                <li>• Manage inventory and orders</li>
-                <li>• Access to analytics dashboard</li>
-                <li>• Marketing tools and promotions</li>
-                <li>• Custom shop profile with your branding</li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+                  Create your online shop instantly
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+                  Advanced analytics dashboard
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+                  Marketing tools and promotions
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+                  Custom branding options
+                </li>
               </>
             )}
             {formData.role === 'casual_seller' && (
               <>
-                <li>• Sell second-hand items easily</li>
-                <li>• No monthly fees</li>
-                <li>• Simple listing process</li>
-                <li>• Secure transactions</li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+                  Sell items easily
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+                  No monthly fees
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+                  Simple listing process
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+                  Secure transactions
+                </li>
               </>
             )}
             {formData.role === 'delivery_agent' && (
               <>
-                <li>• Flexible working hours</li>
-                <li>• Competitive delivery rates</li>
-                <li>• Route optimization</li>
-                <li>• Weekly payouts</li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+                  Flexible working hours
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+                  Competitive delivery rates
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+                  Route optimization
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+                  Weekly payouts
+                </li>
               </>
             )}
           </ul>
@@ -398,12 +399,7 @@ const RegisterForm = ({ onRegister, isLoading }) => {
   );
 
   const renderStep2 = () => (
-    <div className="space-y-4">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-foreground mb-2">Personal Information</h2>
-        <p className="text-text-secondary">Tell us about yourself</p>
-      </div>
-
+    <div className="space-y-5 w-full max-w-full">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           label="First Name"
@@ -432,7 +428,7 @@ const RegisterForm = ({ onRegister, isLoading }) => {
         label="Email Address"
         type="email"
         name="email"
-        placeholder="Enter your email"
+        placeholder="Enter your email address"
         value={formData.email}
         onChange={handleInputChange}
         validationType="email"
@@ -451,7 +447,7 @@ const RegisterForm = ({ onRegister, isLoading }) => {
         validationType="phone"
         debounceDelay={600}
         minLength={9}
-        description="Use international format (e.g., +237 6XX XXX XXX)"
+        description="International format (e.g., +237 6XX XXX XXX)"
         required
       />
 
@@ -469,16 +465,16 @@ const RegisterForm = ({ onRegister, isLoading }) => {
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-9 text-text-secondary hover:text-foreground marketplace-transition"
+          className="absolute right-3 top-10 text-gray-400 hover:text-gray-600 transition-colors z-10"
         >
-          <Icon name={showPassword ? 'EyeOff' : 'Eye'} size={16} />
+          <Icon name={showPassword ? 'EyeOff' : 'Eye'} size={18} />
         </button>
       </div>
 
       {formData.password && (
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-text-secondary">Password strength:</span>
+            <span className="text-gray-600">Password strength:</span>
             <span className={`font-medium ${
               passwordStrength < 50 ? 'text-red-500' : 
               passwordStrength < 75 ? 'text-yellow-500' : 'text-green-500'
@@ -486,13 +482,13 @@ const RegisterForm = ({ onRegister, isLoading }) => {
               {getPasswordStrengthText(passwordStrength)}
             </span>
           </div>
-          <div className="w-full bg-muted rounded-full h-2">
+          <div className="w-full bg-gray-200 rounded-full h-2">
             <div
-              className={`h-2 rounded-full marketplace-transition ${getPasswordStrengthColor(passwordStrength)}`}
+              className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrengthColor(passwordStrength)}`}
               style={{ width: `${passwordStrength}%` }}
             />
           </div>
-          <div className="text-xs text-text-secondary">
+          <div className="text-xs text-gray-500">
             Use 8+ characters with uppercase, lowercase, numbers, and symbols
           </div>
         </div>
@@ -512,9 +508,9 @@ const RegisterForm = ({ onRegister, isLoading }) => {
         <button
           type="button"
           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-          className="absolute right-3 top-9 text-text-secondary hover:text-foreground marketplace-transition"
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors z-10"
         >
-          <Icon name={showConfirmPassword ? 'EyeOff' : 'Eye'} size={16} />
+          <Icon name={showConfirmPassword ? 'EyeOff' : 'Eye'} size={18} />
         </button>
       </div>
     </div>
@@ -735,51 +731,44 @@ const RegisterForm = ({ onRegister, isLoading }) => {
   );
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {renderProgressIndicator()}
-
-      {currentStep === 1 && renderStep1()}
-      {currentStep === 2 && renderStep2()}
-      {currentStep === 3 && renderStep3()}
-
-      <div className="flex justify-between pt-4">
-        {currentStep > 1 && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handlePrevious}
-            iconName="ArrowLeft"
-            iconPosition="left"
-          >
-            Previous
-          </Button>
-        )}
-
-        <div className="ml-auto">
-          {currentStep < getTotalSteps() ? (
-            <Button
-              type="button"
-              variant="default"
-              onClick={handleNext}
-              iconName="ArrowRight"
-              iconPosition="right"
-            >
-              Next
-            </Button>
-          ) : (
-            <Button
-              type="submit"
-              variant="default"
-              loading={isLoading}
-              iconName={formData.role === 'shop_owner' ? 'Store' : 'UserPlus'}
-              iconPosition="right"
-            >
-              {formData.role === 'shop_owner' ? 'Create Account & Shop' : 'Create Account'}
-            </Button>
-          )}
-        </div>
-      </div>
-    </form>
+    <div className="w-full">
+      <Stepper
+        initialStep={1}
+        onStepChange={(step) => {
+          if (step > currentStep) {
+            // Moving forward - validate current step
+            if (validateStep(currentStep)) {
+              setCurrentStep(step);
+              setErrors({});
+            } else {
+              return false; // Prevent step change
+            }
+          } else {
+            // Moving backward - always allow
+            setCurrentStep(step);
+            setErrors({});
+          }
+        }}
+        onFinalStepCompleted={() => {
+          if (validateStep(currentStep)) {
+            handleSubmit(new Event('submit'));
+          }
+        }}
+        backButtonText="Previous"
+        nextButtonText="Next"
+        disableStepIndicators={false}
+      >
+        <Step>
+          {renderStep1()}
+        </Step>
+        <Step>
+          {renderStep2()}
+        </Step>
+        <Step>
+          {renderStep3()}
+        </Step>
+      </Stepper>
+    </div>
   );
 };
 

@@ -25,8 +25,8 @@ const CustomerDashboard = () => {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [wishlistCount, setWishlistCount] = useState(0);
 
-  // Real-time refresh interval
-  const REFRESH_INTERVAL = 60000; // 1 minute
+  // Optimized refresh interval to reduce server load
+  const REFRESH_INTERVAL = 300000; // 5 minutes
 
   useEffect(() => {
     const timer = setInterval(() => {

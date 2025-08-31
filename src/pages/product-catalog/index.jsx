@@ -4,7 +4,7 @@ import { useCart } from '../../contexts/CartContext';
 import Header from '../../components/ui/Header';
 import MobileBottomTab from '../../components/ui/MobileBottomTab';
 import FilterPanel from './components/FilterPanel';
-import ProductGrid from './components/ProductGrid';
+import { ProductGrid } from '../../components/ProductDisplay';
 import CategoryNavigation from './components/CategoryNavigation';
 import FlashSaleHero from './components/FlashSaleHero';
 import SearchSection from './components/SearchSection';
@@ -39,7 +39,20 @@ const ProductCatalog = () => {
     { id: 'automotive', name: 'Automotive', icon: 'Car', count: 0 }
   ]);
 
-  // Initialize from URL params
+  // Initialize with mock products as fallback
+  useEffect(() => {
+    console.log('ProductCatalog component mounted');
+    const mockProducts = generateMockProducts('');
+    console.log('Generated mock products:', mockProducts);
+    const transformedProducts = mockProducts.map(transformProduct);
+    console.log('Transformed products:', transformedProducts);
+    setProducts(transformedProducts);
+    setResultsCount(transformedProducts.length);
+    setLoading(false);
+    console.log('State set - products:', transformedProducts.length, 'loading:', false);
+  }, []);
+
+  // Handle URL params and search
   useEffect(() => {
     const query = searchParams.get('q') || '';
     const category = searchParams.get('category') || 'all';
@@ -51,12 +64,22 @@ const ProductCatalog = () => {
     setSelectedCategory(category);
     setSortBy(sort);
     
-    // Load products from API
-    loadProducts(query);
+    // Load products from API if we have a search query
+    if (query) {
+      loadProducts(query);
+    }
   }, [searchParams]);
+
+  // Debug effect to log state changes
+  useEffect(() => {
+    console.log('Products state updated:', products);
+    console.log('Loading state:', loading);
+    console.log('Results count:', resultsCount);
+  }, [products, loading, resultsCount]);
 
   // Generate mock products when API is not available
   const generateMockProducts = (searchQuery = '') => {
+    console.log('Generating mock products for query:', searchQuery);
     const mockProducts = [
       { id: 1, name: 'Samsung Galaxy S24', price: 450000, stock_quantity: 10, seller_id: 1, created_at: new Date().toISOString() },
       { id: 2, name: 'iPhone 15 Pro', price: 650000, stock_quantity: 5, seller_id: 2, created_at: new Date().toISOString() },
@@ -70,11 +93,14 @@ const ProductCatalog = () => {
 
     // Filter by search query if provided
     if (searchQuery) {
-      return mockProducts.filter(product => 
+      const filtered = mockProducts.filter(product => 
         product.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
+      console.log('Filtered mock products:', filtered);
+      return filtered;
     }
     
+    console.log('Returning all mock products:', mockProducts);
     return mockProducts;
   };
 
@@ -84,12 +110,18 @@ const ProductCatalog = () => {
     const daysSinceCreated = Math.floor((new Date() - createdAt) / (1000 * 60 * 60 * 24));
     const isNew = daysSinceCreated < 30;
     
+    // Use actual product images if available, otherwise fallback to default
+    const productImage = product.image_urls && product.image_urls.length > 0 
+      ? product.image_urls[0] 
+      : '/assets/images/no_image.png';
+    
     return {
       id: product.id,
       name: product.name,
       price: parseFloat(product.price),
       originalPrice: parseFloat(product.price),
-      image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop",
+      image: productImage,
+      image_urls: product.image_urls || [],
       rating: Math.round((Math.random() * 2 + 3) * 10) / 10,
       reviewCount: Math.floor(Math.random() * 500) + 50,
       stock: product.stock_quantity,
@@ -111,19 +143,30 @@ const ProductCatalog = () => {
   const loadProducts = async (searchQuery = '') => {
     try {
       setLoading(true);
+      console.log('Starting to load products...');
       
       // Fetch products from API with fallback
       let response;
       try {
+        console.log('Attempting to fetch products from API...');
         response = await api.getAllProducts(0, 100, true, searchQuery);
+        console.log('API response received:', response);
       } catch (apiError) {
         console.warn('API not available, using mock data:', apiError);
         // Fallback to mock data when API is not available
+        response = generateMockProducts(searchQuery);
+        console.log('Using mock data:', response);
+      }
+      
+      // Ensure response is an array
+      if (!Array.isArray(response)) {
+        console.warn('API response is not an array, using mock data');
         response = generateMockProducts(searchQuery);
       }
       
       // Transform API response using shared transform function
       const transformedProducts = response.map(transformProduct);
+      console.log('Transformed products:', transformedProducts);
       
       setProducts(transformedProducts);
       setResultsCount(transformedProducts.length);
@@ -133,8 +176,20 @@ const ProductCatalog = () => {
       
     } catch (error) {
       console.error('Error loading products:', error);
-      setProducts([]);
-      setResultsCount(0);
+      // Fallback to mock data on any error
+      try {
+        console.log('Falling back to mock data due to error...');
+        const mockResponse = generateMockProducts(searchQuery);
+        const transformedMockProducts = mockResponse.map(transformProduct);
+        setProducts(transformedMockProducts);
+        setResultsCount(transformedMockProducts.length);
+        updateCategoryCounts(transformedMockProducts);
+        console.log('Fallback to mock data successful');
+      } catch (mockError) {
+        console.error('Even mock data failed:', mockError);
+        setProducts([]);
+        setResultsCount(0);
+      }
     } finally {
       setLoading(false);
     }
@@ -372,6 +427,7 @@ const ProductCatalog = () => {
           </div>
 
           {/* Product Grid */}
+          {console.log('Rendering ProductGrid with products:', products, 'loading:', loading)}
           <ProductGrid
             products={products}
             loading={loading}

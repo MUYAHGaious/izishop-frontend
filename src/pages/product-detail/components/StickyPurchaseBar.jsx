@@ -5,7 +5,7 @@ import Button from '../../../components/ui/Button';
 import { showToast } from '../../../components/ui/Toast';
 import { useAuth } from '../../../contexts/AuthContext';
 
-const StickyPurchaseBar = ({ product, selectedVariant, quantity, onQuantityChange }) => {
+const StickyPurchaseBar = ({ product, selectedVariant, quantity, onQuantityChange, onAddToCart }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const navigate = useNavigate();
@@ -49,50 +49,11 @@ const StickyPurchaseBar = ({ product, selectedVariant, quantity, onQuantityChang
     setIsAddingToCart(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Add to cart logic
-      const cartItem = {
-        id: product.id,
-        name: product.name,
-        price: selectedVariant?.price || product.price,
-        quantity: quantity,
-        variant: selectedVariant,
-        image: product.images?.[0],
-        shop: product.shop
-      };
-
-      // Get existing cart
-      const existingCart = JSON.parse(localStorage.getItem('cartItems') || '[]');
-      
-      // Check if item already exists
-      const existingItemIndex = existingCart.findIndex(
-        item => item.id === cartItem.id && 
-        JSON.stringify(item.variant) === JSON.stringify(cartItem.variant)
-      );
-
-      if (existingItemIndex >= 0) {
-        // Update quantity
-        existingCart[existingItemIndex].quantity += cartItem.quantity;
-      } else {
-        // Add new item
-        existingCart.push(cartItem);
+      // Use the parent component's addToCart function
+      if (onAddToCart) {
+        await onAddToCart();
+        showToast(`${product.name} added to cart!`, 'success', 3000);
       }
-
-      // Save to localStorage
-      localStorage.setItem('cartItems', JSON.stringify(existingCart));
-      
-      // Update cart count
-      const totalItems = existingCart.reduce((sum, item) => sum + item.quantity, 0);
-      localStorage.setItem('cartItemCount', totalItems.toString());
-
-      // Dispatch cart update event
-      window.dispatchEvent(new Event('cartUpdated'));
-
-      // Show success toast notification
-      showToast(`${product.name} added to cart!`, 'success', 3000);
-      
     } catch (error) {
       console.error('Error adding to cart:', error);
       showToast('Failed to add item to cart', 'error', 3000);

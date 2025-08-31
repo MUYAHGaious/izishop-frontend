@@ -75,18 +75,46 @@ export const ToastManager = () => {
   useEffect(() => {
     const handleToast = (event) => {
       const { message, type, duration } = event.detail;
+      
+      // Validate event data
+      if (!message || typeof message !== 'string') {
+        console.warn('ToastManager: Invalid toast event received', event.detail);
+        return;
+      }
+      
       const id = Date.now();
       
-      setToasts(prev => [...prev, { id, message, type, duration }]);
+      setToasts(prev => {
+        // Prevent excessive toasts
+        if (prev.length > 10) {
+          return [...prev.slice(-9), { id, message, type, duration }];
+        }
+        return [...prev, { id, message, type, duration }];
+      });
     };
 
-    window.addEventListener('showToast', handleToast);
-    return () => window.removeEventListener('showToast', handleToast);
+    // Use a more specific event listener to avoid conflicts
+    const eventName = 'showToast';
+    window.addEventListener(eventName, handleToast);
+    return () => window.removeEventListener(eventName, handleToast);
   }, []);
 
   const removeToast = (id) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
   };
+
+  // Auto-remove toasts after duration
+  useEffect(() => {
+    if (toasts.length === 0) return;
+    
+    const timers = toasts.map(toast => 
+      setTimeout(() => removeToast(toast.id), toast.duration || 3000)
+    );
+    
+    return () => {
+      timers.forEach(timer => clearTimeout(timer));
+    };
+  }, [toasts]);
 
   return (
     <>
@@ -105,9 +133,18 @@ export const ToastManager = () => {
 
 // Helper function to show toast
 export const showToast = (options) => {
+  // Ensure we're not in a render phase
+  if (typeof window === 'undefined') return;
+  
   const { message, type = 'success', duration = 3000 } = typeof options === 'string' 
     ? { message: options } 
     : options;
+  
+  // Validate options
+  if (!message || typeof message !== 'string') {
+    console.warn('showToast: Invalid message provided', options);
+    return;
+  }
   
   const event = new CustomEvent('showToast', {
     detail: { message, type, duration }

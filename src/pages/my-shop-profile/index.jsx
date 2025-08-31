@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Header from '../../components/ui/Header';
@@ -34,6 +34,15 @@ const MyShopProfile = () => {
   });
   const [activeTab, setActiveTab] = useState('overview');
   
+  // Determine if current user is the shop owner (computed after shop loads)
+  const isOwnerView = useMemo(() => {
+    if (!shop || !user) return false;
+    // If no shopId in URL, this is "my shop" route - check if user owns the shop
+    if (!shopId) return user.id === shop.owner_id;
+    // If shopId in URL, this is public view - only owner if IDs match
+    return user.id === shop.owner_id;
+  }, [shop, user, shopId]);
+  
   // Real data states
   const [shopStats, setShopStats] = useState({
     totalProducts: 0,
@@ -51,6 +60,13 @@ const MyShopProfile = () => {
   useEffect(() => {
     fetchAllShopData();
   }, [shopId]);
+
+  // Reset to overview tab if accessing owner-only tabs in public view
+  useEffect(() => {
+    if (!isOwnerView && (activeTab === 'orders' || activeTab === 'settings')) {
+      setActiveTab('overview');
+    }
+  }, [isOwnerView, activeTab]);
 
   const fetchAllShopData = async () => {
     try {
@@ -360,650 +376,605 @@ const MyShopProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 relative">
+      {/* Decorative Background Elements - Matching Reference */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl" />
+        <div className="absolute top-1/3 -left-40 w-96 h-96 bg-gradient-to-br from-indigo-400/15 to-cyan-400/15 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-gradient-to-br from-pink-400/10 to-orange-400/10 rounded-full blur-2xl" />
+      </div>
+      
       <Header />
       
-      <div className="container mx-auto px-4 py-6 pt-20">
-        {/* Shop Header - Clean Profile Style */}
-        <div className="bg-white rounded-3xl shadow-xl overflow-hidden mb-8">
-          {/* Hero Section with centered layout */}
-          <div className="relative">
-            {/* Background Image/Gradient */}
-            <div className="relative h-80 overflow-hidden">
-              {shop.background_image || imageUploads.backgroundImagePreview ? (
-                <img 
-                  src={imageUploads.backgroundImagePreview || shop.background_image} 
-                  alt="Shop background" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800"></div>
-              )}
-              
-              {/* Centered placeholder icon for background */}
-              {!shop.background_image && !imageUploads.backgroundImagePreview && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-white opacity-30">
-                    <Icon name="Package" size={80} />
-                    <p className="text-center mt-4 text-lg font-medium">Business Background</p>
+      {/* Modern Card-Based Layout */}
+      <div className="container mx-auto px-6 py-12 max-w-7xl relative z-10">
+        {/* Header with Brand Identity - Exact Reference Match */}
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-slate-200/50 mb-6">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            <span className="text-sm font-medium text-slate-600">Shop Active</span>
+          </div>
+          <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 bg-clip-text text-transparent mb-6">
+            {shop?.name || "My Shop"}
+          </h1>
+          <div className="flex items-center justify-center gap-8 text-slate-600 mb-8">
+            <div className="flex items-center gap-2">
+              <Icon name="Star" size={20} className="text-yellow-500 fill-current" />
+              <span className="font-semibold">{shopStats.averageRating || "5.0"}</span>
+              <span className="text-sm">({shopStats.totalReviews || "48"} reviews)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Icon name="MapPin" size={16} />
+              <span className="text-sm">{shop?.address || "Business Location"}</span>
+            </div>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            {isOwnerView && (
+              <button
+                onClick={() => navigate('/shop-owner-dashboard')}
+                className="w-full sm:w-auto px-8 py-4 rounded-2xl font-semibold text-lg transition-all transform hover:scale-105 bg-gradient-to-r from-slate-900 to-slate-700 text-white hover:shadow-2xl hover:shadow-slate-800/25"
+              >
+                <Icon name="Settings" size={20} className="inline mr-2" />
+                Manage Shop
+              </button>
+            )}
+            {!isOwnerView && (
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <button className="flex-1 sm:flex-none px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2">
+                  <Icon name="UserPlus" size={18} />
+                  Follow Shop
+                </button>
+                <button className="flex-1 sm:flex-none px-6 py-4 bg-white/90 backdrop-blur-sm border border-slate-200 text-slate-800 rounded-2xl font-semibold hover:bg-white hover:shadow-lg transition-all flex items-center justify-center gap-2">
+                  <Icon name="Share2" size={18} />
+                  Share
+                </button>
+              </div>
+            )}
+            <button
+              onClick={() => setActiveTab('products')}
+              className="w-full sm:w-auto px-6 py-4 bg-white/90 backdrop-blur-sm border border-slate-200 text-slate-800 rounded-2xl font-semibold hover:bg-white hover:shadow-lg transition-all"
+            >
+              View Products
+            </button>
+          </div>
+        </div>
+
+        {/* Featured Product Hero - Exact Reference Match */}
+        <div className="relative mb-20">
+          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-[2.5rem] p-12 md:p-16 text-white overflow-hidden relative">
+            {/* Decorative circles */}
+            <div className="absolute top-8 right-8 w-24 h-24 bg-white/10 rounded-full" />
+            <div className="absolute top-16 right-16 w-16 h-16 bg-white/5 rounded-full" />
+            <div className="absolute bottom-8 left-8 w-32 h-32 bg-white/5 rounded-full" />
+            <div className="absolute bottom-16 left-16 w-20 h-20 bg-white/10 rounded-full" />
+
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              {/* Left Content */}
+              <div>
+                <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20 mb-6">
+                  <Icon name="Package" size={16} />
+                  <span className="text-sm font-medium">Premium Collection</span>
+                </div>
+                
+                <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+                  {(shop?.description && !shop.description.includes('Tempor') && !shop.description.includes('Lorem') && !shop.description.includes('voluptate')) 
+                    ? shop.description 
+                    : "Discover Quality Products"}
+                </h2>
+                
+                <p className="text-xl text-slate-300 mb-8 leading-relaxed">
+                  Experience premium quality and exceptional service. Browse our carefully curated collection designed for your lifestyle.
+                </p>
+
+                <button 
+                  onClick={() => setActiveTab('products')}
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-lime-400 to-green-500 text-slate-900 px-8 py-4 rounded-2xl font-bold text-lg hover:shadow-2xl hover:shadow-lime-400/25 transition-all transform hover:scale-105"
+                >
+                  View All Products
+                  <div className="w-8 h-8 bg-slate-900/20 rounded-full flex items-center justify-center">
+                    <Icon name="ArrowRight" size={16} />
+                  </div>
+                </button>
+
+                {/* Social Links */}
+                <div className="flex items-center gap-4 mt-8">
+                  <span className="text-sm text-slate-400">Follow us on:</span>
+                  <div className="flex gap-2">
+                    {['Twitter', 'Instagram', 'Facebook', 'Youtube'].map((social) => (
+                      <button key={social} className="w-8 h-8 bg-white/10 hover:bg-white/20 rounded-full transition-colors" />
+                    ))}
                   </div>
                 </div>
-              )}
-              
-              {/* Background Image Upload Button (Edit Mode) */}
-              {isEditing && (
-                <div className="absolute top-4 right-4">
-                  <label className="cursor-pointer inline-flex items-center gap-2 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-800 px-3 py-2 rounded-lg transition-all shadow-lg">
-                    {imageUploads.uploadingBackground ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-                    ) : (
-                      <Icon name="Camera" size={16} />
-                    )}
-                    <span className="text-sm font-medium">Change Background</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleImageSelect(e, 'backgroundImage')}
-                      className="hidden"
-                      disabled={imageUploads.uploadingBackground}
-                    />
-                  </label>
-                </div>
-              )}
-            </div>
+              </div>
 
-            {/* Profile Section - Overlapping the background */}
-            <div className="relative -mt-20 mx-6 bg-white rounded-3xl shadow-lg p-8">
-              {/* Profile Header */}
-              <div className="flex items-start justify-between mb-6">
-                {/* Profile Info */}
-                <div className="flex items-start gap-6">
-                  {/* Profile Image */}
-                  <div className="relative">
-                    <div className="w-32 h-32 bg-gray-100 rounded-3xl flex items-center justify-center shadow-lg border overflow-hidden">
-                      {shop.profile_photo || imageUploads.profileImagePreview ? (
-                        <img 
-                          src={imageUploads.profileImagePreview || shop.profile_photo} 
-                          alt="Shop logo" 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <Icon name="Store" size={48} className="text-blue-600" />
-                      )}
-                    </div>
-                    
-                    {/* Profile Image Upload Button (Edit Mode) */}
-                    {isEditing && (
-                      <div className="absolute -bottom-2 -right-2">
-                        <label className="cursor-pointer inline-flex items-center justify-center w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all shadow-lg">
-                          {imageUploads.uploadingProfile ? (
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                          ) : (
-                            <Icon name="Camera" size={16} />
-                          )}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleImageSelect(e, 'profileImage')}
-                            className="hidden"
-                            disabled={imageUploads.uploadingProfile}
-                          />
-                        </label>
-                      </div>
+              {/* Right Content - Featured Product */}
+              <div className="relative">
+                <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-3xl p-8 border border-white/20">
+                  <div className="w-full h-80 bg-gradient-to-br from-slate-700 to-slate-600 rounded-2xl flex items-center justify-center mb-6">
+                    {shop?.profile_photo || imageUploads.profileImagePreview ? (
+                      <img 
+                        src={imageUploads.profileImagePreview || shop.profile_photo} 
+                        alt="Featured Product" 
+                        className="w-full h-full object-cover rounded-2xl"
+                      />
+                    ) : (
+                      <img 
+                        src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=826&q=80" 
+                        alt="Featured Product" 
+                        className="w-full h-full object-cover rounded-2xl"
+                      />
                     )}
                   </div>
                   
-                  {/* Shop Info */}
-                  <div className="flex-1">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-2">{shop.name}</h1>
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mb-3 ${
-                      shop.is_active 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {shop.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                    <p className="text-gray-600 max-w-md">
-                      {shop.description || 'Tempor est voluptate'}
-                    </p>
+                  <div className="text-center">
+                    <h3 className="text-2xl font-bold mb-2">Featured Product</h3>
+                    <p className="text-slate-300 mb-4">Premium quality guaranteed</p>
+                    <div className="flex items-center justify-center gap-2 text-lime-400 font-semibold">
+                      <Icon name="Star" size={16} className="fill-current" />
+                      <span>{shopStats.averageRating || "5.0"}</span>
+                      <span className="text-slate-400">({shopStats.totalReviews || "48"} reviews)</span>
+                    </div>
                   </div>
-                </div>
-                
-                {/* Action Buttons */}
-                <div className="flex gap-3">
-                  {user?.id === shop.owner_id && !isEditing && (
-                    <Button
-                      onClick={handleEdit}
-                      className="bg-blue-600 text-white hover:bg-blue-700 shadow-lg px-6"
-                    >
-                      <Icon name="Edit2" size={16} className="mr-2" />
-                      Edit Shop
-                    </Button>
-                  )}
-                  {isEditing && (
-                    <>
-                      <Button
-                        onClick={handleCancelEdit}
-                        variant="outline"
-                        className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleSaveWithImages}
-                        disabled={imageUploads.uploadingProfile || imageUploads.uploadingBackground}
-                        className="bg-green-600 text-white hover:bg-green-700 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed px-6"
-                      >
-                        {(imageUploads.uploadingProfile || imageUploads.uploadingBackground) ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            Saving...
-                          </>
-                        ) : (
-                          <>
-                            <Icon name="Save" size={16} className="mr-2" />
-                            Save Changes
-                          </>
-                        )}
-                      </Button>
-                    </>
-                  )}
-                  {!isEditing && user?.id !== shop.owner_id && (
-                    <>
-                      <Button className="bg-blue-600 text-white hover:bg-blue-700 shadow-lg px-6">
-                        <Icon name="UserPlus" size={16} className="mr-2" />
-                        Follow
-                      </Button>
-                      <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6">
-                        Contact
-                      </Button>
-                    </>
-                  )}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
 
-              {/* Statistics Row */}
-              <div className="grid grid-cols-4 gap-8 py-6 border-t border-b border-gray-100">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600 mb-1">
-                    {shopStats.totalOrders || 0}
-                  </div>
-                  <div className="text-sm text-gray-500">Total Sales</div>
+        {/* Shop Information Grid - Glass Morphism Effect */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-16">
+          {/* Contact Information */}
+          <div className="h-80">
+            <div className="bg-white/30 backdrop-blur-md rounded-3xl p-6 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 h-full">
+              <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <div className="w-8 h-8 bg-blue-100/80 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                  <Icon name="Phone" size={16} className="text-blue-600" />
                 </div>
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 mb-1">
-                    <Icon name="Star" size={20} className="text-yellow-400 fill-current" />
-                    <span className="text-3xl font-bold text-yellow-600">
-                      {shopStats.averageRating || 0}
-                    </span>
+                Contact Info
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/60 backdrop-blur-sm rounded-full flex items-center justify-center border border-slate-200/50">
+                    <Icon name="Phone" size={16} className="text-slate-600" />
                   </div>
-                  <div className="text-sm text-gray-500">Rating</div>
+                  <div>
+                    <p className="text-sm text-slate-500">Phone</p>
+                    <p className="font-semibold text-slate-800">{shop?.phone || "+237 XXX XXX XXX"}</p>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-purple-600 mb-1">
-                    {shopStats.totalReviews || 0}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/60 backdrop-blur-sm rounded-full flex items-center justify-center border border-slate-200/50">
+                    <Icon name="Mail" size={16} className="text-slate-600" />
                   </div>
-                  <div className="text-sm text-gray-500">Reviews</div>
+                  <div>
+                    <p className="text-sm text-slate-500">Email</p>
+                    <p className="font-semibold text-slate-800">{shop?.email || "info@myshop.com"}</p>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-orange-600 mb-1">
-                    {shopStats.totalProducts || 0}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/60 backdrop-blur-sm rounded-full flex items-center justify-center border border-slate-200/50">
+                    <Icon name="Clock" size={16} className="text-slate-600" />
                   </div>
-                  <div className="text-sm text-gray-500">Products</div>
-                </div>
-              </div>
-
-              {/* Contact Information */}
-              <div className="flex items-center justify-center gap-8 py-6 text-sm text-gray-600">
-                {shop.address && (
-                  <div className="flex items-center gap-2">
-                    <Icon name="MapPin" size={16} />
-                    <span>{shop.address}</span>
+                  <div>
+                    <p className="text-sm text-slate-500">Business Hours</p>
+                    <p className="font-semibold text-slate-800">Mon-Sat: 8AM-8PM</p>
                   </div>
-                )}
-                {shop.phone && (
-                  <div className="flex items-center gap-2">
-                    <Icon name="Phone" size={16} />
-                    <span>{shop.phone}</span>
-                  </div>
-                )}
-                {shop.email && (
-                  <div className="flex items-center gap-2">
-                    <Icon name="Mail" size={16} />
-                    <span>{shop.email}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <Icon name="Calendar" size={16} />
-                  <span>Joined {new Date(shop.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
                 </div>
               </div>
             </div>
           </div>
 
-        </div>
+          {/* Trust Badges */}
+          <div className="h-80">
+            <div className="bg-white/30 backdrop-blur-md rounded-3xl p-6 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 h-full">
+              <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <div className="w-8 h-8 bg-green-100/80 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                  <Icon name="Shield" size={16} className="text-green-600" />
+                </div>
+                Trust & Safety
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="text-center p-3 bg-white/60 backdrop-blur-sm rounded-2xl border border-slate-200/50">
+                  <Icon name="CheckCircle" size={24} className="text-green-600 mx-auto mb-2" />
+                  <p className="font-semibold text-slate-800 text-sm">Verified</p>
+                  <p className="text-xs text-slate-500">Identity</p>
+                </div>
+                <div className="text-center p-3 bg-white/60 backdrop-blur-sm rounded-2xl border border-slate-200/50">
+                  <Icon name="Star" size={24} className="text-yellow-500 mx-auto mb-2" />
+                  <p className="font-semibold text-slate-800 text-sm">Premium</p>
+                  <p className="text-xs text-slate-500">Quality</p>
+                </div>
+                <div className="text-center p-3 bg-white/60 backdrop-blur-sm rounded-2xl border border-slate-200/50">
+                  <Icon name="Truck" size={24} className="text-blue-600 mx-auto mb-2" />
+                  <p className="font-semibold text-slate-800 text-sm">Fast</p>
+                  <p className="text-xs text-slate-500">Delivery</p>
+                </div>
+                <div className="text-center p-3 bg-white/60 backdrop-blur-sm rounded-2xl border border-slate-200/50">
+                  <Icon name="RotateCcw" size={24} className="text-purple-600 mx-auto mb-2" />
+                  <p className="font-semibold text-slate-800 text-sm">Returns</p>
+                  <p className="text-xs text-slate-500">30 Days</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        {/* Navigation Tabs */}
-        <div className="bg-white rounded-2xl shadow-lg mb-8">
-          <div className="border-b border-gray-200">
-            <nav className="flex">
-              {[
-                { id: 'overview', label: 'Overview', icon: 'BarChart3' },
-                { id: 'products', label: 'Products', icon: 'Package' },
-                { id: 'orders', label: 'Orders', icon: 'ShoppingBag' },
-                { id: 'reviews', label: 'Reviews', icon: 'Star' },
-                { id: 'settings', label: 'Settings', icon: 'Settings' }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === tab.id
-                      ? 'border-blue-600 text-blue-600 bg-blue-50'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <Icon name={tab.icon} size={16} />
-                  {tab.label}
+          {/* Quick Actions */}
+          <div className="h-80">
+            <div className="bg-white/30 backdrop-blur-md rounded-3xl p-6 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 h-full">
+              <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <div className="w-8 h-8 bg-purple-100/80 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                  <Icon name="Zap" size={16} className="text-purple-600" />
+                </div>
+                Quick Actions
+              </h3>
+              <div className="space-y-3">
+                <button className="w-full p-3 bg-white/60 backdrop-blur-sm hover:bg-white/80 text-slate-800 rounded-2xl font-medium transition-all flex items-center gap-3 border border-slate-200/50 hover:border-slate-300/50">
+                  <div className="w-8 h-8 bg-blue-100/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                    <Icon name="MessageCircle" size={16} className="text-blue-600" />
+                  </div>
+                  <span>Chat with Shop</span>
                 </button>
-              ))}
-            </nav>
+                <button className="w-full p-3 bg-white/60 backdrop-blur-sm hover:bg-white/80 text-slate-800 rounded-2xl font-medium transition-all flex items-center gap-3 border border-slate-200/50 hover:border-slate-300/50">
+                  <div className="w-8 h-8 bg-green-100/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                    <Icon name="Search" size={16} className="text-green-600" />
+                  </div>
+                  <span>Search Products</span>
+                </button>
+                <button className="w-full p-3 bg-white/60 backdrop-blur-sm hover:bg-white/80 text-slate-800 rounded-2xl font-medium transition-all flex items-center gap-3 border border-slate-200/50 hover:border-slate-300/50">
+                  <div className="w-8 h-8 bg-purple-100/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                    <Icon name="Filter" size={16} className="text-purple-600" />
+                  </div>
+                  <span>Filter Categories</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Tab Content */}
-        {activeTab === 'overview' && (
-          <div className="space-y-8">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[
-                { 
-                  label: 'Products', 
-                  value: isLoadingStats ? '...' : shopStats.totalProducts, 
-                  icon: 'Package', 
-                  color: 'bg-blue-500',
-                  change: '+12%'
-                },
-                { 
-                  label: 'Orders', 
-                  value: isLoadingStats ? '...' : shopStats.totalOrders, 
-                  icon: 'ShoppingBag', 
-                  color: 'bg-green-500',
-                  change: '+8%'
-                },
-                { 
-                  label: 'Revenue', 
-                  value: isLoadingStats ? '...' : formatCurrency(shopStats.totalRevenue), 
-                  icon: 'Banknote', 
-                  color: 'bg-purple-500',
-                  change: '+15%'
-                },
-                { 
-                  label: 'Rating', 
-                  value: isLoadingStats ? '...' : `${shopStats.averageRating}★`, 
-                  icon: 'Star', 
-                  color: 'bg-yellow-500',
-                  change: '+0.2'
-                }
-              ].map((stat, index) => (
-                <div key={index} className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-                      <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                      <p className="text-sm text-green-600 mt-1">
-                        <Icon name="TrendingUp" size={12} className="inline mr-1" />
-                        {stat.change}
-                      </p>
-                    </div>
-                    <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center`}>
-                      <Icon name={stat.icon} size={24} className="text-white" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* About Section */}
-              <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6">
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Icon name="Info" size={20} />
-                  About Our Business
-                </h2>
-                {isEditing ? (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Shop Name</label>
-                      <input
-                        name="name"
-                        value={editData.name}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Enter shop name"
+        {/* About Shop Owner */}
+        <div className="mb-16">
+          <div className="bg-white/30 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300">
+            <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+              <Icon name="User" size={24} />
+              About the Shop Owner
+            </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+              <div className="lg:col-span-1">
+                <div className="text-center">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    {shop?.owner_photo ? (
+                      <img src={shop.owner_photo} alt="Owner" className="w-full h-full rounded-full object-cover" />
+                    ) : (
+                      <img 
+                        src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80" 
+                        alt="Shop Owner" 
+                        className="w-full h-full rounded-full object-cover"
                       />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                      <textarea
-                        name="description"
-                        value={editData.description}
-                        onChange={handleInputChange}
-                        rows={4}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                        placeholder="Tell customers about your business..."
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                        <select
-                          name="category"
-                          value={editData.category}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="">Select category</option>
-                          <option value="electronics">Electronics</option>
-                          <option value="fashion">Fashion</option>
-                          <option value="food">Food & Beverages</option>
-                          <option value="health">Health & Beauty</option>
-                          <option value="home">Home & Garden</option>
-                          <option value="sports">Sports & Outdoors</option>
-                          <option value="automotive">Automotive</option>
-                          <option value="books">Books & Education</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
-                        <input
-                          name="website"
-                          value={editData.website}
-                          onChange={handleInputChange}
-                          type="url"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="https://yourwebsite.com"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <p className="text-gray-600 leading-relaxed">
-                      {shop.description || 'No description provided yet. Share information about your business, what you sell, and what makes you unique.'}
-                    </p>
-                    {shop.category && (
-                      <div className="flex items-center gap-2">
-                        <Icon name="Tag" size={16} className="text-gray-400" />
-                        <span className="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full">{shop.category}</span>
-                      </div>
-                    )}
-                    {shop.website && (
-                      <div className="flex items-center gap-2">
-                        <Icon name="Globe" size={16} className="text-gray-400" />
-                        <a 
-                          href={shop.website} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 underline"
-                        >
-                          {shop.website}
-                        </a>
-                      </div>
                     )}
                   </div>
-                )}
-              </div>
-
-              {/* Contact Information */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <Icon name="Phone" size={18} />
-                  Contact Information
-                </h3>
-                <div className="space-y-4">
-                  {isEditing ? (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-                        <input
-                          name="address"
-                          value={editData.address}
-                          onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Business address"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                        <input
-                          name="phone"
-                          value={editData.phone}
-                          onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Phone number"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                        <input
-                          name="email"
-                          value={editData.email}
-                          onChange={handleInputChange}
-                          type="email"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Business email"
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      {shop.address && (
-                        <div className="flex items-start gap-3">
-                          <Icon name="MapPin" size={16} className="text-gray-400 mt-0.5" />
-                          <span className="text-gray-600">{shop.address}</span>
-                        </div>
-                      )}
-                      {shop.phone && (
-                        <div className="flex items-center gap-3">
-                          <Icon name="Phone" size={16} className="text-gray-400" />
-                          <span className="text-gray-600">{shop.phone}</span>
-                        </div>
-                      )}
-                      {shop.email && (
-                        <div className="flex items-center gap-3">
-                          <Icon name="Mail" size={16} className="text-gray-400" />
-                          <span className="text-gray-600">{shop.email}</span>
-                        </div>
-                      )}
-                      {!shop.address && !shop.phone && !shop.email && (
-                        <p className="text-gray-500 text-sm">No contact information provided</p>
-                      )}
-                    </>
-                  )}
-                </div>
-
-                {/* Quick Actions */}
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">Quick Actions</h4>
-                  <div className="space-y-2">
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-sm"
-                      onClick={() => navigate('/add-product')}
-                    >
-                      <Icon name="Plus" size={16} className="mr-2" />
-                      Add Product
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-sm"
-                      onClick={() => navigate('/shop-owner-dashboard')}
-                    >
-                      <Icon name="BarChart3" size={16} className="mr-2" />
-                      Dashboard
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-sm"
-                      onClick={() => navigate('/order-management')}
-                    >
-                      <Icon name="ShoppingBag" size={16} className="mr-2" />
-                      Manage Orders
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Recent Activity */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Recent Products */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Icon name="Package" size={18} />
-                    Recent Products
-                  </h3>
-                  <Button variant="outline" size="sm" onClick={() => navigate('/my-products')}>
-                    View All
-                  </Button>
-                </div>
-                {isLoadingStats ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="animate-pulse flex space-x-3">
-                        <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
-                        <div className="flex-1 space-y-2">
-                          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                          <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                        </div>
-                      </div>
+                  <h4 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">{shop?.owner_name || "Shop Owner"}</h4>
+                  <p className="text-sm text-gray-600 mb-4">Established 2020 • 4+ years experience</p>
+                  <div className="flex justify-center gap-2">
+                    {['Facebook', 'Instagram', 'Twitter'].map((social) => (
+                      <button key={social} className="w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors">
+                        <Icon name="ExternalLink" size={14} className="text-gray-600" />
+                      </button>
                     ))}
                   </div>
-                ) : recentProducts.length > 0 ? (
-                  <div className="space-y-3">
-                    {recentProducts.map((product) => (
-                      <div key={product.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50">
-                        <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                          <Icon name="Package" size={16} className="text-gray-600" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900 truncate">{product.name}</p>
-                          <p className="text-sm text-gray-600">{formatCurrency(product.price)}</p>
-                        </div>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          product.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {product.is_active ? 'Active' : 'Inactive'}
+                </div>
+              </div>
+              <div className="lg:col-span-2">
+                <p className="text-gray-700 leading-relaxed mb-4">
+                  Welcome to our shop! We are passionate about providing high-quality products and exceptional customer service. 
+                  With over 4 years of experience in the industry, we have built a reputation for reliability and excellence.
+                </p>
+                <p className="text-gray-700 leading-relaxed mb-6">
+                  Our commitment is to offer you the best products at competitive prices, backed by our guarantee of quality and customer satisfaction. 
+                  We carefully curate our inventory to ensure every item meets our high standards.
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                  <div className="text-center p-3 sm:p-4 bg-blue-50 rounded-2xl">
+                    <div className="text-xl sm:text-2xl font-bold text-blue-600">{shopStats.totalProducts || 150}</div>
+                    <div className="text-xs sm:text-sm text-blue-600">Products</div>
+                  </div>
+                  <div className="text-center p-3 sm:p-4 bg-green-50 rounded-2xl">
+                    <div className="text-xl sm:text-2xl font-bold text-green-600">{shopStats.totalOrders || 500}</div>
+                    <div className="text-xs sm:text-sm text-green-600">Orders</div>
+                  </div>
+                  <div className="text-center p-3 sm:p-4 bg-purple-50 rounded-2xl">
+                    <div className="text-xl sm:text-2xl font-bold text-purple-600">{shopStats.followers || 1200}</div>
+                    <div className="text-xs sm:text-sm text-purple-600">Followers</div>
+                  </div>
+                  <div className="text-center p-3 sm:p-4 bg-orange-50 rounded-2xl">
+                    <div className="text-xl sm:text-2xl font-bold text-orange-600">{shopStats.averageRating || "4.9"}</div>
+                    <div className="text-xs sm:text-sm text-orange-600">Rating</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        {/* Product Categories - Exact Reference Match */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+          {/* New Gen Category */}
+          <div className="bg-white/30 backdrop-blur-md rounded-3xl p-8 border border-white/20 hover:shadow-2xl transition-all group shadow-xl">
+            <h4 className="text-lg font-bold text-slate-800 mb-4">New Gen Products</h4>
+            <div className="w-full h-48 bg-gradient-to-br from-slate-200 to-slate-100 rounded-2xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform">
+              {recentProducts[0]?.image ? (
+                <img src={recentProducts[0].image} alt="New Gen" className="w-full h-full object-cover rounded-2xl" />
+              ) : (
+                <img 
+                  src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80" 
+                  alt="New Gen Products" 
+                  className="w-full h-full object-cover rounded-2xl"
+                />
+              )}
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-600">{shopStats.activeProducts || 24} items</span>
+              <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center">
+                <Icon name="ArrowRight" size={16} className="text-white" />
+              </div>
+            </div>
+          </div>
+
+          {/* Premium Category */}
+          <div className="bg-white/30 backdrop-blur-md rounded-3xl p-8 border border-white/20 hover:shadow-2xl transition-all group shadow-xl">
+            <h4 className="text-lg font-bold text-slate-800 mb-4">Premium Collection</h4>
+            <div className="w-full h-48 bg-gradient-to-br from-amber-100 to-orange-100 rounded-2xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform">
+              {recentProducts[1]?.image ? (
+                <img src={recentProducts[1].image} alt="Premium" className="w-full h-full object-cover rounded-2xl" />
+              ) : (
+                <img 
+                  src="https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=898&q=80" 
+                  alt="Premium Collection" 
+                  className="w-full h-full object-cover rounded-2xl"
+                />
+              )}
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-600">{Math.ceil((shopStats.totalProducts || 24) * 0.3)} items</span>
+              <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center">
+                <Icon name="ArrowRight" size={16} className="text-white" />
+              </div>
+            </div>
+          </div>
+
+          {/* Latest Category */}
+          <div className="bg-white/30 backdrop-blur-md rounded-3xl p-8 border border-white/20 hover:shadow-2xl transition-all group shadow-xl">
+            <h4 className="text-lg font-bold text-slate-800 mb-4">Latest Arrivals</h4>
+            <div className="w-full h-48 bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform">
+              {recentProducts[2]?.image ? (
+                <img src={recentProducts[2].image} alt="Latest" className="w-full h-full object-cover rounded-2xl" />
+              ) : (
+                <img 
+                  src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
+                  alt="Latest Arrivals" 
+                  className="w-full h-full object-cover rounded-2xl"
+                />
+              )}
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-600">{Math.ceil((shopStats.totalProducts || 24) * 0.2)} items</span>
+              <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center">
+                <Icon name="ArrowRight" size={16} className="text-white" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Enhanced Product Grid - Exact Reference Match */}
+        <div className="bg-white/30 backdrop-blur-md rounded-3xl p-8 border border-white/20 mb-16 shadow-xl hover:shadow-2xl transition-all duration-300">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-3xl font-bold text-slate-800 mb-2">More Products</h2>
+              <p className="text-slate-600">Discover our complete collection</p>
+            </div>
+            <div className="text-sm text-slate-500">
+              {shopStats.totalProducts || 24} products
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {recentProducts.length > 0 ? (
+              recentProducts.slice(0, 8).map((product, index) => (
+                <div key={product.id || index} className="group bg-white/30 backdrop-blur-md rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-white/20">
+                  {/* Product Image */}
+                  <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-2xl mb-4">
+                    {product.image ? (
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <img 
+                        src={`https://images.unsplash.com/photo-${['1560472354-b33ff0c44a43', '1542291026-7eec264c27ff', '1525966222134-fcfa99b8ae77', '1594633313593-bab3825d0caf', '1571945153237-4929e783af4a', '1507003211169-0a1dd7228f2d', '1551698618-1dfe5d97d256', '1549298916-b41d501d3772'][index % 8]}?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80`}
+                        alt={`Product ${index + 1}`}
+                        className="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform duration-300"
+                      />
+                    )}
+                    
+                    {/* Heart Icon */}
+                    <div className="absolute top-3 right-3">
+                      <button className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-red-50 transition-all">
+                        <Icon name="Heart" size={16} className="text-gray-400 hover:text-red-500" />
+                      </button>
+                    </div>
+
+                    {/* Arrow Icon */}
+                    <div className="absolute bottom-3 right-3">
+                      <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
+                        <Icon name="ArrowUpRight" size={16} className="text-white" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Product Info */}
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+                      {product.name || `Product ${index + 1}`}
+                    </h3>
+                    
+                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                      Premium quality product with excellent features
+                    </p>
+
+                    <div className="flex items-center justify-between">
+                      <div className="text-xl font-bold text-gray-900">
+                        {formatCurrency(product.price || 25000)}
+                      </div>
+                      
+                      <div className="flex items-center gap-1">
+                        <Icon name="Star" size={16} className="text-yellow-500 fill-current" />
+                        <span className="text-sm font-medium text-gray-700">5.0</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              // Placeholder products matching reference design
+              Array.from({ length: 8 }).map((_, index) => (
+                <div key={index} className="group bg-white/30 backdrop-blur-md rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-white/20">
+                  {/* Product Image */}
+                  <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-2xl mb-4">
+                    <img 
+                      src={`https://images.unsplash.com/photo-${['1560472354-b33ff0c44a43', '1542291026-7eec264c27ff', '1525966222134-fcfa99b8ae77', '1594633313593-bab3825d0caf', '1571945153237-4929e783af4a', '1507003211169-0a1dd7228f2d', '1551698618-1dfe5d97d256', '1549298916-b41d501d3772'][index % 8]}?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80`}
+                      alt={`Premium Product ${index + 1}`}
+                      className="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform duration-300"
+                    />
+                    
+                    {/* Heart Icon */}
+                    <div className="absolute top-3 right-3">
+                      <button className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-red-50 transition-all">
+                        <Icon name="Heart" size={16} className="text-gray-400 hover:text-red-500" />
+                      </button>
+                    </div>
+
+                    {/* Arrow Icon */}
+                    <div className="absolute bottom-3 right-3">
+                      <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
+                        <Icon name="ArrowUpRight" size={16} className="text-white" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Product Info */}
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+                      Premium Product {index + 1}
+                    </h3>
+                    
+                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                      High-quality product with modern design
+                    </p>
+
+                    <div className="flex items-center justify-between">
+                      <div className="text-xl font-bold text-gray-900">
+                        {formatCurrency(25000 + (index * 5000))}
+                      </div>
+                      
+                      <div className="flex items-center gap-1">
+                        <Icon name="Star" size={16} className="text-yellow-500 fill-current" />
+                        <span className="text-sm font-medium text-gray-700">5.0</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Customer Reviews Section */}
+        <div className="mb-16">
+          <div className="bg-white/30 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+              <h3 className="text-2xl font-bold text-slate-800 mb-4 sm:mb-0 flex items-center gap-2">
+                <Icon name="MessageSquare" size={24} />
+                Customer Reviews
+              </h3>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <Icon name="Star" size={20} className="text-yellow-500 fill-current" />
+                  <span className="text-xl font-bold text-gray-800">{shopStats.averageRating || "4.9"}</span>
+                </div>
+                <span className="text-gray-600">({shopStats.totalReviews || 124} reviews)</span>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {recentReviews.length > 0 ? (
+                recentReviews.map((review, index) => (
+                  <div key={review.id || index} className="bg-white/50 p-4 sm:p-6 rounded-2xl border border-white/30">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-white font-semibold text-xs sm:text-sm">
+                          {review.customer_name?.charAt(0) || "A"}
                         </span>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Icon name="Package" size={32} className="text-gray-300 mx-auto mb-2" />
-                    <p className="text-gray-500 text-sm">No products yet</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Recent Reviews */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Icon name="Star" size={18} />
-                    Recent Reviews
-                  </h3>
-                  <Button variant="outline" size="sm">
-                    View All
-                  </Button>
-                </div>
-                {isLoadingStats ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="animate-pulse space-y-2">
-                        <div className="flex space-x-2">
-                          {[1, 2, 3, 4, 5].map(j => (
-                            <div key={j} className="w-4 h-4 bg-gray-200 rounded"></div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-semibold text-gray-800 text-sm sm:text-base truncate">{review.customer_name || "Anonymous"}</h4>
+                        <div className="flex items-center gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Icon key={i} name="Star" size={12} className={`${i < (review.rating || 5) ? 'text-yellow-500 fill-current' : 'text-gray-300'}`} />
                           ))}
                         </div>
-                        <div className="h-3 bg-gray-200 rounded w-full"></div>
-                        <div className="h-3 bg-gray-200 rounded w-2/3"></div>
                       </div>
-                    ))}
+                    </div>
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      {review.comment || "Great products and excellent service. Highly recommended!"}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {review.created_at ? new Date(review.created_at).toLocaleDateString() : "2 days ago"}
+                    </p>
                   </div>
-                ) : recentReviews.length > 0 ? (
-                  <div className="space-y-4">
-                    {recentReviews.map((review) => (
-                      <div key={review.id} className="border-b border-gray-100 pb-3">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="flex">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Icon
-                                key={star}
-                                name="Star"
-                                size={14}
-                                className={`${
-                                  star <= review.rating
-                                    ? 'text-yellow-400 fill-current'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-sm font-medium text-gray-900">
-                            {review.user_name || 'Anonymous'}
-                          </span>
+                ))
+              ) : (
+                // Placeholder reviews
+                Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="bg-white/50 p-4 sm:p-6 rounded-2xl border border-white/30">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-white font-semibold text-xs sm:text-sm">
+                          {['A', 'M', 'S'][index]}
+                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-semibold text-gray-800 text-sm sm:text-base">{['Alice K.', 'Mike R.', 'Sarah L.'][index]}</h4>
+                        <div className="flex items-center gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Icon key={i} name="Star" size={12} className="text-yellow-500 fill-current" />
+                          ))}
                         </div>
-                        {review.review && (
-                          <p className="text-sm text-gray-600 line-clamp-2">{review.review}</p>
-                        )}
-                        <p className="text-xs text-gray-500 mt-1">
-                          {new Date(review.created_at).toLocaleDateString()}
-                        </p>
                       </div>
-                    ))}
+                    </div>
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      {[
+                        "Excellent quality products and fast delivery. Will definitely order again!",
+                        "Great customer service and professional handling. Highly recommend this shop.",
+                        "Amazing shopping experience. Products exactly as described and well packaged."
+                      ][index]}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {[3, 5, 7][index]} days ago
+                    </p>
                   </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Icon name="Star" size={32} className="text-gray-300 mx-auto mb-2" />
-                    <p className="text-gray-500 text-sm">No reviews yet</p>
-                  </div>
-                )}
-              </div>
+                ))
+              )}
+            </div>
+            
+            <div className="text-center mt-6">
+              <button className="w-full sm:w-auto px-6 py-3 bg-white border border-gray-200 text-gray-800 rounded-2xl font-semibold hover:shadow-lg transition-all">
+                View All Reviews
+              </button>
             </div>
           </div>
-        )}
-
-        {/* Products Tab */}
-        {activeTab === 'products' && (
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <ProductsTab />
-          </div>
-        )}
-
-        {/* Orders Tab */}
-        {activeTab === 'orders' && (
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <OrdersTab />
-          </div>
-        )}
-
-        {/* Reviews Tab */}
-        {activeTab === 'reviews' && (
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <ReviewsTab />
-          </div>
-        )}
-
-        {/* Settings Tab */}
-        {activeTab === 'settings' && (
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <ShopSettings shopData={shop} setShopData={setShop} />
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

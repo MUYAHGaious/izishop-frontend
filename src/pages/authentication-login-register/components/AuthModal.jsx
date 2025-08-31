@@ -5,7 +5,7 @@ const AuthModal = ({ children, onClose, showClose = false }) => {
   return (
     <div className="w-full max-w-sm mx-auto sm:max-w-md lg:max-w-lg">
       {/* Mobile-first glass morphism modal */}
-      <div className="relative w-full bg-white/95 backdrop-blur-xl border border-white/30 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden">
+      <div className="relative w-full bg-white/95 backdrop-blur-xl border border-white/30 rounded-2xl sm:rounded-3xl shadow-2xl">
         {/* Enhanced gradient overlay for mobile */}
         <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-white/20 to-white/10 pointer-events-none" />
         

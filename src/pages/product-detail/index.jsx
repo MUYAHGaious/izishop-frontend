@@ -11,167 +11,103 @@ import ReviewsSection from './components/ReviewsSection';
 import RelatedProducts from './components/RelatedProducts';
 import StickyPurchaseBar from './components/StickyPurchaseBar';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCart } from '../../contexts/CartContext';
+import { useWishlist } from '../../contexts/WishlistContext';
 import { showToast } from '../../components/ui/Toast';
+import api from '../../services/api';
 
 const ProductDetail = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const [product, setProduct] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
   const productId = searchParams.get('id') || '1';
 
-  // Mock product data
-  const mockProduct = {
-    id: 1,
-    name: 'iPhone 14 Pro Max 256GB',
-    price: 899000,
-    originalPrice: 999000,
-    images: [
-      'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=800',
-      'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800',
-      'https://images.unsplash.com/photo-1580910051074-3eb694886505?w=800',
-      'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800'
-    ],
-    rating: 4.8,
-    reviewCount: 1247,
-    sku: 'IPH14PM256',
-    isVerified: true,
-    inStock: true,
-    stock: 15,
-    isSecondHand: false,
-    category: 'Electronics',
-    subcategory: 'Smartphones',
-    description: `The iPhone 14 Pro Max delivers our most advanced Pro camera system ever, with a 48MP Main camera that captures incredible detail and color. The Always-On display keeps your Lock Screen glanceable, so you don't have to tap it to stay in the know.\n\nThe A16 Bionic chip powers advanced features like Cinematic mode and delivers exceptional performance and efficiency. With up to 29 hours of video playback, iPhone 14 Pro Max has the longest battery life ever in an iPhone.\n\nBuilt with aerospace-grade titanium and featuring the Action button, iPhone 14 Pro Max is designed to handle whatever life throws your way.`,
-    highlights: [
-      '48MP Main camera with 2x Telephoto','Always-On display with ProMotion','A16 Bionic chip with 6-core GPU','Up to 29 hours video playback','Aerospace-grade titanium design','Action button for quick shortcuts'
-    ],
-    features: [
-      'Face ID for secure authentication','Water resistant to 6 meters for up to 30 minutes','MagSafe and Qi wireless charging','5G connectivity for superfast downloads','iOS 17 with advanced privacy features'
-    ],
-    specifications: [
-      { name: 'Display', value: '6.7-inch Super Retina XDR OLED' },
-      { name: 'Processor', value: 'A16 Bionic chip' },
-      { name: 'Storage', value: '256GB' },
-      { name: 'Camera', value: '48MP + 12MP + 12MP Triple camera' },
-      { name: 'Front Camera', value: '12MP TrueDepth' },
-      { name: 'Battery', value: 'Up to 29 hours video playback' },
-      { name: 'Operating System', value: 'iOS 17' },
-      { name: 'Connectivity', value: '5G, Wi-Fi 6, Bluetooth 5.3' },
-      { name: 'Water Resistance', value: 'IP68' },
-      { name: 'Weight', value: '240 grams' }
-    ],
-    variants: [
-      {
-        id: 1,
-        type: 'storage',name: '128GB',
-        price: 799000,
-        stock: 8,
-        available: true
-      },
-      {
-        id: 2,
-        type: 'storage',name: '256GB',
-        price: 899000,
-        stock: 15,
-        available: true
-      },
-      {
-        id: 3,
-        type: 'storage',name: '512GB',
-        price: 1099000,
-        stock: 3,
-        available: true
-      }
-    ],
-    variantTypes: [
-      {
-        name: 'Storage',
-        options: [
-          { value: '128gb', label: '128GB', price: 799000, available: true },
-          { value: '256gb', label: '256GB', price: 899000, available: true },
-          { value: '512gb', label: '512GB', price: 1099000, available: true }
-        ]
-      },
-      {
-        name: 'Color',
-        options: [
-          { value: 'space-black', label: 'Space Black', available: true },
-          { value: 'silver', label: 'Silver', available: true },
-          { value: 'gold', label: 'Gold', available: false },
-          { value: 'deep-purple', label: 'Deep Purple', available: true }
-        ]
-      }
-    ],
-    deliveryTime: '2-3 business days',deliveryFee: 0,expressDelivery: true,expressDeliveryTime: '1 business day',
-    expressDeliveryFee: 2000,
-    returnPolicy: '7-day return policy',
-    returnWindow: '7 days from delivery',warranty: '1 Year Apple Warranty',warrantyDetails: 'Comprehensive warranty covering manufacturing defects and hardware issues. Does not cover accidental damage or liquid damage.',shipFrom: 'Douala, Cameroon',dimensions: '30cm x 20cm x 5cm, 0.5kg',
-    shop: {
-      id: 1,
-      name: 'TechHub Store',type: 'shop',avatar: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100',
-      isVerified: true,
-      isOnline: true,
-      rating: 4.9,
-      reviewCount: 2847,
-      productCount: 1250,
-      responseRate: 98,
-      responseTime: 15,
-      location: 'Douala, Cameroon',joinedDate: 'March 2020',lastSeen: '2 hours ago',
-      hasBusinessLicense: true,
-      hasReturnPolicy: true,
-      badges: [
-        { name: 'Top Seller', icon: 'Award' },
-        { name: 'Fast Shipping', icon: 'Truck' },
-        { name: 'Quality Assured', icon: 'Shield' }
-      ]
-    }
-  };
-
+  // Load real product data
   useEffect(() => {
     const loadProduct = async () => {
       setIsLoading(true);
       
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setProduct(mockProduct);
-        setSelectedVariant(mockProduct.variants?.[1] || null);
+        // Load product details
+        const productResponse = await api.get(`/api/products/${productId}`);
+        const productData = productResponse.data;
+        setProduct(productData);
         
-        // Check if product is in wishlist
-        const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-        setIsWishlisted(wishlist.includes(productId));
+        // Set default variant if available
+        if (productData.variants && productData.variants.length > 0) {
+          setSelectedVariant(productData.variants[0]);
+        }
+        
+        // Load product reviews
+        try {
+          const reviewsResponse = await api.get(`/api/products/${productId}/reviews`);
+          setReviews(reviewsResponse.data || []);
+        } catch (error) {
+          console.log('No reviews available for this product');
+          setReviews([]);
+        }
+        
+        // Load related products
+        try {
+          const relatedResponse = await api.get(`/api/products/${productId}/related`);
+          setRelatedProducts(relatedResponse.data || []);
+        } catch (error) {
+          console.log('No related products available');
+          setRelatedProducts([]);
+        }
         
       } catch (error) {
         console.error('Error loading product:', error);
+        showToast('Failed to load product details', 'error', 3000);
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadProduct();
+    if (productId) {
+      loadProduct();
+    }
   }, [productId]);
 
   const handleBack = () => {
     navigate(-1);
   };
 
-  const handleWishlistToggle = () => {
-    const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-    
-    if (isWishlisted) {
-      const updatedWishlist = wishlist.filter(id => id !== productId);
-      localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
-      setIsWishlisted(false);
-    } else {
-      wishlist.push(productId);
-      localStorage.setItem('wishlist', JSON.stringify(wishlist));
-      setIsWishlisted(true);
+  const handleWishlistToggle = async () => {
+    if (!isAuthenticated()) {
+      showToast('Please log in to manage your wishlist', 'info', 3000);
+      navigate('/authentication-login-register');
+      return;
+    }
+
+    try {
+      if (isInWishlist(productId)) {
+        await removeFromWishlist(productId);
+        showToast('Removed from wishlist', 'success', 2000);
+      } else {
+        await addToWishlist({
+          id: productId,
+          name: product.name,
+          price: selectedVariant?.price || product.price,
+          image: product.images?.[0],
+          shopId: product.shop?.id,
+          shopName: product.shop?.name
+        });
+        showToast('Added to wishlist', 'success', 2000);
+      }
+    } catch (error) {
+      console.error('Error toggling wishlist:', error);
+      showToast('Failed to update wishlist', 'error', 3000);
     }
   };
 
@@ -184,9 +120,10 @@ const ProductDetail = () => {
       case 'copy':
         try {
           await navigator.clipboard.writeText(url);
-          // Show success toast
+          showToast('Link copied to clipboard!', 'success', 2000);
         } catch (error) {
           console.error('Failed to copy:', error);
+          showToast('Failed to copy link', 'error', 2000);
         }
         break;
       case 'whatsapp':
@@ -197,6 +134,8 @@ const ProductDetail = () => {
         break;
       case 'twitter':
         window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`);
+        break;
+      default:
         break;
     }
     
@@ -277,11 +216,11 @@ const ProductDetail = () => {
               <button
                 onClick={handleWishlistToggle}
                 className={`p-2 rounded-md marketplace-transition ${
-                  isWishlisted
+                  isInWishlist(productId)
                     ? 'text-error bg-error/10 hover:bg-error/20' :'text-text-secondary hover:text-foreground hover:bg-muted'
                 }`}
               >
-                <Icon name="Heart" size={20} className={isWishlisted ? 'fill-current' : ''} />
+                <Icon name="Heart" size={20} className={isInWishlist(productId) ? 'fill-current' : ''} />
               </button>
               
               <div className="relative">
@@ -356,12 +295,13 @@ const ProductDetail = () => {
             <ProductDescription product={product} />
 
             {/* Reviews Section */}
-            <ReviewsSection product={product} />
+            <ReviewsSection product={product} reviews={reviews} />
 
             {/* Related Products */}
             <RelatedProducts 
               currentProductId={product.id} 
               category={product.category} 
+              relatedProducts={relatedProducts}
             />
           </div>
         </div>
@@ -373,6 +313,15 @@ const ProductDetail = () => {
         selectedVariant={selectedVariant}
         quantity={quantity}
         onQuantityChange={setQuantity}
+        onAddToCart={() => addToCart({
+          id: product.id,
+          name: product.name,
+          price: selectedVariant?.price || product.price,
+          image: product.images?.[0],
+          shopId: product.shop?.id,
+          shopName: product.shop?.name,
+          variant: selectedVariant
+        })}
       />
     </div>
   );

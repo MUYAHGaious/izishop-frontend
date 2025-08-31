@@ -142,3 +142,31 @@ firebase.json
 
 # Misc
 *.tsbuildinfo
+
+# Debug and development files
+debug-logs/
+console-debugger.js
+debug.html
+build_output.txt
+
+# Large image files (consider if these should be tracked)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+
+# Configuration backups
+vite.config.mjs.timestamp-*.mjs
+
+# Documentation files (consider if these should be tracked)
+*.md
+!README.md
+!FRONTEND_README.md
+!PROJECT_DOCUMENTATION.md
+!SMART_SEARCH_IMPLEMENTATION.md
+!DASHBOARD_UPDATE_SUMMARY.md
+!DASHBOARD_DESIGN_CONCEPT.md
+
+# Directory structure files
+dirstructure.txt

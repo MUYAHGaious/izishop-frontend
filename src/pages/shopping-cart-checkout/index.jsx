@@ -1,3 +1,4 @@
+import { useCart } from '../../contexts/CartContext';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/ui/Header';
@@ -15,69 +16,14 @@ import Icon from '../../components/AppIcon';
 const ShoppingCartCheckout = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-  const [cartItems, setCartItems] = useState([]);
-  const [orderData, setOrderData] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Mock cart data
-  const mockCartItems = [
-    {
-      id: 1,
-      name: "Samsung Galaxy S24 Ultra",
-      shop: "TechHub Cameroon",
-      price: 850000,
-      quantity: 1,
-      image: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&h=400&fit=crop",
-      variant: "256GB, Titanium Black"
-    },
-    {
-      id: 2,
-      name: "Apple MacBook Pro 14-inch",
-      shop: "Digital Store Yaoundé",
-      price: 1200000,
-      quantity: 1,
-      image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop",
-      variant: "M3 Pro, 512GB SSD"
-    },
-    {
-      id: 3,
-      name: "Sony WH-1000XM5 Headphones",
-      shop: "Audio Paradise",
-      price: 125000,
-      quantity: 2,
-      image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
-      variant: "Midnight Black"
-    }
-  ];
-
-  useEffect(() => {
-    // Simulate loading cart data
-    const timer = setTimeout(() => {
-      setCartItems(mockCartItems);
-      setIsLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleUpdateQuantity = (itemId, newQuantity) => {
-    setCartItems(items =>
-      items.map(item =>
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      )
-    );
-  };
-
-  const handleRemoveItem = (itemId) => {
-    setCartItems(items => items.filter(item => item.id !== itemId));
-  };
+  const { cartItems, updateQuantity, removeFromCart, isLoading } = useCart();
+  
 
   const handleProceedToCheckout = () => {
     setCurrentStep(2);
   };
 
   const handleShippingNext = (shippingData) => {
-    setOrderData(prev => ({ ...prev, ...shippingData }));
     setCurrentStep(3);
   };
 
@@ -87,15 +33,6 @@ const ShoppingCartCheckout = () => {
     const tax = subtotal * 0.1925;
     const total = subtotal + shipping + tax;
 
-    setOrderData(prev => ({ 
-      ...prev, 
-      ...paymentData,
-      items: cartItems,
-      subtotal,
-      shipping,
-      tax,
-      total
-    }));
     setCurrentStep(4);
   };
 
@@ -194,8 +131,8 @@ const ShoppingCartCheckout = () => {
                     <CartItem
                       key={item.id}
                       item={item}
-                      onUpdateQuantity={handleUpdateQuantity}
-                      onRemove={handleRemoveItem}
+                      onUpdateQuantity={updateQuantity}
+                      onRemove={removeFromCart}
                     />
                   ))}
                 </div>
@@ -256,7 +193,7 @@ const ShoppingCartCheckout = () => {
 
           {/* Confirmation Step */}
           {currentStep === 4 && (
-            <OrderConfirmation orderData={orderData} />
+            <OrderConfirmation orderData={{items: cartItems}} />
           )}
         </div>
       </main>

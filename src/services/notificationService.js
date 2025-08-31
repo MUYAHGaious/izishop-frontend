@@ -538,14 +538,14 @@ export class NotificationService {
     
     this.isRunning = true;
     
-    // Poll for notifications more frequently - every 5 seconds for real-time feel
+    // Poll for notifications every 2 minutes for balanced real-time experience
     this.intervalId = setInterval(async () => {
       try {
         await this.fetchNotifications();
       } catch (error) {
         console.error('Error fetching notifications:', error);
       }
-    }, 5000); // Reduced from 30 seconds to 5 seconds
+    }, 120000); // 2 minutes - balanced approach
     
     // Initial fetch
     this.fetchNotifications();

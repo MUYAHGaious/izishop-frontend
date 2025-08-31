@@ -6,6 +6,7 @@ import Input from './Input';
 import NotificationBell from './NotificationBell';
 import SettingsOverlay from './SettingsOverlay';
 import { useAuth } from '../../contexts/AuthContext';
+import { useWishlist } from '../../contexts/WishlistContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -16,6 +17,10 @@ const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
+  const { getWishlistCount } = useWishlist();
+  
+  // Safety check for wishlist count
+  const wishlistCount = getWishlistCount ? getWishlistCount() : 0;
 
   // Determine dashboard path for admin/shop owner with safe fallbacks
   let dashboardPath = null;
@@ -91,14 +96,12 @@ const Header = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-surface border-b border-border z-header">
-      <div className="flex items-center justify-between h-16 px-3 sm:px-4 lg:px-6">
-        {/* Logo */}
-        <Link to="/product-catalog" className="flex items-center space-x-2 flex-shrink-0">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <Icon name="ShoppingBag" size={20} color="white" />
-          </div>
-          <span className="text-xl font-bold text-primary hidden sm:block">IziShop</span>
+    <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-b border-white/20 z-header shadow-sm">
+      <div className="flex items-center justify-between h-18 px-6 lg:px-8">
+        {/* Company Logo */}
+        <Link to="/product-catalog" className="flex items-center space-x-3 flex-shrink-0">
+          <Icon name="Package" size={28} className="text-teal-600" />
+          <span className="text-2xl font-bold text-gray-900 hidden sm:block">IziShopin</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -118,48 +121,54 @@ const Header = () => {
           ))}
         </nav>
 
-        {/* Search Bar */}
-        <div className="hidden sm:flex flex-1 max-w-md mx-2 sm:mx-4 lg:mx-8">
-          <form onSubmit={handleSearch} className="relative">
-            <Input
+        {/* Minimal Search Bar */}
+        <div className="flex-1 max-w-lg mx-8">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Icon name="Search" size={18} className="text-gray-400" />
+            </div>
+            <input
               type="search"
-              placeholder="Search products, shops..."
+              placeholder="Search products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4"
+              className="w-full pl-12 pr-4 py-3 bg-gray-100/80 backdrop-blur-sm border-0 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
             />
-            <Icon
-              name="Search"
-              size={18}
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary"
-            />
-          </form>
+            <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
+              <button className="p-1.5 bg-gray-900 rounded-xl hover:bg-gray-800 transition-colors">
+                <Icon name="Search" size={14} className="text-white" />
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Desktop Actions */}
-        <div className="hidden sm:flex items-center space-x-2 lg:space-x-3">
-          {/* Only show notification bell for authenticated users */}
-          {isAuthenticated() && (
-            <NotificationBell variant="header" size={20} />
-          )}
+        {/* Clean Right Section */}
+        <div className="flex items-center space-x-6">
+          {/* Clean Icons */}
+          <button className="p-2 hover:bg-gray-100/50 rounded-xl transition-colors">
+            <Icon name="Bell" size={20} className="text-gray-600" />
+          </button>
           
-          <Link
-            to="/shopping-cart"
-            className="relative p-2 text-text-secondary hover:text-text-primary transition-colors"
-          >
-            <Icon name="ShoppingCart" size={20} />
-            {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center">
-                {cartCount}
+          {/* Wishlist/Heart Icon */}
+          <Link to="/wishlist" className="p-2 hover:bg-gray-100/50 rounded-xl transition-colors relative">
+            <Icon name="Heart" size={20} className="text-red-500" />
+            {wishlistCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {wishlistCount}
               </span>
             )}
           </Link>
           
-          {/* Account Button with Profile Picture */}
-          {isAuthenticated() ? (
-            <div className="relative group">
-              <button className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
+          {/* User Info */}
+          <div className="flex items-center space-x-3">
+            <span className="text-sm font-medium text-gray-700 hidden lg:block">
+              {user?.first_name || 'User'}
+            </span>
+            
+            {/* User Avatar */}
+            {isAuthenticated() ? (
+              <div className="relative group">
+                <button className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden shadow-lg hover:shadow-xl transition-all">
                   {userProfileImage ? (
                     <img 
                       src={userProfileImage} 
@@ -167,13 +176,11 @@ const Header = () => {
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : (
-                    <span className="text-xs font-bold text-white">
+                    <span className="text-sm font-bold text-white">
                       {user?.first_name?.[0]?.toUpperCase() || 'U'}
                     </span>
                   )}
-                </div>
-                <Icon name="ChevronDown" size={16} className="text-gray-500" />
-              </button>
+                </button>
               
               {/* Dropdown Menu */}
               <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
@@ -271,7 +278,7 @@ const Header = () => {
                   </div>
                 </div>
               </div>
-            </div>
+              </div>
           ) : (
             <Button 
               variant="default" 
@@ -344,6 +351,24 @@ const Header = () => {
               </div>
               )}
               
+              {/* Mobile Wishlist */}
+              <Link
+                to="/wishlist"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center justify-between px-3 py-3 rounded-md text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-muted transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <Icon name="Heart" size={18} />
+                  <span>Wishlist</span>
+                </div>
+                {wishlistCount > 0 && (
+                  <span className="bg-red-500 text-white text-xs font-medium rounded-full px-2 py-1">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
+              
+              {/* Mobile Cart */}
               <Link
                 to="/shopping-cart"
                 onClick={() => setIsMenuOpen(false)}
@@ -463,8 +488,8 @@ const Header = () => {
           </div>
         </div>
       )}
+      </div>
 
-      {/* Settings Overlay */}
       <SettingsOverlay
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}

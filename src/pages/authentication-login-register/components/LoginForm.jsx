@@ -193,42 +193,50 @@ const LoginForm = ({ onLogin, isLoading, onSwitchToRegister }) => {
 
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-foreground mb-2">Welcome Back</h2>
-        <p className="text-text-secondary">Sign in to your IziShop account</p>
-      </div>
-
-      <LoginEmailInput
-        label="Email Address"
-        name="email"
-        placeholder="Enter your email"
-        value={formData.email}
-        onChange={handleInputChange}
-        debounceDelay={600}
-        minLength={4}
-        onSwitchToRegister={onSwitchToRegister}
-        required
-      />
-
-      <div className="relative">
-        <Input
-          label="Password"
-          type={showPassword ? 'text' : 'password'}
-          name="password"
-          placeholder="Enter your password"
-          value={formData.password}
+    <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
+      <div>
+        <input
+          type="email"
+          name="email"
+          placeholder="Enter your email"
+          value={formData.email}
           onChange={handleInputChange}
-          error={loginError || errors.password}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent placeholder-gray-500 transition-all duration-300 focus:scale-[1.01] transform"
           required
         />
-        <button
-          type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-9 text-text-secondary hover:text-foreground marketplace-transition"
-        >
-          <Icon name={showPassword ? 'EyeOff' : 'Eye'} size={16} />
-        </button>
+        {errors.email && (
+          <p className="text-sm text-red-500 mt-1">{errors.email}</p>
+        )}
+      </div>
+
+      <div className="relative">
+        <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-teal-500 focus-within:border-transparent transition-all duration-300 focus-within:scale-[1.01] transform">
+          <div className="flex items-center px-3">
+            <div className="w-2 h-2 bg-gray-400 rounded-full mx-0.5"></div>
+            <div className="w-2 h-2 bg-gray-400 rounded-full mx-0.5"></div>
+            <div className="w-2 h-2 bg-gray-400 rounded-full mx-0.5"></div>
+            <div className="w-2 h-2 bg-gray-400 rounded-full mx-0.5"></div>
+          </div>
+          <input
+            type={showPassword ? 'text' : 'password'}
+            name="password"
+            placeholder=""
+            value={formData.password}
+            onChange={handleInputChange}
+            className="flex-1 px-3 py-3 focus:outline-none"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="px-3 py-3 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <Icon name={showPassword ? 'EyeOff' : 'Eye'} size={16} />
+          </button>
+        </div>
+        {(loginError || errors.password) && (
+          <p className="text-sm text-red-500 mt-1">{loginError || errors.password}</p>
+        )}
       </div>
 
       <div className="flex items-center justify-between">
@@ -240,34 +248,25 @@ const LoginForm = ({ onLogin, isLoading, onSwitchToRegister }) => {
             onChange={handleInputChange}
             disabled={isLoadingRemembered}
           />
-          {formData.rememberMe && (
-            <div className="flex items-center text-xs text-text-secondary">
-              <Icon name="Shield" size={12} className="mr-1" />
-              Secure
-            </div>
-          )}
         </div>
         
         <Link
           to="/forgot-password"
-          className="text-sm text-primary hover:text-primary/80 marketplace-transition"
+          className="text-sm text-teal-600 hover:text-teal-500 transition-colors"
         >
-          Forgot password?
+          Forgot Password?
         </Link>
       </div>
-
 
       <Button
         type="submit"
         variant="default"
         fullWidth
         loading={isLoading}
-        iconName="LogIn"
-        iconPosition="right"
+        className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-lg font-medium transition-all duration-300 hover:scale-[1.02] hover:shadow-lg transform disabled:scale-100"
       >
-        Sign In
+        {isLoading ? 'Signing in...' : 'Sign In'}
       </Button>
-
     </form>
   );
 };

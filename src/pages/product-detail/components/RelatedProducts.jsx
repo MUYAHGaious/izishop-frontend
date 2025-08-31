@@ -1,111 +1,74 @@
 import React, { useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Image from '../../../components/AppImage';
+import { useAuth } from '../../../contexts/AuthContext';
+import { useCart } from '../../../contexts/CartContext';
+import { useWishlist } from '../../../contexts/WishlistContext';
+import { showToast } from '../../../components/ui/Toast';
 
-const RelatedProducts = ({ currentProductId, category }) => {
+const RelatedProducts = ({ currentProductId, category, relatedProducts = [] }) => {
   const scrollRef = useRef(null);
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
-  const mockRelatedProducts = [
-    {
-      id: 2,
-      name: 'Samsung Galaxy S23 Ultra',
-      price: 850000,
-      originalPrice: 950000,
-      image: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400',
-      rating: 4.6,
-      reviewCount: 234,
-      shop: {
-        name: 'TechHub Store',
-        isVerified: true
-      },
-      isSecondHand: false,
-      discount: 11,
-      inStock: true
-    },
-    {
-      id: 3,
-      name: 'iPhone 13 Pro Max',
-      price: 750000,
-      originalPrice: 850000,
-      image: 'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400',
-      rating: 4.8,
-      reviewCount: 456,
-      shop: {
-        name: 'Apple Store',
-        isVerified: true
-      },
-      isSecondHand: false,
-      discount: 12,
-      inStock: true
-    },
-    {
-      id: 4,
-      name: 'Google Pixel 7 Pro',
-      price: 650000,
-      originalPrice: null,
-      image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400',
-      rating: 4.4,
-      reviewCount: 189,
-      shop: {
-        name: 'Mobile World',
-        isVerified: false
-      },
-      isSecondHand: false,
-      discount: null,
-      inStock: true
-    },
-    {
-      id: 5,
-      name: 'OnePlus 11 5G',
-      price: 550000,
-      originalPrice: 600000,
-      image: 'https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=400',
-      rating: 4.3,
-      reviewCount: 167,
-      shop: {
-        name: 'OnePlus Official',
-        isVerified: true
-      },
-      isSecondHand: false,
-      discount: 8,
-      inStock: false
-    },
-    {
-      id: 6,
-      name: 'Xiaomi Mi 13 Pro',
-      price: 480000,
-      originalPrice: null,
-      image: 'https://images.unsplash.com/photo-1574944985070-8f3ebc6b79d2?w=400',
-      rating: 4.2,
-      reviewCount: 203,
-      shop: {
-        name: 'Xiaomi Store',
-        isVerified: true
-      },
-      isSecondHand: false,
-      discount: null,
-      inStock: true
-    },
-    {
-      id: 7,
-      name: 'Huawei P50 Pro',
-      price: 420000,
-      originalPrice: 500000,
-      image: 'https://images.unsplash.com/photo-1580910051074-3eb694886505?w=400',
-      rating: 4.1,
-      reviewCount: 145,
-      shop: {
-        name: 'Huawei Official',
-        isVerified: true
-      },
-      isSecondHand: true,
-      condition: 'Excellent',
-      discount: 16,
-      inStock: true
+  const handleAddToCart = async (product) => {
+    if (!isAuthenticated()) {
+      showToast('Please log in to add items to your cart', 'info', 3000);
+      navigate('/authentication-login-register');
+      return;
     }
-  ];
+
+    try {
+      await addToCart({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        shopId: product.shop?.id,
+        shopName: product.shop?.name
+      });
+      showToast(`${product.name} added to cart!`, 'success', 2000);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      showToast('Failed to add item to cart', 'error', 3000);
+    }
+  };
+
+  const handleWishlistToggle = async (product) => {
+    if (!isAuthenticated()) {
+      showToast('Please log in to manage your wishlist', 'info', 3000);
+      navigate('/authentication-login-register');
+      return;
+    }
+
+    try {
+      if (isInWishlist(product.id)) {
+        await removeFromWishlist(product.id);
+        showToast('Removed from wishlist', 'success', 2000);
+      } else {
+        await addToWishlist({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          shopId: product.shop?.id,
+          shopName: product.shop?.name
+        });
+        showToast('Added to wishlist', 'success', 2000);
+      }
+    } catch (error) {
+      console.error('Error toggling wishlist:', error);
+      showToast('Failed to update wishlist', 'error', 3000);
+    }
+  };
+
+  const handleProductClick = (productId) => {
+    navigate(`/product-detail?id=${productId}`);
+  };
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('fr-CM', {
@@ -115,6 +78,15 @@ const RelatedProducts = ({ currentProductId, category }) => {
     }).format(price);
   };
 
+  const calculateDiscount = (originalPrice, currentPrice) => {
+    if (!originalPrice || originalPrice <= currentPrice) return null;
+    return Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
+  };
+
+  if (!relatedProducts || relatedProducts.length === 0) {
+    return null;
+  }
+
   const scroll = (direction) => {
     if (scrollRef.current) {
       const scrollAmount = 300;
@@ -123,25 +95,6 @@ const RelatedProducts = ({ currentProductId, category }) => {
         behavior: 'smooth'
       });
     }
-  };
-
-  const handleAddToCart = (product, e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Add to cart logic here
-    console.log('Adding to cart:', product);
-    
-    // Show success feedback
-    const button = e.target.closest('button');
-    const originalText = button.textContent;
-    button.textContent = 'Added!';
-    button.disabled = true;
-    
-    setTimeout(() => {
-      button.textContent = originalText;
-      button.disabled = false;
-    }, 2000);
   };
 
   return (
@@ -175,7 +128,7 @@ const RelatedProducts = ({ currentProductId, category }) => {
           className="flex space-x-4 overflow-x-auto scrollbar-hide scroll-smooth"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {mockRelatedProducts.map((product) => (
+          {relatedProducts.map((product) => (
             <Link
               key={product.id}
               to={`/product-detail?id=${product.id}`}
@@ -279,7 +232,7 @@ const RelatedProducts = ({ currentProductId, category }) => {
                   size="sm"
                   fullWidth
                   disabled={!product.inStock}
-                  onClick={(e) => handleAddToCart(product, e)}
+                  onClick={() => handleAddToCart(product)}
                   className="mt-3"
                 >
                   <Icon name="ShoppingCart" size={14} className="mr-2" />

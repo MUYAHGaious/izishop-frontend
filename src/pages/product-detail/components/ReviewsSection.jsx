@@ -2,92 +2,31 @@ import React, { useState } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Image from '../../../components/AppImage';
+import { useAuth } from '../../../contexts/AuthContext';
+import { showToast } from '../../../components/ui/Toast';
 
-const ReviewsSection = ({ product }) => {
+const ReviewsSection = ({ product, reviews = [] }) => {
   const [selectedRating, setSelectedRating] = useState('all');
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [expandedReviews, setExpandedReviews] = useState(new Set());
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [newReview, setNewReview] = useState({ rating: 5, title: '', content: '' });
+  const { isAuthenticated } = useAuth();
 
-  const mockReviews = [
-    {
-      id: 1,
-      user: {
-        name: 'Marie Dubois',
-        avatar: 'https://randomuser.me/api/portraits/women/1.jpg',
-        isVerified: true
-      },
-      rating: 5,
-      date: '2025-01-10',
-      title: 'Excellent product quality!',
-      content: `I'm really impressed with this product. The quality is outstanding and it arrived exactly as described. The packaging was secure and the delivery was fast. Would definitely recommend to others and will buy again.`,
-      isVerifiedPurchase: true,
-      helpful: 12,
-      images: [
-        'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400','https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400'
-      ],
-      sellerResponse: {
-        date: '2025-01-11',content: 'Thank you so much for your wonderful review! We really appreciate your feedback and are glad you love the product.'
-      }
-    },
-    {
-      id: 2,
-      user: {
-        name: 'Jean-Paul Kamga',avatar: 'https://randomuser.me/api/portraits/men/2.jpg',
-        isVerified: true
-      },
-      rating: 4,
-      date: '2025-01-08',title: 'Good value for money',
-      content: `Overall satisfied with the purchase. The product works as expected and the price is reasonable. Delivery took a bit longer than expected but the seller kept me updated throughout the process.`,
-      isVerifiedPurchase: true,
-      helpful: 8,
-      images: []
-    },
-    {
-      id: 3,
-      user: {
-        name: 'Fatima Nkomo',avatar: 'https://randomuser.me/api/portraits/women/3.jpg',
-        isVerified: false
-      },
-      rating: 3,
-      date: '2025-01-05',title: 'Average quality',
-      content: `The product is okay but not exceptional. It does what it's supposed to do but I expected better quality for the price. The seller was responsive to my questions though.`,
-      isVerifiedPurchase: true,
-      helpful: 3,
-      images: []
-    },
-    {
-      id: 4,
-      user: {
-        name: 'Emmanuel Tabi',
-        avatar: 'https://randomuser.me/api/portraits/men/4.jpg',
-        isVerified: true
-      },
-      rating: 5,
-      date: '2025-01-03',
-      title: 'Highly recommended!',
-      content: `Fantastic product! Exceeded my expectations in every way. The build quality is solid, features work perfectly, and customer service was excellent. Will definitely shop here again.`,
-      isVerifiedPurchase: true,
-      helpful: 15,
-      images: [
-        'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400'
-      ]
-    }
-  ];
+  // Calculate rating distribution from real reviews
+  const ratingDistribution = reviews.reduce((acc, review) => {
+    acc[review.rating] = (acc[review.rating] || 0) + 1;
+    return acc;
+  }, { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 });
 
-  const ratingDistribution = {
-    5: 45,
-    4: 25,
-    3: 15,
-    2: 10,
-    1: 5
-  };
-
-  const totalReviews = Object.values(ratingDistribution).reduce((sum, count) => sum + count, 0);
-  const averageRating = product?.rating || 4.2;
+  const totalReviews = reviews.length;
+  const averageRating = totalReviews > 0 
+    ? (reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews).toFixed(1)
+    : product?.rating || 0;
 
   const filteredReviews = selectedRating === 'all' 
-    ? mockReviews 
-    : mockReviews.filter(review => review.rating === parseInt(selectedRating));
+    ? reviews 
+    : reviews.filter(review => review.rating === parseInt(selectedRating));
 
   const displayedReviews = showAllReviews ? filteredReviews : filteredReviews.slice(0, 3);
 
@@ -99,6 +38,38 @@ const ReviewsSection = ({ product }) => {
       newExpanded.add(reviewId);
     }
     setExpandedReviews(newExpanded);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!isAuthenticated()) {
+      showToast('Please log in to submit a review', 'info', 3000);
+      return;
+    }
+
+    if (!newReview.title.trim() || !newReview.content.trim()) {
+      showToast('Please fill in all required fields', 'warning', 3000);
+      return;
+    }
+
+    try {
+      // TODO: Submit review to backend API
+      // const response = await api.post(`/api/products/${product.id}/reviews`, newReview);
+      
+      showToast('Review submitted successfully!', 'success', 3000);
+      setNewReview({ rating: 5, title: '', content: '' });
+      setShowReviewForm(false);
+      
+      // Refresh reviews (this would typically be handled by the parent component)
+      // window.location.reload();
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      showToast('Failed to submit review', 'error', 3000);
+    }
+  };
+
+  const handleHelpfulClick = (reviewId) => {
+    // TODO: Implement helpful vote functionality
+    console.log('Marked review as helpful:', reviewId);
   };
 
   const formatDate = (dateString) => {

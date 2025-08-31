@@ -2,37 +2,11 @@ import React from 'react';
 import Button from '../../../components/ui/Button';
 import Image from '../../../components/AppImage';
 import Icon from '../../../components/AppIcon';
+import { useCart } from '../../../contexts/CartContext';
 
 const OrderReviewForm = ({ onNext, onBack, formData, setFormData }) => {
-  const cartItems = [
-    {
-      id: 1,
-      name: "iPhone 14 Pro Max 256GB",
-      image: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400",
-      price: 850000,
-      quantity: 1,
-      seller: "TechStore Cameroun",
-      condition: "New"
-    },
-    {
-      id: 2,
-      name: "Samsung Galaxy Buds Pro",
-      image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400",
-      price: 125000,
-      quantity: 2,
-      seller: "AudioWorld CM",
-      condition: "New"
-    },
-    {
-      id: 3,
-      name: "MacBook Air M2 - Occasion",
-      image: "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=400",
-      price: 450000,
-      quantity: 1,
-      seller: "SecondHand Tech",
-      condition: "Very good condition"
-    }
-  ];
+  const { cartItems, updateQuantity, removeFromCart } = useCart();
+  
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const deliveryCost = formData.deliveryCost || 0;
@@ -48,15 +22,7 @@ const OrderReviewForm = ({ onNext, onBack, formData, setFormData }) => {
     }).format(amount);
   };
 
-  const handleQuantityChange = (itemId, newQuantity) => {
-    // In a real app, this would update the cart
-    console.log(`Update item ${itemId} quantity to ${newQuantity}`);
-  };
-
-  const removeItem = (itemId) => {
-    // In a real app, this would remove from cart
-    console.log(`Remove item ${itemId} from cart`);
-  };
+  
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -97,7 +63,7 @@ const OrderReviewForm = ({ onNext, onBack, formData, setFormData }) => {
                           <Button
                             variant="outline"
                             size="xs"
-                            onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
                             disabled={item.quantity <= 1}
                             iconName="Minus"
                             className="w-8 h-8"
@@ -106,7 +72,7 @@ const OrderReviewForm = ({ onNext, onBack, formData, setFormData }) => {
                           <Button
                             variant="outline"
                             size="xs"
-                            onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
                             iconName="Plus"
                             className="w-8 h-8"
                           />
@@ -120,7 +86,7 @@ const OrderReviewForm = ({ onNext, onBack, formData, setFormData }) => {
                         <Button
                           variant="ghost"
                           size="xs"
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => removeFromCart(item.id)}
                           iconName="Trash2"
                           className="text-error hover:text-error"
                         />

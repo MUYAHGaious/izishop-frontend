@@ -73,22 +73,13 @@ const RegisterForm = ({ onRegister, isLoading }) => {
   const validateStep = (step) => {
     const newErrors = {};
 
-    // Step 1 is now just a welcome screen, no validation needed
-
-    if (step === 2) {
+    // Step 1: Personal Information (First Name, Last Name, Password, Confirm Password)
+    if (step === 1) {
       if (!formData.firstName) {
         newErrors.firstName = 'First name is required';
       }
       if (!formData.lastName) {
         newErrors.lastName = 'Last name is required';
-      }
-      if (!formData.email) {
-        newErrors.email = 'Email is required';
-      } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-        newErrors.email = 'Please enter a valid email address';
-      }
-      if (!formData.phone) {
-        newErrors.phone = 'Phone number is required';
       }
       if (!formData.password) {
         newErrors.password = 'Password is required';
@@ -99,6 +90,18 @@ const RegisterForm = ({ onRegister, isLoading }) => {
         newErrors.confirmPassword = 'Please confirm your password';
       } else if (formData.password !== formData.confirmPassword) {
         newErrors.confirmPassword = 'Passwords do not match';
+      }
+    }
+
+    // Step 2: Contact Information (Email, Phone)
+    if (step === 2) {
+      if (!formData.email) {
+        newErrors.email = 'Email is required';
+      } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+        newErrors.email = 'Please enter a valid email address';
+      }
+      if (!formData.phone) {
+        newErrors.phone = 'Phone number is required';
       }
     }
 
@@ -287,46 +290,14 @@ const RegisterForm = ({ onRegister, isLoading }) => {
 
 
   const renderStep1 = () => (
-    <div className="space-y-5">
-      <div className="text-center p-6 bg-gradient-to-br from-teal-50 to-blue-50 rounded-xl border border-teal-100">
-        <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-          </svg>
-        </div>
-        <h3 className="text-xl font-bold text-gray-900 mb-2">Welcome to IziShopin!</h3>
-        <p className="text-gray-600 mb-4">
-          Join our marketplace community and unlock amazing features
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-          <div className="flex items-center gap-2 text-left">
-            <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-            Browse thousands of products
-          </div>
-          <div className="flex items-center gap-2 text-left">
-            <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-            Secure payment options
-          </div>
-          <div className="flex items-center gap-2 text-left">
-            <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-            Upgrade to seller anytime
-          </div>
-          <div className="flex items-center gap-2 text-left">
-            <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-            24/7 customer support
-          </div>
-        </div>
-        <div className="mt-4 p-3 bg-white rounded-lg border border-teal-200">
-          <p className="text-xs text-teal-600 font-medium">
-            💡 Start as a customer and upgrade to seller or delivery agent later in your settings!
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderStep2 = () => (
     <div className="space-y-5 w-full max-w-full">
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-foreground mb-2">Personal Information</h2>
+        <p className="text-text-secondary">
+          Let's start with your basic information
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           label="First Name"
@@ -350,33 +321,6 @@ const RegisterForm = ({ onRegister, isLoading }) => {
           required
         />
       </div>
-
-      <ValidatedInput
-        label="Email Address"
-        type="email"
-        name="email"
-        placeholder="Enter your email address"
-        value={formData.email}
-        onChange={handleInputChange}
-        validationType="email"
-        debounceDelay={600}
-        minLength={3}
-        required
-      />
-
-      <ValidatedInput
-        label="Phone Number"
-        type="tel"
-        name="phone"
-        placeholder="+237 6XX XXX XXX"
-        value={formData.phone}
-        onChange={handleInputChange}
-        validationType="phone"
-        debounceDelay={600}
-        minLength={9}
-        description="International format (e.g., +237 6XX XXX XXX)"
-        required
-      />
 
       <div className="relative">
         <Input
@@ -440,6 +384,44 @@ const RegisterForm = ({ onRegister, isLoading }) => {
           <Icon name={showConfirmPassword ? 'EyeOff' : 'Eye'} size={18} />
         </button>
       </div>
+    </div>
+  );
+
+  const renderStep2 = () => (
+    <div className="space-y-5 w-full max-w-full">
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-foreground mb-2">Contact Information</h2>
+        <p className="text-text-secondary">
+          We'll need your email and phone number to get in touch
+        </p>
+      </div>
+
+      <ValidatedInput
+        label="Email Address"
+        type="email"
+        name="email"
+        placeholder="Enter your email address"
+        value={formData.email}
+        onChange={handleInputChange}
+        validationType="email"
+        debounceDelay={600}
+        minLength={3}
+        required
+      />
+
+      <ValidatedInput
+        label="Phone Number"
+        type="tel"
+        name="phone"
+        placeholder="+237 6XX XXX XXX"
+        value={formData.phone}
+        onChange={handleInputChange}
+        validationType="phone"
+        debounceDelay={600}
+        minLength={9}
+        description="International format (e.g., +237 6XX XXX XXX)"
+        required
+      />
     </div>
   );
 

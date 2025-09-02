@@ -12,6 +12,9 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [cartCount, setCartCount] = useState(0);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [cartAnimating, setCartAnimating] = useState(false);
+  const [notificationAnimating, setNotificationAnimating] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [userProfileImage, setUserProfileImage] = useState(null);
   const location = useLocation();
@@ -35,11 +38,32 @@ const Header = () => {
     dashboardPath = null;
   }
 
-  // Update cart count and profile image from localStorage
+  // Update cart count, notifications, and profile image from localStorage
   useEffect(() => {
     const updateCartCount = () => {
       const count = localStorage.getItem('cartItemCount');
-      setCartCount(count ? parseInt(count) : 0);
+      const newCount = count ? parseInt(count) : 0;
+      const prevCount = cartCount;
+      
+      if (newCount > prevCount && prevCount > 0) {
+        setCartAnimating(true);
+        setTimeout(() => setCartAnimating(false), 1000);
+      }
+      
+      setCartCount(newCount);
+    };
+
+    const updateNotificationCount = () => {
+      const count = localStorage.getItem('notificationCount');
+      const newCount = count ? parseInt(count) : 0;
+      const prevCount = notificationCount;
+      
+      if (newCount > prevCount && prevCount >= 0) {
+        setNotificationAnimating(true);
+        setTimeout(() => setNotificationAnimating(false), 1000);
+      }
+      
+      setNotificationCount(newCount);
     };
 
     const updateProfileImage = () => {
@@ -50,25 +74,28 @@ const Header = () => {
     };
 
     updateCartCount();
+    updateNotificationCount();
     updateProfileImage();
     
     // Listen for storage changes
     window.addEventListener('storage', updateCartCount);
+    window.addEventListener('storage', updateNotificationCount);
     window.addEventListener('storage', updateProfileImage);
     
-    // Custom event for cart updates
+    // Custom events
     window.addEventListener('cartUpdated', updateCartCount);
-    
-    // Custom event for profile image updates
+    window.addEventListener('notificationUpdated', updateNotificationCount);
     window.addEventListener('profileImageUpdated', updateProfileImage);
     
     return () => {
       window.removeEventListener('storage', updateCartCount);
+      window.removeEventListener('storage', updateNotificationCount);
       window.removeEventListener('storage', updateProfileImage);
       window.removeEventListener('cartUpdated', updateCartCount);
+      window.removeEventListener('notificationUpdated', updateNotificationCount);
       window.removeEventListener('profileImageUpdated', updateProfileImage);
     };
-  }, [user]);
+  }, [user, cartCount, notificationCount]);
 
   const isActive = (path) => location.pathname === path;
 
@@ -77,6 +104,7 @@ const Header = () => {
     return [
       { label: 'Products', path: '/product-catalog', icon: 'Package' },
       { label: 'Shops', path: '/shops-listing', icon: 'Store' },
+      { label: 'Marketplace', path: '/casual-marketplace', icon: 'ShoppingBag' },
     ];
   };
 
@@ -122,6 +150,14 @@ const Header = () => {
           >
             Shops
           </Link>
+          <Link
+            to="/casual-marketplace"
+            className={`text-sm font-medium transition-colors hover:text-teal-600 ${
+              isActive('/casual-marketplace') ? 'text-teal-600' : 'text-gray-700'
+            }`}
+          >
+            Marketplace
+          </Link>
         </nav>
 
         {/* Search Bar */}
@@ -153,6 +189,26 @@ const Header = () => {
             {wishlistCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                 {wishlistCount}
+              </span>
+            )}
+          </Link>
+
+          {/* Bell Icon */}
+          <Link to="/notifications" className="p-2 hover:bg-gray-100/50 rounded-xl transition-colors relative">
+            <Icon name="Bell" size={20} className="text-amber-600" />
+            {notificationCount > 0 && (
+              <span className={`absolute -top-1 -right-1 bg-amber-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center ${notificationAnimating ? 'animate-bounce' : ''}`}>
+                {notificationCount > 99 ? '99+' : notificationCount}
+              </span>
+            )}
+          </Link>
+
+          {/* Cart Icon */}
+          <Link to="/shopping-cart" className="p-2 hover:bg-gray-100/50 rounded-xl transition-colors relative">
+            <Icon name="ShoppingCart" size={20} className="text-teal-600" />
+            {cartCount > 0 && (
+              <span className={`absolute -top-1 -right-1 bg-teal-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center ${cartAnimating ? 'animate-bounce' : ''}`}>
+                {cartCount > 99 ? '99+' : cartCount}
               </span>
             )}
           </Link>

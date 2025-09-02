@@ -43,6 +43,8 @@ import CustomerSupport from "./pages/customer-support";
 import OrderManagement from "./pages/order-management";
 import CustomerDashboard from "./pages/customer-dashboard";
 import DeliveryAgentDashboard from "./pages/delivery-agent-dashboard";
+import UserSettings from "./pages/user-settings";
+import CasualMarketplace from "./pages/casual-marketplace";
 
 // Protected Route Component
 const ProtectedRoute = ({ children, requiredRole = null }) => {
@@ -169,6 +171,23 @@ const AppRoutes = () => {
         element={
           <AuthenticatedRouteGuard>
             <UserProfile />
+          </AuthenticatedRouteGuard>
+        } 
+      />
+      
+      <Route 
+        path="/settings" 
+        element={
+          <AuthenticatedRouteGuard>
+            <UserSettings />
+          </AuthenticatedRouteGuard>
+        } 
+      />
+      <Route 
+        path="/casual-marketplace" 
+        element={
+          <AuthenticatedRouteGuard>
+            <CasualMarketplace />
           </AuthenticatedRouteGuard>
         } 
       />

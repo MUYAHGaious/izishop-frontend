@@ -20,8 +20,21 @@ const MetricsCards = ({ metrics }) => {
         const response = await api.getShopOwnerTodayStats();
         setRealTimeStats(response);
       } catch (error) {
-        console.error('Failed to fetch real-time stats:', error);
-        setRealTimeStats(null);
+        // Handle expected errors gracefully for new shop owners
+        const is404Error = error.status === 404 || error.message?.includes('404') || error.message?.includes('Shop not found') || error.message?.includes('not found');
+        if (is404Error) {
+          console.log('No real-time stats found - expected for new shops');
+          setRealTimeStats({
+            revenue: 0,
+            orders: 0,
+            customers: 0,
+            products: 0,
+            growth: { revenue: 0, orders: 0, customers: 0, products: 0 }
+          });
+        } else {
+          console.error('Failed to fetch real-time stats:', error);
+          setRealTimeStats(null);
+        }
       } finally {
         setLoadingStats(false);
       }

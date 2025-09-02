@@ -228,31 +228,56 @@ const ShopOwnerDashboard = () => {
         setNoShopFound(false);
         
         // Fetch initial data using cached approach
+        console.log('📊 Dashboard: Fetching initial data...');
         const data = await fetchMultipleData(['shopData', 'productStats', 'products']);
+        console.log('📊 Dashboard: Received data:', data);
         
         if (!isMounted) return; // Prevent state updates if component unmounted
         
         // Update shop data
         if (data.shopData) {
-          // Fetch real rating data
-          let ratingStats = { average_rating: 0, total_reviews: 0 };
-          try {
-            ratingStats = await api.getMyShopRatingStats();
-          } catch (error) {
-            console.warn('Failed to fetch rating stats:', error);
+          console.log('📊 Dashboard: Processing shop data:', data.shopData);
+          // Handle new users who haven't created a shop yet
+          if (data.shopData.isNewUser) {
+            console.log('New user detected - showing create shop flow');
+            setNoShopFound(true);
+            setShopData(prev => ({
+              ...prev,
+              name: data.shopData.name,
+              owner: user?.first_name || user?.email?.split('@')[0] || 'New Shop Owner',
+              status: 'setup_required',
+              rating: '0.0',
+              totalProducts: 0,
+              totalOrders: 0,
+              monthlyRevenue: 0,
+              totalReviews: 0,
+              isNewUser: true
+            }));
+          } else {
+            // Fetch real rating data for existing shops
+            let ratingStats = { average_rating: 0, total_reviews: 0 };
+            try {
+              ratingStats = await api.getMyShopRatingStats();
+            } catch (error) {
+              // Only log non-404 errors
+              const is404Error = error.status === 404 || error.message?.includes('404') || error.message?.includes('Shop not found') || error.message?.includes('not found');
+              if (!is404Error) {
+                console.warn('Failed to fetch rating stats:', error);
+              }
+            }
+            
+            setShopData(prev => ({
+              ...prev,
+              name: data.shopData.name,
+              owner: user?.first_name || user?.email?.split('@')[0] || 'Shop Owner',
+              status: data.shopData.is_active ? 'active' : 'inactive',
+              rating: parseFloat(ratingStats.average_rating || 0).toFixed(1),
+              totalProducts: data.productStats?.total_products || 0,
+              totalOrders: 0,
+              monthlyRevenue: 0,
+              totalReviews: ratingStats.total_reviews || 0
+            }));
           }
-          
-          setShopData(prev => ({
-            ...prev,
-            name: data.shopData.name,
-            owner: user?.first_name || user?.email?.split('@')[0] || 'Shop Owner',
-            status: data.shopData.is_active ? 'active' : 'inactive',
-            rating: parseFloat(ratingStats.average_rating || 0).toFixed(1),
-            totalProducts: data.productStats?.total_products || 0,
-            totalOrders: 0,
-            monthlyRevenue: 0,
-            totalReviews: ratingStats.total_reviews || 0
-          }));
         }
 
         // Update product statistics
@@ -272,16 +297,31 @@ const ShopOwnerDashboard = () => {
         if (data.products) {
           setProducts(data.products);
         }
-
       } catch (error) {
         if (isMounted) {
           console.error('Error loading dashboard data:', error);
           
           // Check if error is due to shop not found
           if (error?.message?.includes('Shop not found')) {
+            console.log('New user detected - no shop found');
             setNoShopFound(true);
             setShowCreateShopModal(true);
+            
+            // Set proper shop data for new users
+            setShopData(prev => ({
+              ...prev,
+              name: 'Create Your Shop',
+              owner: user?.first_name || user?.email?.split('@')[0] || 'New Shop Owner',
+              status: 'setup_required',
+              rating: '0.0',
+              totalProducts: 0,
+              totalOrders: 0,
+              monthlyRevenue: 0,
+              totalReviews: 0,
+              isNewUser: true
+            }));
           } else {
+            console.error('Dashboard data load failed with unexpected error:', error);
             showToast('Failed to load dashboard data', 'error');
           }
         }
@@ -399,6 +439,14 @@ const ShopOwnerDashboard = () => {
   };
 
   const handleViewShop = () => {
+    // Check if user has created a shop yet
+    if (noShopFound || shopData.isNewUser || shopData.status === 'setup_required') {
+      console.log('User has no shop yet, showing create shop modal');
+      showToast('Please create your shop first', 'info');
+      setShowCreateShopModal(true);
+      return;
+    }
+    
     navigate('/my-shop-profile');
   };
 

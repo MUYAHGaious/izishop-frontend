@@ -93,7 +93,8 @@ export const AuthProvider = ({ children }) => {
       console.log('AuthContext: Storage check - accessToken:', !!accessToken, 'storedUser:', !!storedUser);
       
       // CRITICAL: Check if authService confirms authentication AND session is valid
-      const isAuthServiceAuthenticated = authService.isAuthenticated();
+      // Use skipRefresh during initialization to prevent refresh loops
+      const isAuthServiceAuthenticated = authService.isAuthenticated(true);
       const isSessionValid = sessionService.isValidSession();
       console.log('AuthContext: AuthService authentication status:', isAuthServiceAuthenticated);
       console.log('AuthContext: Session validity:', isSessionValid);
@@ -110,7 +111,7 @@ export const AuthProvider = ({ children }) => {
             
             // CRITICAL: Only use backup if we have valid tokens in storage AND authService confirms
             const hasValidTokens = localStorage.getItem('accessToken') && localStorage.getItem('refreshToken');
-            const authServiceAuthenticated = authService.isAuthenticated();
+            const authServiceAuthenticated = authService.isAuthenticated(true);
             
             if (backupAge < 5 * 60 * 1000 && backup.user && hasValidTokens && authServiceAuthenticated) {
               console.log('AuthContext: Recovering from backup authentication state with valid tokens');
@@ -377,9 +378,14 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       setLoading(true);
       
+      console.log('=== AUTH CONTEXT REGISTER STARTED ===');
       console.log('AuthContext register called with:', userData);
+      console.log('=== CALLING API.REGISTER ===');
       const response = await api.register(userData);
+      console.log('=== API.REGISTER COMPLETED ===');
       console.log('Registration API response:', response);
+      console.log('Response type:', typeof response);
+      console.log('Response keys:', response ? Object.keys(response) : 'No response');
       console.log('User role from response:', response.user?.role);
       console.log('Access token present:', !!response.access_token);
       console.log('Refresh token present:', !!response.refresh_token);
@@ -432,8 +438,14 @@ export const AuthProvider = ({ children }) => {
         }
       }
       
+      console.log('=== AUTH CONTEXT REGISTER COMPLETED ===');
       return response;
     } catch (error) {
+      console.error('=== AUTH CONTEXT REGISTER ERROR ===');
+      console.error('AuthContext register error:', error);
+      console.error('Error message:', error?.message);
+      console.error('Error response:', error?.response?.data);
+      console.error('================================');
       setError(error.message);
       throw error;
     } finally {

@@ -26,6 +26,7 @@ const RoleBasedNavigation = () => {
       title: 'Customer Portal',
       items: [
         { label: 'Dashboard', path: '/customer-dashboard', icon: 'Home', badge: null },
+        { label: 'Casual Marketplace', path: '/casual-marketplace', icon: 'ShoppingBag', badge: 'New' },
         { label: 'Orders', path: '/order-management', icon: 'Package', badge: '3' },
         { label: 'Checkout', path: '/checkout', icon: 'CreditCard', badge: null },
       ]
@@ -34,6 +35,7 @@ const RoleBasedNavigation = () => {
       title: 'Shop Management',
       items: [
         { label: 'Dashboard', path: '/shop-owner-dashboard', icon: 'Store', badge: null },
+        { label: 'Casual Marketplace', path: '/casual-marketplace', icon: 'ShoppingBag', badge: null },
         { label: 'Products', path: '/product-management', icon: 'Package2', badge: '12' },
         { label: 'Orders', path: '/order-management', icon: 'ShoppingCart', badge: '5' },
       ]

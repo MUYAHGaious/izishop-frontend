@@ -271,36 +271,51 @@ class ApiService {
           throw new Error('Unauthorized');
         } else if (response.status === 401 && !requireAuth) {
           // For public endpoints, just throw a regular error without token refresh
-          throw new Error('Endpoint requires authentication');
+          const error = new Error('Endpoint requires authentication');
+          error.status = 401;
+          throw error;
         }
         
         if (response.status === 403) {
-          throw new Error('Access forbidden');
+          const error = new Error('Access forbidden');
+          error.status = 403;
+          throw error;
         }
         
         if (response.status === 422 && errorData) {
+          let error;
           if (errorData.errors && Array.isArray(errorData.errors)) {
             const errorMessages = errorData.errors.map(err => `${err.field}: ${err.message}`).join(', ');
-            throw new Error(`Validation error: ${errorMessages}`);
+            error = new Error(`Validation error: ${errorMessages}`);
           } else if (errorData.detail) {
             if (Array.isArray(errorData.detail)) {
               const errorMessages = errorData.detail.map(err => `${err.loc.join('.')}: ${err.msg}`).join(', ');
-              throw new Error(`Validation error: ${errorMessages}`);
+              error = new Error(`Validation error: ${errorMessages}`);
             } else if (typeof errorData.detail === 'string') {
-              throw new Error(errorData.detail);
+              error = new Error(errorData.detail);
             }
+          }
+          if (error) {
+            error.status = 422;
+            throw error;
           }
         }
         
         if (response.status === 429) {
-          throw new Error('Too many requests. Please try again later.');
+          const error = new Error('Too many requests. Please try again later.');
+          error.status = 429;
+          throw error;
         }
         
         if (response.status >= 500) {
-          throw new Error('Server error. Please try again later.');
+          const error = new Error('Server error. Please try again later.');
+          error.status = response.status;
+          throw error;
         }
         
-        throw new Error(errorData.detail || errorData.message || `HTTP error! status: ${response.status}`);
+        const error = new Error(errorData.detail || errorData.message || `HTTP error! status: ${response.status}`);
+        error.status = response.status;
+        throw error;
       }
       
       const contentType = response.headers.get('content-type');
@@ -310,9 +325,37 @@ class ApiService {
       
       return await response.text();
     } catch (error) {
-      console.error(`API request failed for ${endpoint}:`, error);
+      // Don't log 404 errors as they're often expected (e.g., new users with no data)
+      const is404Error = error.status === 404 || 
+                        error.message?.includes('404') || 
+                        error.message?.includes('status: 404') ||
+                        error.message?.includes('Shop not found') ||
+                        error.message?.includes('not found');
+      
+      if (!is404Error) {
+        console.error(`API request failed for ${endpoint}:`, error);
+      }
       throw error;
     }
+  }
+
+  // Generic HTTP methods
+  async get(endpoint, options = {}, requireAuth = true) {
+    return this.request(endpoint, { method: 'GET', ...options }, requireAuth);
+  }
+
+  async post(endpoint, data = null, options = {}, requireAuth = true) {
+    const body = data ? JSON.stringify(data) : null;
+    return this.request(endpoint, { method: 'POST', body, ...options }, requireAuth);
+  }
+
+  async put(endpoint, data = null, options = {}, requireAuth = true) {
+    const body = data ? JSON.stringify(data) : null;
+    return this.request(endpoint, { method: 'PUT', body, ...options }, requireAuth);
+  }
+
+  async delete(endpoint, options = {}, requireAuth = true) {
+    return this.request(endpoint, { method: 'DELETE', ...options }, requireAuth);
   }
 
   // Authentication methods with enhanced token handling
@@ -331,29 +374,45 @@ class ApiService {
   }
 
   async register(userData) {
+    console.log('=== API REGISTER STARTED ===');
     console.log('API register called with:', { ...userData, password: '[REDACTED]', confirm_password: '[REDACTED]' });
     console.log('Making POST request to /auth/register');
+    console.log('API Base URL:', this.baseURL);
+    console.log('Request URL:', `${this.baseURL}/auth/register`);
     
-    const response = await this.request('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(userData)
-    }, false); // false = no authentication required
-    
-    console.log('API register response:', { 
-      ...response, 
-      access_token: response.access_token ? '[TOKEN_PRESENT]' : '[NO_TOKEN]',
-      refresh_token: response.refresh_token ? '[TOKEN_PRESENT]' : '[NO_TOKEN]'
-    });
-    
-    // Store both access and refresh tokens
-    if (response.access_token) {
-      this.setTokens(response.access_token, response.refresh_token);
-      console.log('Tokens stored successfully');
-    } else {
-      console.warn('No access token in registration response - user may need verification');
+    try {
+      const response = await this.request('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(userData)
+      }, false); // false = no authentication required
+      
+      console.log('=== API REGISTER SUCCESS ===');
+      console.log('API register response:', { 
+        ...response, 
+        access_token: response.access_token ? '[TOKEN_PRESENT]' : '[NO_TOKEN]',
+        refresh_token: response.refresh_token ? '[TOKEN_PRESENT]' : '[NO_TOKEN]'
+      });
+      
+      // Store both access and refresh tokens
+      if (response.access_token) {
+        this.setTokens(response.access_token, response.refresh_token);
+        console.log('Tokens stored successfully');
+      } else {
+        console.warn('No access token in registration response - user may need verification');
+      }
+      
+      console.log('=== API REGISTER COMPLETED ===');
+      return response;
+    } catch (error) {
+      console.error('=== API REGISTER ERROR ===');
+      console.error('API register error:', error);
+      console.error('Error message:', error?.message);
+      console.error('Error response:', error?.response);
+      console.error('Error status:', error?.response?.status);
+      console.error('Error data:', error?.response?.data);
+      console.error('==========================');
+      throw error;
     }
-    
-    return response;
   }
 
   async getCurrentUser() {
@@ -454,10 +513,14 @@ class ApiService {
 
   async getMyShop() {
     try {
-      return await this.request('/shops/my-shop');
+      console.log('🏪 Fetching shop data via /shops/my-shop...');
+      const result = await this.request('/shops/my-shop');
+      console.log('🏪 Shop data found:', result);
+      return result;
     } catch (error) {
-      console.warn('Failed to fetch shop data:', error);
-      return { name: 'My Shop', is_active: true, created_at: new Date().toISOString() };
+      console.log('🏪 Shop fetch error:', error.status, error.message);
+      // Re-throw the error so calling code can handle it appropriately
+      throw error;
     }
   }
 
@@ -1156,6 +1219,16 @@ class ApiService {
         method: 'GET'
       });
     } catch (error) {
+      // 404 is expected for new shop owners with no ratings yet
+      if (error.status === 404 || error.message.includes('404')) {
+        console.log('No rating stats found - this is expected for new shops');
+        return {
+          average_rating: 0,
+          total_reviews: 0,
+          rating_distribution: {},
+          isNewShop: true
+        };
+      }
       console.warn('Failed to fetch my shop rating stats:', error);
       return {
         average_rating: 0,
@@ -1250,6 +1323,14 @@ class ApiService {
     } catch (error) {
       return false;
     }
+  }
+
+  // Role upgrade method
+  async upgradeUserRole(newRole) {
+    return await this.request('/auth/upgrade-role', {
+      method: 'PATCH',
+      body: JSON.stringify({ role: newRole })
+    });
   }
 
   // Delivery Agent API methods
@@ -1822,9 +1903,18 @@ class ApiService {
   }
 
   async getMyShop() {
-    return this.request('/shops/my-shop', {
-      method: 'GET'
-    });
+    try {
+      console.log('🏪 Fetching shop data via /shops/my-shop...');
+      const result = await this.request('/shops/my-shop', {
+        method: 'GET'
+      });
+      console.log('🏪 Shop data found:', result);
+      return result;
+    } catch (error) {
+      console.log('🏪 Shop fetch error:', error.status, error.message);
+      // Re-throw the error so calling code can handle it appropriately
+      throw error;
+    }
   }
 
   async getMyProductStats() {

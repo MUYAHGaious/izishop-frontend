@@ -144,6 +144,7 @@ const AuthenticationLoginRegister = () => {
 
   const handleRegister = async (registrationData) => {
     setIsLoading(true);
+    console.log('=== STARTING REGISTRATION PROCESS ===');
     try {
       console.log('handleRegister called with registrationData');
       console.log('Registration data received:', registrationData);
@@ -153,8 +154,10 @@ const AuthenticationLoginRegister = () => {
       // Extract shop data if present
       const { shopData, ...userData } = registrationData;
       
+      console.log('=== CALLING AUTH CONTEXT REGISTER ===');
       // First, create the user account
       const response = await register(userData);
+      console.log('=== AUTH CONTEXT REGISTER COMPLETED ===');
       console.log('User registration response:', response);
       console.log('Response type:', typeof response);
       console.log('Response keys:', response ? Object.keys(response) : 'No response');
@@ -164,10 +167,12 @@ const AuthenticationLoginRegister = () => {
       
       // Check if registration was successful
       if (response && response.user) {
+        console.log('=== REGISTRATION SUCCESSFUL ===');
         console.log('Registration successful, user created:', response.user);
         
         // Check if user was auto-logged in (has access token)
         if (response.access_token) {
+          console.log('=== AUTO-LOGIN PATH ===');
           console.log('Auto-login successful, user role:', response.user.role);
           console.log('User authenticated after registration:', isAuthenticated());
           
@@ -176,29 +181,37 @@ const AuthenticationLoginRegister = () => {
           localStorage.setItem('refreshToken', response.refresh_token);
           localStorage.setItem('user', JSON.stringify(response.user));
           
+          console.log('=== REDIRECTING TO DASHBOARD ===');
           // Redirect to dashboard immediately
-            redirectToDashboard(response.user.role);
+          redirectToDashboard(response.user.role);
           setIsLoading(false);
           return;
-          } else {
+        } else {
+          console.log('=== NO AUTO-LOGIN PATH ===');
           // No auto-login, show success message and redirect to login
           console.log('Registration successful but no auto-login');
           showToast('Registration successful! Please log in to access your dashboard.', 'success');
-              setActiveTab('login');
+          setActiveTab('login');
           setIsLoading(false);
           return;
-            }
-          } else {
+        }
+      } else {
+        console.log('=== REGISTRATION FAILED ===');
         // Registration failed
         console.log('Registration failed:', response);
         const errorMessage = response?.error || response?.detail || 'Registration failed. Please try again.';
         showToast(errorMessage, 'error');
-            setIsLoading(false);
-            return;
-          }
+        setIsLoading(false);
+        return;
+      }
           
     } catch (error) {
+      console.error('=== REGISTRATION ERROR ===');
       console.error('Registration error:', error);
+      console.error('Error message:', error?.message);
+      console.error('Error response:', error?.response?.data);
+      console.error('Error status:', error?.response?.status);
+      console.error('==========================');
       let errorMessage = 'Registration failed. Please try again.';
       
       // Extract error message from different error formats

@@ -9,6 +9,8 @@ import OrderManagement from './components/OrderManagement';
 import Analytics from './components/Analytics';
 import SystemSettings from './components/SystemSettings';
 import NotificationCenter from './components/NotificationCenter';
+import SubscriptionManagement from './components/SubscriptionManagement';
+import MarketplaceAnalytics from './components/MarketplaceAnalytics';
 import notificationService from '../../services/notificationService';
 
 const AdminDashboard = () => {
@@ -87,7 +89,9 @@ const AdminDashboard = () => {
     { id: 'overview', label: 'Overview', icon: 'BarChart3', color: 'text-blue-600' },
     { id: 'users', label: 'Users', icon: 'Users', color: 'text-green-600' },
     { id: 'shops', label: 'Shops', icon: 'Store', color: 'text-purple-600' },
-    { id: 'orders', label: 'Orders', icon: 'ShoppingBag', color: 'text-orange-600' },
+    { id: 'subscriptions', label: 'Subscriptions', icon: 'CreditCard', color: 'text-emerald-600' },
+    { id: 'marketplace', label: 'Marketplace', icon: 'ShoppingBag', color: 'text-orange-600' },
+    { id: 'orders', label: 'Orders', icon: 'Package', color: 'text-teal-600' },
     { id: 'analytics', label: 'Analytics', icon: 'TrendingUp', color: 'text-indigo-600' },
     { id: 'notifications', label: 'Notifications', icon: 'Send', color: 'text-pink-600' },
     { id: 'settings', label: 'Settings', icon: 'Settings', color: 'text-gray-600' }
@@ -101,6 +105,10 @@ const AdminDashboard = () => {
         return <UserManagement />;
       case 'shops':
         return <ShopManagement />;
+      case 'subscriptions':
+        return <SubscriptionManagement />;
+      case 'marketplace':
+        return <MarketplaceAnalytics />;
       case 'orders':
         return <OrderManagement />;
       case 'analytics':
@@ -141,7 +149,7 @@ const AdminDashboard = () => {
 
           {/* Center - Quick Navigation */}
           <div className="hidden lg:flex items-center space-x-1">
-            {tabs.slice(0, 4).map((tab) => (
+            {tabs.slice(0, 5).map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}

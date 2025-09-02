@@ -15,6 +15,7 @@ import { useDataCache } from '../../contexts/DataCacheContext';
 import { useWebSocket } from '../../contexts/WebSocketContext';
 import api from '../../services/api';
 import { showToast } from '../../components/ui/Toast';
+import Footer from '../landing-page/components/Footer';
 
 const ShopsListing = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -41,7 +42,7 @@ const ShopsListing = () => {
       const { page = 1, limit = 100, search = '', category = '', sort = 'relevance', ...filters } = params;
       console.log('=== FETCHING SHOPS DEBUG ===');
       console.log('Params:', { page, limit, search, category, sort, filters });
-      console.log('API base URL:', 'http://localhost:8001/api');
+      console.log('API base URL:', 'http://localhost:8000/api');
       console.log('Expected endpoint: /api/shops');
       
       const response = await api.getAllShops(page, limit, search, category, sort, filters);
@@ -53,7 +54,7 @@ const ShopsListing = () => {
       
       // Also check shop count for debugging
       try {
-        const countResponse = await fetch('http://localhost:8001/api/shops/debug/count');
+        const countResponse = await fetch('http://localhost:8000/api/shops/debug/count');
         const countData = await countResponse.json();
         console.log('=== SHOP COUNT DEBUG ===');
         console.log('Shop count data:', countData);
@@ -110,6 +111,7 @@ const ShopsListing = () => {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
+        console.log('🔄 loadInitialData triggered - URL searchParams changed');
         setLoading(true);
         setError(null);
 
@@ -250,8 +252,12 @@ const ShopsListing = () => {
     if (loading) return;
     
     try {
+      console.log('🔎 Search triggered:', searchQuery);
       setLoading(true);
       setError(null);
+      
+      // Reset pagination when search changes (this is correct behavior)  
+      setCurrentPage(1);
       
       // Update URL params
       const newParams = new URLSearchParams(searchParams);
@@ -277,10 +283,10 @@ const ShopsListing = () => {
       
       if (shopsData) {
         const shops = Array.isArray(shopsData) ? shopsData : (shopsData.shops || []);
-        setShops(shops);
+        console.log('🔎 Setting search results:', shops.length, 'shops');
+        setShops(shops); // This should replace shops when searching - this is correct
         setResultsCount(shops.length);
         setHasMore(false);
-        setCurrentPage(1);
       }
 
     } catch (error) {
@@ -301,6 +307,7 @@ const ShopsListing = () => {
     if (loading) return;
     
     try {
+      console.log('🔍 Filter change triggered:', filterType, value);
       setLoading(true);
       setError(null);
       
@@ -310,6 +317,9 @@ const ShopsListing = () => {
       };
       setFilters(newFilters);
 
+      // Reset pagination when filter changes (this is correct behavior)
+      setCurrentPage(1);
+      
       // Fetch filtered results
       const shopsParams = {
         page: 1,
@@ -324,10 +334,10 @@ const ShopsListing = () => {
       
       if (shopsData) {
         const shops = Array.isArray(shopsData) ? shopsData : (shopsData.shops || []);
-        setShops(shops);
+        console.log('🔍 Setting filtered shops:', shops.length, 'shops');
+        setShops(shops); // This should replace shops when filtering - this is correct
         setResultsCount(shops.length);
         setHasMore(false);
-        setCurrentPage(1);
       }
 
     } catch (error) {
@@ -367,31 +377,41 @@ const ShopsListing = () => {
         shopsData = await fetchWithCache('shops', () => fetchShops(shopsParams), shopsParams, true);
       } catch (apiError) {
         console.log('API sorting failed, using client-side sorting:', apiError);
-        // If API fails, use current shops and sort client-side
-        shopsData = { shops: shops };
+        // If API fails, we'll sort client-side using current state
+        shopsData = null; // Signal to use client-side sorting
       }
       
       if (shopsData) {
+        // API sorting succeeded - use new data and reset pagination
         let shops = Array.isArray(shopsData) ? shopsData : (shopsData.shops || []);
         
-        // Apply client-side sorting as fallback or if API doesn't support sorting
-        if (newSort === 'newest') {
-          shops = [...shops].sort((a, b) => {
-            const dateA = new Date(a.created_at || a.createdAt || 0);
-            const dateB = new Date(b.created_at || b.createdAt || 0);
-            return dateB - dateA; // Newest first
-          });
-        } else if (newSort === 'rating') {
-          shops = [...shops].sort((a, b) => (b.average_rating || 0) - (a.average_rating || 0));
-        } else if (newSort === 'popularity') {
-          shops = [...shops].sort((a, b) => (b.total_reviews || 0) - (a.total_reviews || 0));
-        }
-        // 'relevance' keeps original order
-        
+        console.log('🔄 Sort via API - setting', shops.length, 'shops');
         setShops(shops);
         setResultsCount(shops.length);
         setHasMore(false);
         setCurrentPage(1);
+      } else {
+        // API sorting failed - use client-side sorting on current shops
+        console.log('🔄 Sort client-side - using current shops state');
+        setShops(prevShops => {
+          let sortedShops = [...prevShops];
+          
+          if (newSort === 'newest') {
+            sortedShops = sortedShops.sort((a, b) => {
+              const dateA = new Date(a.created_at || a.createdAt || 0);
+              const dateB = new Date(b.created_at || b.createdAt || 0);
+              return dateB - dateA; // Newest first
+            });
+          } else if (newSort === 'rating') {
+            sortedShops = sortedShops.sort((a, b) => (b.average_rating || 0) - (a.average_rating || 0));
+          } else if (newSort === 'popularity') {
+            sortedShops = sortedShops.sort((a, b) => (b.total_reviews || 0) - (a.total_reviews || 0));
+          }
+          // 'relevance' keeps original order
+          
+          console.log('🔄 Client-side sort complete -', sortedShops.length, 'shops');
+          return sortedShops;
+        });
       }
 
     } catch (error) {
@@ -401,7 +421,7 @@ const ShopsListing = () => {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, filters, fetchWithCache, searchParams, setSearchParams, shops]);
+  }, [searchQuery, filters, fetchWithCache, searchParams, setSearchParams]);
 
   const handleFollowShop = useCallback(async (shopId, isFollowing) => {
     if (!isAuthenticated()) {
@@ -448,9 +468,13 @@ const ShopsListing = () => {
   }, []);
 
   const handleLoadMore = useCallback(async () => {
-    if (!hasMore || loading) return;
+    if (!hasMore || loading) {
+      console.log('📄 LoadMore skipped - hasMore:', hasMore, 'loading:', loading);
+      return;
+    }
     
     try {
+      console.log('📄 LoadMore triggered - current shops:', shops.length, 'currentPage:', currentPage);
       setLoading(true);
       setError(null);
 
@@ -464,9 +488,11 @@ const ShopsListing = () => {
         ...filters
       };
 
+      console.log('📄 Fetching page', nextPage, 'with params:', shopsParams);
       const shopsData = await fetchWithCache('shops', () => fetchShops(shopsParams), shopsParams, true);
       
       if (shopsData && shopsData.shops) {
+        console.log('📄 Appending', shopsData.shops.length, 'more shops to existing', shops.length);
         setShops(prev => [...prev, ...shopsData.shops]);
         setCurrentPage(nextPage);
         setHasMore(shopsData.shops.length >= 20);
@@ -475,7 +501,10 @@ const ShopsListing = () => {
         if (shopsData.total) {
           setResultsCount(shopsData.total);
         }
+        
+        console.log('📄 LoadMore complete - total shops now:', shops.length + shopsData.shops.length);
       } else {
+        console.log('📄 No more shops found, setting hasMore to false');
         setHasMore(false);
       }
 
@@ -979,6 +1008,9 @@ const ShopsListing = () => {
           }}
         />
       </ErrorBoundary>
+
+      {/* Footer */}
+      <Footer />
       
       <ErrorBoundary>
         <MobileBottomTab />

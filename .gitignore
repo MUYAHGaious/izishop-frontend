@@ -159,14 +159,9 @@ build_output.txt
 # Configuration backups
 vite.config.mjs.timestamp-*.mjs
 
-# Documentation files (consider if these should be tracked)
-*.md
+# Documentation files (allow deployment docs)
 !README.md
-!FRONTEND_README.md
-!PROJECT_DOCUMENTATION.md
-!SMART_SEARCH_IMPLEMENTATION.md
-!DASHBOARD_UPDATE_SUMMARY.md
-!DASHBOARD_DESIGN_CONCEPT.md
+!DEPLOYMENT.md
 
 # Directory structure files
 dirstructure.txt

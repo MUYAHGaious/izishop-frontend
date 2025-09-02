@@ -15,7 +15,7 @@ const DashboardHeader = ({ shopData, notifications }) => {
           <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center overflow-hidden">
             {shopData.profile_photo ? (
               <img
-                src={`http://localhost:8001${shopData.profile_photo}`}
+                src={`http://localhost:8000${shopData.profile_photo}`}
                 alt={`${shopData.name} profile`}
                 className="w-full h-full object-cover rounded-xl"
               />

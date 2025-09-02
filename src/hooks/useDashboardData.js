@@ -76,7 +76,17 @@ export const useDashboardData = (dashboardType = 'shop-owner') => {
           const data = await fetchData(dataType, {}, forceRefresh);
           results[dataType] = data;
         } catch (err) {
-          console.error(`Error fetching ${dataType}:`, err);
+          // Only log non-404 errors to reduce noise for expected failures
+          const is404Error = err.status === 404 || 
+                            err.message?.includes('404') || 
+                            err.message?.includes('Shop not found') ||
+                            err.message?.includes('not found');
+          
+          if (!is404Error) {
+            console.error(`Error fetching ${dataType}:`, err);
+          } else {
+            console.log(`Expected 404 for ${dataType} - likely new user with no data yet`);
+          }
           results[dataType] = null;
         }
       });

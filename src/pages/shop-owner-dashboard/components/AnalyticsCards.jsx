@@ -40,13 +40,25 @@ const AnalyticsCards = ({ timeRange = '7d' }) => {
         setAnalyticsData(periodData);
         
       } catch (error) {
-        console.error('Error loading analytics data:', error);
-        setError(error.message || 'Failed to load analytics data');
-        showToast({
-          type: 'error',
-          message: 'Failed to load analytics data. Please try again.',
-          duration: 3000
-        });
+        // Handle expected errors gracefully for new shop owners
+        const is404Error = error.status === 404 || error.message?.includes('404') || error.message?.includes('Shop not found') || error.message?.includes('not found');
+        if (is404Error) {
+          console.log('No analytics data found - expected for new shops');
+          setTodayStats({ revenue: 0, orders: 0, customers: 0, products: 0 });
+          setAnalyticsData({
+            revenue: { current: 0, previous: 0, change: 0 },
+            orders: { current: 0, previous: 0, change: 0 },
+            customers: { current: 0, previous: 0, change: 0 }
+          });
+        } else {
+          console.error('Error loading analytics data:', error);
+          setError(error.message || 'Failed to load analytics data');
+          showToast({
+            type: 'error',
+            message: 'Failed to load analytics data. Please try again.',
+            duration: 3000
+          });
+        }
       } finally {
         setLoading(false);
       }

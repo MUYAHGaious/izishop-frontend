@@ -309,33 +309,88 @@ const ShopOverview = ({ shopData, onTabChange }) => {
       try {
         // Fetch today's statistics
         setLoadingStats(true);
-        const todayStatsData = await api.getShopOwnerTodayStats();
-        setTodayStats(todayStatsData);
+        try {
+          const todayStatsData = await api.getShopOwnerTodayStats();
+          setTodayStats(todayStatsData);
+        } catch (error) {
+          const is404Error = error.status === 404 || error.message?.includes('404') || error.message?.includes('Shop not found') || error.message?.includes('not found');
+          if (is404Error) {
+            console.log('No today stats found - expected for new shops');
+            setTodayStats({ sales: 0, orders: 0, revenue: 0, visitors: 0 });
+          } else {
+            console.error('Error fetching today stats:', error);
+            setTodayStats({ sales: 0, orders: 0, revenue: 0, visitors: 0 });
+          }
+        }
         
         // Fetch rating statistics
         setLoadingRatings(true);
-        const stats = await api.getMyShopRatingStats();
-        setRatingStats(stats);
-        
-        // Fetch recent ratings (first 5)
-        if (stats.total_reviews > 0) {
-          const ratingsResponse = await api.getShopRatings(shopData.id || 'current-shop', {
-            page: 1,
-            page_size: 5,
-            sort_by: 'newest'
-          });
-          setRecentRatings(ratingsResponse.ratings || []);
+        try {
+          const stats = await api.getMyShopRatingStats();
+          setRatingStats(stats);
+          
+          // Fetch recent ratings (first 5) only if shop has reviews
+          if (stats.total_reviews > 0 && !stats.isNewShop) {
+            const ratingsResponse = await api.getShopRatings(shopData.id || 'current-shop', {
+              page: 1,
+              page_size: 5,
+              sort_by: 'newest'
+            });
+            setRecentRatings(ratingsResponse.ratings || []);
+          }
+        } catch (error) {
+          // Handle expected errors gracefully for new shop owners
+          const is404Error = error.status === 404 || error.message?.includes('404') || error.message?.includes('Shop not found') || error.message?.includes('not found');
+          if (is404Error) {
+            console.log('No rating stats found - expected for new shops');
+            setRatingStats({
+              average_rating: 0,
+              total_reviews: 0,
+              rating_distribution: {},
+              isNewShop: true
+            });
+            setRecentRatings([]);
+          } else {
+            console.error('Unexpected error fetching rating stats:', error);
+            setRatingStats({
+              average_rating: 0,
+              total_reviews: 0,
+              rating_distribution: {}
+            });
+          }
         }
         
         // Fetch recent orders
         setLoadingOrders(true);
-        const recentOrdersData = await api.getShopOwnerRecentOrders(4);
-        setRecentOrders(recentOrdersData);
+        try {
+          const recentOrdersData = await api.getShopOwnerRecentOrders(4);
+          setRecentOrders(recentOrdersData);
+        } catch (error) {
+          const is404Error = error.status === 404 || error.message?.includes('404') || error.message?.includes('Shop not found') || error.message?.includes('not found');
+          if (is404Error) {
+            console.log('No recent orders found - expected for new shops');
+            setRecentOrders([]);
+          } else {
+            console.error('Error fetching recent orders:', error);
+            setRecentOrders([]);
+          }
+        }
         
         // Fetch low stock products
         setLoadingLowStock(true);
-        const lowStockData = await api.getShopOwnerLowStockProducts();
-        setLowStockProducts(lowStockData);
+        try {
+          const lowStockData = await api.getShopOwnerLowStockProducts();
+          setLowStockProducts(lowStockData);
+        } catch (error) {
+          const is404Error = error.status === 404 || error.message?.includes('404') || error.message?.includes('Shop not found') || error.message?.includes('not found');
+          if (is404Error) {
+            console.log('No low stock products found - expected for new shops');
+            setLowStockProducts([]);
+          } else {
+            console.error('Error fetching low stock products:', error);
+            setLowStockProducts([]);
+          }
+        }
         
         // Fetch pending orders count
         try {

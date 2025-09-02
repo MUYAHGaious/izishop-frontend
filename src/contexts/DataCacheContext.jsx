@@ -160,7 +160,17 @@ const DataCacheProvider = ({ children }) => {
       
       return data;
     } catch (error) {
-      console.error(`Error fetching data for ${key}:`, error);
+      // Don't log 404 errors as they're often expected (e.g., new users with no data)
+      const is404Error = error.status === 404 || 
+                        error.message?.includes('404') || 
+                        error.message?.includes('Shop not found') ||
+                        error.message?.includes('not found');
+      
+      if (!is404Error) {
+        console.error(`Error fetching data for ${key}:`, error);
+      } else {
+        console.log(`404 for ${key} - likely expected for new user`);
+      }
       throw error;
     } finally {
       setLoading(type, false, params);

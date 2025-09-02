@@ -96,8 +96,17 @@ const MyShopProfile = () => {
       await fetchShopStatistics(shopData.id);
       
     } catch (err) {
-      setError(err.message || 'Failed to load shop data');
       console.error('Shop data fetch error:', err);
+      
+      // Handle new users who don't have a shop yet
+      if (err.message?.includes('Shop not found') || err.status === 404) {
+        console.log('New user detected - no shop found, redirecting to dashboard');
+        showToast('You need to create a shop first', 'info');
+        navigate('/shop-owner-dashboard');
+        return;
+      }
+      
+      setError(err.message || 'Failed to load shop data');
     } finally {
       setLoading(false);
     }

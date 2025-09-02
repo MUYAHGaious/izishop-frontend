@@ -1,7 +1,7 @@
 // Enterprise-level authentication service
 // Implements secure token management with automatic refresh and rotation
 
-const API_BASE_URL = 'http://localhost:8001/api';
+const API_BASE_URL = 'http://localhost:8000/api';
 
 class AuthService {
   constructor() {
@@ -13,6 +13,7 @@ class AuthService {
     this.retryAttempts = 0;
     this.maxRetryAttempts = 3;
     this.tokenCheckInterval = null;
+    this.lastRefreshAttempt = null;
     
     // Initialize from storage
     this.loadTokensFromStorage();
@@ -117,8 +118,8 @@ class AuthService {
     console.log('AuthService: Tokens set and saved, isAuthenticated():', this.isAuthenticated());
   }
 
-  // Check if user is authenticated
-  isAuthenticated() {
+  // Check if user is authenticated (lightweight version for frequent calls)
+  isAuthenticated(skipRefresh = false) {
     if (!this.accessToken) {
       return false;
     }
@@ -134,11 +135,29 @@ class AuthService {
           return false;
         }
         
-        // Refresh token is still valid, trigger refresh
-        console.log('AuthService: Refresh token valid, will attempt refresh');
-        this.checkAndRefreshTokens().catch(error => {
-          console.error('AuthService: Failed to refresh token during auth check:', error);
-        });
+        // If skipRefresh is true (e.g., during initialization), don't trigger refresh
+        if (skipRefresh) {
+          console.log('AuthService: Refresh skipped during initialization');
+          return true;
+        }
+        
+        // Refresh token is still valid, trigger refresh only if not already refreshing
+        // and if we haven't attempted a refresh in the last 30 seconds
+        const now = Date.now();
+        const cooldownPeriod = 30 * 1000; // 30 seconds
+        
+        if (!this.isRefreshing && 
+            (!this.lastRefreshAttempt || (now - this.lastRefreshAttempt) > cooldownPeriod)) {
+          console.log('AuthService: Refresh token valid, will attempt refresh');
+          this.lastRefreshAttempt = now;
+          this.checkAndRefreshTokens().catch(error => {
+            console.error('AuthService: Failed to refresh token during auth check:', error);
+          });
+        } else if (this.isRefreshing) {
+          console.log('AuthService: Refresh already in progress, skipping');
+        } else {
+          console.log('AuthService: Refresh attempted recently, waiting for cooldown');
+        }
         
         // Return true for now, refresh will happen in background
         return true;
@@ -231,7 +250,7 @@ class AuthService {
 
   // Proactive token refresh check
   async checkAndRefreshTokens() {
-    if (!this.isAuthenticated()) return;
+    if (!this.isAuthenticated() || this.isRefreshing) return;
 
     try {
       // Check if access token needs refresh (5 minutes before expiry)

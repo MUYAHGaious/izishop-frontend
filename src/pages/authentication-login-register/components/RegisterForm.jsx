@@ -14,7 +14,7 @@ const RegisterForm = ({ onRegister, isLoading }) => {
   const { register } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    role: '',
+    role: 'customer',
     firstName: '',
     lastName: '',
     email: '',
@@ -43,31 +43,8 @@ const RegisterForm = ({ onRegister, isLoading }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
 
-  const roleOptions = [
-    { value: 'customer', label: 'Customer', description: 'Shop and buy products' },
-    { value: 'shop_owner', label: 'Shop Owner', description: 'Sell products through your shop' },
-    { value: 'casual_seller', label: 'Casual Seller', description: 'Sell second-hand items' },
-    { value: 'delivery_agent', label: 'Delivery Agent', description: 'Deliver orders to customers' }
-  ];
-
-  const businessTypeOptions = [
-    { value: 'electronics', label: 'Electronics & Technology' },
-    { value: 'fashion', label: 'Fashion & Clothing' },
-    { value: 'food', label: 'Food & Beverages' },
-    { value: 'health', label: 'Health & Beauty' },
-    { value: 'home', label: 'Home & Garden' },
-    { value: 'sports', label: 'Sports & Recreation' },
-    { value: 'books', label: 'Books & Media' },
-    { value: 'automotive', label: 'Automotive' },
-    { value: 'other', label: 'Other' }
-  ];
-
-  const vehicleTypeOptions = [
-    { value: 'motorcycle', label: 'Motorcycle' },
-    { value: 'bicycle', label: 'Bicycle' },
-    { value: 'car', label: 'Car' },
-    { value: 'van', label: 'Van/Truck' }
-  ];
+  // Removed roleOptions, businessTypeOptions, vehicleTypeOptions - no longer needed
+  // All users register as customers and can upgrade roles in settings
 
   const calculatePasswordStrength = (password) => {
     let strength = 0;
@@ -96,11 +73,7 @@ const RegisterForm = ({ onRegister, isLoading }) => {
   const validateStep = (step) => {
     const newErrors = {};
 
-    if (step === 1) {
-      if (!formData.role) {
-        newErrors.role = 'Please select a role';
-      }
-    }
+    // Step 1 is now just a welcome screen, no validation needed
 
     if (step === 2) {
       if (!formData.firstName) {
@@ -212,10 +185,12 @@ const RegisterForm = ({ onRegister, isLoading }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    console.log('=== REGISTER FORM SUBMIT STARTED ===');
     console.log('handleSubmit called');
     console.log('Current step:', currentStep);
     console.log('Total steps:', getTotalSteps());
     console.log('Form data:', formData);
+    
     
     // Skip validation if this is called from final step completion
     const isFromFinalStep = currentStep > getTotalSteps() || e.fromFinalStep;
@@ -239,14 +214,7 @@ const RegisterForm = ({ onRegister, isLoading }) => {
         return;
       }
       
-      // Map frontend roles to backend roles
-      const roleMapping = {
-        'customer': 'CUSTOMER',
-        'shop_owner': 'SHOP_OWNER',
-        'casual_seller': 'CASUAL_SELLER',
-        'delivery_agent': 'DELIVERY_AGENT'
-      };
-      
+      // All users default to CUSTOMER role - they can upgrade in settings later
       // Prepare user data for API (only the fields the backend expects)
       const userData = {
         email: formData.email.trim().toLowerCase(),
@@ -254,7 +222,7 @@ const RegisterForm = ({ onRegister, isLoading }) => {
         confirm_password: formData.confirmPassword,
         first_name: formData.firstName.trim(),
         last_name: formData.lastName.trim(),
-        role: roleMapping[formData.role] || formData.role.toUpperCase()
+        role: 'CUSTOMER' // Always default to customer
       };
       
       // Add phone if provided (clean it to digits only)
@@ -320,106 +288,40 @@ const RegisterForm = ({ onRegister, isLoading }) => {
 
   const renderStep1 = () => (
     <div className="space-y-5">
-      <Select
-        label="I want to join as"
-        description="Choose how you'd like to use IziShopin"
-        options={roleOptions}
-        value={formData.role}
-        onChange={(value) => handleSelectChange('role', value)}
-        error={errors.role}
-        required
-        placeholder="Select your role"
-      />
-
-      {formData.role && (
-        <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-          <h3 className="font-medium text-gray-900 mb-3">
-            {roleOptions.find(r => r.value === formData.role)?.label} Benefits
-          </h3>
-          <ul className="text-sm text-gray-600 space-y-2">
-            {formData.role === 'customer' && (
-              <>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-                  Browse thousands of products
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-                  Secure payment options
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-                  Order tracking and delivery
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-                  24/7 customer support
-                </li>
-              </>
-            )}
-            {formData.role === 'shop_owner' && (
-              <>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-                  Create your online shop instantly
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-                  Advanced analytics dashboard
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-                  Marketing tools and promotions
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-                  Custom branding options
-                </li>
-              </>
-            )}
-            {formData.role === 'casual_seller' && (
-              <>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-                  Sell items easily
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-                  No monthly fees
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-                  Simple listing process
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-                  Secure transactions
-                </li>
-              </>
-            )}
-            {formData.role === 'delivery_agent' && (
-              <>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-                  Flexible working hours
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-                  Competitive delivery rates
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-                  Route optimization
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
-                  Weekly payouts
-                </li>
-              </>
-            )}
-          </ul>
+      <div className="text-center p-6 bg-gradient-to-br from-teal-50 to-blue-50 rounded-xl border border-teal-100">
+        <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
         </div>
-      )}
+        <h3 className="text-xl font-bold text-gray-900 mb-2">Welcome to IziShopin!</h3>
+        <p className="text-gray-600 mb-4">
+          Join our marketplace community and unlock amazing features
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div className="flex items-center gap-2 text-left">
+            <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+            Browse thousands of products
+          </div>
+          <div className="flex items-center gap-2 text-left">
+            <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+            Secure payment options
+          </div>
+          <div className="flex items-center gap-2 text-left">
+            <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+            Upgrade to seller anytime
+          </div>
+          <div className="flex items-center gap-2 text-left">
+            <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>
+            24/7 customer support
+          </div>
+        </div>
+        <div className="mt-4 p-3 bg-white rounded-lg border border-teal-200">
+          <p className="text-xs text-teal-600 font-medium">
+            💡 Start as a customer and upgrade to seller or delivery agent later in your settings!
+          </p>
+        </div>
+      </div>
     </div>
   );
 

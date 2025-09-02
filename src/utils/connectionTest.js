@@ -2,7 +2,7 @@
  * Simple utility to test backend connection
  */
 
-const API_BASE_URL = 'http://localhost:8001';
+const API_BASE_URL = 'http://localhost:8000';
 
 export const testBackendConnection = async () => {
   try {
@@ -40,7 +40,7 @@ export const testBackendConnection = async () => {
 export const testWebSocketConnection = async () => {
   return new Promise((resolve) => {
     try {
-      const ws = new WebSocket(`ws://localhost:8001/ws/online-status`);
+      const ws = new WebSocket(`ws://localhost:8000/ws/online-status`);
       
       const timeout = setTimeout(() => {
         ws.close();

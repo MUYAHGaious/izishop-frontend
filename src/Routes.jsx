@@ -108,15 +108,11 @@ const PublicRoute = ({ children }) => {
     try {
       const user = JSON.parse(storedUser);
       // Already logged in, redirect to appropriate page
-      if (user?.role === 'SHOP_OWNER') {
-        return <Navigate to="/shop-owner-dashboard" replace />;
-      } else if (user?.role === 'ADMIN') {
+      // NEW LOGIC: Most users go to product catalog, only admins go to dashboard
+      if (user?.role === 'ADMIN') {
         return <Navigate to="/admin-dashboard" replace />;
-      } else if (user?.role === 'DELIVERY_AGENT') {
-        return <Navigate to="/delivery-agent-dashboard" replace />;
-      } else if (user?.role === 'CUSTOMER') {
-        return <Navigate to="/customer-dashboard" replace />;
       } else {
+        // All other users (customers, shop owners, delivery agents, etc.) go to product catalog
         return <Navigate to="/product-catalog" replace />;
       }
     } catch (e) {

@@ -72,30 +72,30 @@ const AuthenticationLoginRegister = () => {
     console.log('Redirecting after auth:', { redirectUrl, pendingCartState, role });
     
     // If redirectAfterAuth doesn't provide a URL (e.g., during registration), 
-    // use role-based redirection
+    // use role-based redirection - DEFAULT TO PRODUCT CATALOG
     let finalRedirectUrl = redirectUrl;
     if (!finalRedirectUrl || finalRedirectUrl === '/product-catalog') {
-      // Role-based default redirection for registration
+      // NEW LOGIC: Most users go to product catalog, only specific roles go to dashboard
       switch (role) {
-        case 'SHOP_OWNER':
-        case 'shop_owner':
-          finalRedirectUrl = '/shop-owner-dashboard';
-          break;
         case 'ADMIN':
         case 'admin':
+          // Admins need dashboard access for management
           finalRedirectUrl = '/admin-dashboard';
+          break;
+        case 'SHOP_OWNER':
+        case 'shop_owner':
+          // Shop owners also go to product catalog by default
+          // They can access dashboard later via navigation menu
+          finalRedirectUrl = '/product-catalog';
           break;
         case 'CUSTOMER':
         case 'customer':
-          finalRedirectUrl = '/customer-dashboard';
-          break;
         case 'DELIVERY_AGENT':
         case 'delivery_agent':
-          finalRedirectUrl = '/delivery-agent-dashboard';
-          break;
         case 'CASUAL_SELLER':
         case 'casual_seller':
         default:
+          // ALL OTHER USERS go to product catalog to start shopping
           finalRedirectUrl = '/product-catalog';
           break;
       }

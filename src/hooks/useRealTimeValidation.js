@@ -63,11 +63,13 @@ export const useRealTimeValidation = (
   // Validate function
   const validateValue = async (val) => {
     const cleanValue = val.trim();
+    console.log(`[VALIDATION DEBUG] Starting validation for ${validationType}:`, cleanValue);
     
     // Check cache first
     const cacheKey = `${validationType}:${cleanValue.toLowerCase()}`;
     if (cacheRef.current.has(cacheKey)) {
       const cached = cacheRef.current.get(cacheKey);
+      console.log(`[VALIDATION DEBUG] Using cached result for ${validationType}:`, cached);
       setValidationState(cached.available ? VALIDATION_STATES.VALID : VALIDATION_STATES.INVALID);
       setMessage(cached.message);
       setSuggestions(cached.suggestions || []);
@@ -87,10 +89,12 @@ export const useRealTimeValidation = (
       setMessage('Checking availability...');
       setSuggestions([]);
 
+      console.log(`[VALIDATION DEBUG] Making API call for ${validationType}:`, cleanValue);
       const validationFn = getValidationFunction(validationType);
       const result = await validationFn(cleanValue, {
         signal: abortControllerRef.current.signal
       });
+      console.log(`[VALIDATION DEBUG] API response for ${validationType}:`, result);
 
       // Cache the result
       cacheRef.current.set(cacheKey, result);

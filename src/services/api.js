@@ -836,19 +836,25 @@ class ApiService {
     try {
       const encodedEmail = encodeURIComponent(email);
       const url = `/auth/check-email/${encodedEmail}`;
-      console.log(`Making API request to: ${this.baseURL}${url}`);
+      console.log(`[EMAIL DEBUG] Making API request to: ${this.baseURL}${url}`);
       
       const result = await this.request(url, {
         method: 'GET',
         signal: options.signal
       }, false); // false = no authentication required
       
-      console.log('API response:', result);
+      console.log('[EMAIL DEBUG] API response:', result);
       return result;
     } catch (error) {
+      // Log the full error for debugging
+      console.error('[EMAIL DEBUG] Email validation error details:', {
+        message: error.message,
+        status: error.status,
+        stack: error.stack,
+        email: email
+      });
       // If backend is not available, assume email is available for now
       console.warn('Email validation failed, backend may not be running:', error.message);
-      console.error('Full error:', error);
       return { available: true, message: 'Email validation temporarily unavailable' };
     }
   }

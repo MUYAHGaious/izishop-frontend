@@ -2,7 +2,7 @@
 // Best practices for authentication and error handling
 import authService from './authService';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = 'https://izishop-backend.onrender.com/api';
 
 class ApiService {
   constructor() {

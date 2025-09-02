@@ -961,11 +961,21 @@ class ApiService {
   async checkPhoneAvailability(phone, options = {}) {
     try {
       const encodedPhone = encodeURIComponent(phone);
-      return await this.request(`/auth/check-phone/${encodedPhone}`, {
+      console.log('Checking phone availability for:', phone, 'encoded:', encodedPhone);
+      const result = await this.request(`/auth/check-phone/${encodedPhone}`, {
         method: 'GET',
         signal: options.signal
       }, false); // false = no authentication required
+      console.log('Phone validation result:', result);
+      return result;
     } catch (error) {
+      // Log the full error for debugging
+      console.error('Phone validation error details:', {
+        message: error.message,
+        status: error.status,
+        stack: error.stack,
+        phone: phone
+      });
       // If backend is not available, assume phone is available for now
       console.warn('Phone validation failed, backend may not be running:', error.message);
       return { available: true, message: 'Phone validation temporarily unavailable' };

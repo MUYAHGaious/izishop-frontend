@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet';
 import Routes from './Routes';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
-import { WishlistProvider } from './contexts/WishlistContext';
+import { WishlistProvider } from './contexts/WishlistProvider';
 import { ShopProvider } from './contexts/ShopContext';
 import { DataCacheProvider } from './contexts/DataCacheContext';
 import { WebSocketProvider } from './contexts/WebSocketContext';
@@ -11,6 +11,7 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { ToastManager } from './components/ui/Toast';
 import SessionExpiryWarning from './components/ui/SessionExpiryWarning';
 import ErrorBoundary from './components/ErrorBoundary';
+import { useNavigationHandler } from './hooks/useNavigationListener';
 import './styles/index.css';
 
 function App() {
@@ -94,6 +95,28 @@ function App() {
       console.error = originalConsoleError; // Restore original console.error
     };
   }, []);
+
+  // CRITICAL FIX: Handle React Router navigation issues (2025)
+  // Use navigation handler to ensure components update when URL changes
+  useNavigationHandler({
+    logNavigation: true, // Enable for debugging
+    onRouteChange: ({ location, navigationType }) => {
+      console.log('🚀 Route changed - forcing component refresh:', {
+        path: location.pathname,
+        type: navigationType
+      });
+      // Force re-render by clearing any cached component state that might prevent updates
+      setHasError(false);
+      setErrorInfo(null);
+    },
+    onBackNavigation: ({ location, action }) => {
+      console.log('⬅️ Browser back/forward navigation detected:', {
+        path: location.pathname,
+        action
+      });
+      // Additional handling for back navigation if needed
+    }
+  });
 
   // Error fallback UI
   if (hasError) {

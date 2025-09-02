@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useParams } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
+import { useRouteRefresh } from '../../hooks/useNavigationListener';
 import Header from '../../components/ui/Header';
 import MobileBottomTab from '../../components/ui/MobileBottomTab';
 import FilterPanel from './components/FilterPanel';
@@ -27,6 +28,25 @@ const ProductCatalog = () => {
   const [viewMode, setViewMode] = useState('grid'); // grid or list
   const [selectedCategory, setSelectedCategory] = useState('all');
 
+  // CRITICAL FIX: Ensure component re-renders on navigation changes (2025)
+  useRouteRefresh(({ location, navigationType }) => {
+    console.log('📦 ProductCatalog - Route changed:', {
+      path: location.pathname,
+      search: location.search,
+      type: navigationType
+    });
+    
+    // Force refresh of product data when route changes
+    setLoading(true);
+    setCurrentPage(1);
+    
+    // Reset filters if navigating to product catalog fresh
+    if (location.pathname === '/product-catalog' && !location.search) {
+      setFilters({});
+      setSortBy('relevance');
+      setSelectedCategory('all');
+    }
+  });
 
   // Dynamic categories based on real data - matching landing page icons
   const [categories, setCategories] = useState([

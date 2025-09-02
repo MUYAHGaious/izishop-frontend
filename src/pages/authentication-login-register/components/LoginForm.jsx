@@ -194,20 +194,12 @@ const LoginForm = ({ onLogin, isLoading, onSwitchToRegister }) => {
   
   return (
     <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
-      <div>
-        <input
-          type="email"
-          name="email"
-          placeholder="Enter your email"
-          value={formData.email}
-          onChange={handleInputChange}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent placeholder-gray-500 transition-all duration-300 focus:scale-[1.01] transform"
-          required
-        />
-        {errors.email && (
-          <p className="text-sm text-red-500 mt-1">{errors.email}</p>
-        )}
-      </div>
+      <LoginEmailInput
+        value={formData.email}
+        onChange={handleInputChange}
+        error={errors.email}
+        disabled={isLoadingRemembered}
+      />
 
       <div className="relative">
         <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-teal-500 focus-within:border-transparent transition-all duration-300 focus-within:scale-[1.01] transform">

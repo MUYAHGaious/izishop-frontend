@@ -268,12 +268,18 @@ const RegisterForm = ({ onRegister, isLoading }) => {
       
       let errorMessage = 'Registration failed. Please try again.';
       
-      if (error.message && typeof error.message === 'string') {
-        errorMessage = error.message;
-      } else if (typeof error === 'string') {
-        errorMessage = error;
-      } else if (error.response && error.response.data && error.response.data.detail) {
-        errorMessage = error.response.data.detail;
+      // Safely extract error message
+      try {
+        if (error && error.message && typeof error.message === 'string') {
+          errorMessage = error.message;
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        } else if (error && error.response && error.response.data && error.response.data.detail) {
+          errorMessage = error.response.data.detail;
+        }
+      } catch (e) {
+        console.warn('Error extracting error message:', e);
+        errorMessage = 'Registration failed. Please try again.';
       }
       
       setErrors({

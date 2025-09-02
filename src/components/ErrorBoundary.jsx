@@ -12,10 +12,24 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    if (error && typeof error === 'object') {
-      error.__ErrorBoundary = true;
+    // Safely add ErrorBoundary marker
+    try {
+      if (error && typeof error === 'object') {
+        error.__ErrorBoundary = true;
+      }
+    } catch (e) {
+      console.warn("Could not add ErrorBoundary marker:", e);
     }
-    window.__COMPONENT_ERROR__?.(error, errorInfo);
+    
+    // Safely call global error handler
+    try {
+      if (typeof window.__COMPONENT_ERROR__ === 'function') {
+        window.__COMPONENT_ERROR__(error, errorInfo);
+      }
+    } catch (e) {
+      console.warn("Global error handler failed:", e);
+    }
+    
     console.error("Error caught by ErrorBoundary:", error, errorInfo);
     this.setState({ error, errorInfo });
   }

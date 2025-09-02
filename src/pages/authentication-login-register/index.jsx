@@ -212,13 +212,19 @@ const AuthenticationLoginRegister = () => {
       console.error('Error response:', error?.response?.data);
       console.error('Error status:', error?.response?.status);
       console.error('==========================');
+      
       let errorMessage = 'Registration failed. Please try again.';
       
-      // Extract error message from different error formats
-      if (error.response && error.response.data) {
-        errorMessage = error.response.data.detail || error.response.data.error || errorMessage;
-      } else if (error.message) {
-        errorMessage = error.message;
+      // Safely extract error message from different error formats
+      try {
+        if (error && error.response && error.response.data) {
+          errorMessage = error.response.data.detail || error.response.data.error || errorMessage;
+        } else if (error && error.message) {
+          errorMessage = error.message;
+        }
+      } catch (e) {
+        console.warn('Error extracting error message:', e);
+        errorMessage = 'Registration failed. Please try again.';
       }
       
       showToast(errorMessage, 'error');

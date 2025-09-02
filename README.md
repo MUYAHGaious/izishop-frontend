@@ -1,6 +1,6 @@
-# React
+# IziShop Frontend
 
-A modern React-based project utilizing the latest frontend technologies and tools for building responsive web applications.
+A modern e-commerce marketplace frontend built with React and the latest web technologies for a seamless shopping experience.
 
 ## 🚀 Features
 
@@ -98,10 +98,9 @@ Build the application for production:
 npm run build
 ```
 
-## 🙏 Acknowledgments
+## 🛠️ Built With
 
-- Built with [Rocket.new](https://rocket.new)
-- Powered by React and Vite
-- Styled with Tailwind CSS
-
-Built with ❤️ on Rocket.new
+- React 18 & Vite for fast development
+- Tailwind CSS for modern styling  
+- Redux Toolkit for state management
+- React Router for navigation

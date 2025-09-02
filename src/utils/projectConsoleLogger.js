@@ -173,7 +173,7 @@ class ProjectConsoleLogger {
                 immediate: immediate
             };
             
-            const url = 'http://localhost:8000/api/debug/frontend-logs';
+            const url = 'https://izishop-backend.onrender.com/api/debug/frontend-logs';
             
             if (synchronous) {
                 // Use sendBeacon for page unload (fire-and-forget)

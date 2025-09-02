@@ -42,7 +42,7 @@ const ShopsListing = () => {
       const { page = 1, limit = 100, search = '', category = '', sort = 'relevance', ...filters } = params;
       console.log('=== FETCHING SHOPS DEBUG ===');
       console.log('Params:', { page, limit, search, category, sort, filters });
-      console.log('API base URL:', 'http://localhost:8000/api');
+      console.log('API base URL:', 'https://izishop-backend.onrender.com/api');
       console.log('Expected endpoint: /api/shops');
       
       const response = await api.getAllShops(page, limit, search, category, sort, filters);
@@ -54,7 +54,7 @@ const ShopsListing = () => {
       
       // Also check shop count for debugging
       try {
-        const countResponse = await fetch('http://localhost:8000/api/shops/debug/count');
+        const countResponse = await fetch('https://izishop-backend.onrender.com/api/shops/debug/count');
         const countData = await countResponse.json();
         console.log('=== SHOP COUNT DEBUG ===');
         console.log('Shop count data:', countData);

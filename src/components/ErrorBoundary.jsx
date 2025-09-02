@@ -12,18 +12,24 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Safely add ErrorBoundary marker
+    // Safely add ErrorBoundary marker - using defineProperty to avoid issues with frozen objects
     try {
       if (error && typeof error === 'object') {
-        error.__ErrorBoundary = true;
+        Object.defineProperty(error, '__ErrorBoundary', {
+          value: true,
+          writable: false,
+          enumerable: false,
+          configurable: false
+        });
       }
     } catch (e) {
-      console.warn("Could not add ErrorBoundary marker:", e);
+      // Ignore if object is frozen/sealed - this is expected in production builds
+      console.debug("Could not add ErrorBoundary marker (expected in production):", e.message);
     }
     
     // Safely call global error handler
     try {
-      if (typeof window.__COMPONENT_ERROR__ === 'function') {
+      if (typeof window !== 'undefined' && typeof window.__COMPONENT_ERROR__ === 'function') {
         window.__COMPONENT_ERROR__(error, errorInfo);
       }
     } catch (e) {

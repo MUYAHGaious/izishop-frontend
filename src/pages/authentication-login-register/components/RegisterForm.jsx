@@ -396,16 +396,13 @@ const RegisterForm = ({ onRegister, isLoading }) => {
         </p>
       </div>
 
-      <ValidatedInput
+      <Input
         label="Email Address"
         type="email"
         name="email"
         placeholder="Enter your email address"
         value={formData.email}
         onChange={handleInputChange}
-        validationType="email"
-        debounceDelay={600}
-        minLength={3}
         required
       />
 

@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet';
 import Routes from './Routes';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
-import { WishlistProvider } from './contexts/WishlistProvider';
+import { WishlistProvider } from './contexts/WishlistContext';
 import { ShopProvider } from './contexts/ShopContext';
 import { DataCacheProvider } from './contexts/DataCacheContext';
 import { WebSocketProvider } from './contexts/WebSocketContext';

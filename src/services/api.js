@@ -2,7 +2,7 @@
 // Best practices for authentication and error handling
 import authService from './authService';
 
-const API_BASE_URL = 'https://izishop-backend.onrender.com/api';
+const API_BASE_URL = 'http://127.0.0.1:8000';
 
 class ApiService {
   constructor() {
@@ -120,11 +120,11 @@ class ApiService {
 
       // Check if this is a public endpoint (no auth required)
       const publicEndpoints = [
-        '/auth/check-email',
-        '/auth/check-phone', 
+        '/api/auth/check-email',
+        '/api/auth/check-phone', 
         '/shops/check-name',
         '/auth/login',
-        '/auth/register',
+        '/api/auth/register',
         '/auth/admin-login',
         '/auth/refresh'
       ];
@@ -376,12 +376,12 @@ class ApiService {
   async register(userData) {
     console.log('=== API REGISTER STARTED ===');
     console.log('API register called with:', { ...userData, password: '[REDACTED]', confirm_password: '[REDACTED]' });
-    console.log('Making POST request to /auth/register');
+    console.log('Making POST request to /api/auth/register');
     console.log('API Base URL:', this.baseURL);
-    console.log('Request URL:', `${this.baseURL}/auth/register`);
+    console.log('Request URL:', `${this.baseURL}/api/auth/register`);
     
     try {
-      const response = await this.request('/auth/register', {
+      const response = await this.request('/api/auth/register', {
         method: 'POST',
         body: JSON.stringify(userData)
       }, false); // false = no authentication required
@@ -793,7 +793,7 @@ class ApiService {
     }
   }
 
-  async getAllProducts(skip = 0, limit = 100, activeOnly = true, search = null) {
+  async getAllProducts(skip = 0, limit = 100, activeOnly = true, search = null, category = null) {
     const params = new URLSearchParams({
       skip: skip.toString(),
       limit: limit.toString(),
@@ -804,11 +804,19 @@ class ApiService {
       params.append('search', search);
     }
     
-    return this.request(`/products/?${params}`);
+    if (category && category !== 'all') {
+      params.append('category', category);
+    }
+    
+    return this.request(`/api/products/?${params}`);
+  }
+
+  async getCategories() {
+    return this.request('/api/categories');
   }
 
   async getProduct(productId) {
-    return this.request(`/products/${productId}`);
+    return this.request(`/api/products/${productId}`);
   }
 
   async updateProduct(productId, productData) {
@@ -835,7 +843,7 @@ class ApiService {
   async checkEmailAvailability(email, options = {}) {
     try {
       const encodedEmail = encodeURIComponent(email);
-      const url = `/auth/check-email/${encodedEmail}`;
+      const url = `/api/auth/check-email/${encodedEmail}`;
       console.log(`[EMAIL DEBUG] Making API request to: ${this.baseURL}${url}`);
       
       const result = await this.request(url, {
@@ -967,7 +975,7 @@ class ApiService {
   async checkPhoneAvailability(phone, options = {}) {
     try {
       const encodedPhone = encodeURIComponent(phone);
-      return await this.request(`/auth/check-phone/${encodedPhone}`, {
+      return await this.request(`/api/auth/check-phone/${encodedPhone}`, {
         method: 'GET',
         signal: options.signal
       }, false); // false = no authentication required

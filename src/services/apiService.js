@@ -75,9 +75,8 @@ class ApiService {
 
   // User management endpoints
   async checkEmailExists(email) {
-    const response = await this.request('/auth/check-email', {
-      method: 'POST',
-      body: JSON.stringify({ email })
+    const response = await this.request(`/api/auth/check-email/${encodeURIComponent(email)}`, {
+      method: 'GET'
     }, false);
     return await this.handleResponse(response);
   }
@@ -91,7 +90,7 @@ class ApiService {
   }
 
   async register(userData) {
-    const response = await this.request('/auth/register', {
+    const response = await this.request('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData)
     }, false);

@@ -6,12 +6,13 @@ import Header from '../../components/ui/Header';
 import MobileBottomTab from '../../components/ui/MobileBottomTab';
 import FilterPanel from './components/FilterPanel';
 import ProductGrid from './components/ProductGrid';
-import CategoryNavigation from './components/CategoryNavigation';
 import FlashSaleHero from './components/FlashSaleHero';
 import SearchSection from './components/SearchSection';
 import Footer from '../landing-page/components/Footer';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
+import CustomDropdown from '../../components/ui/CustomDropdown';
+import ErrorBoundary from '../../components/ErrorBoundary';
 import api from '../../services/api';
 
 const ProductCatalog = () => {
@@ -26,6 +27,16 @@ const ProductCatalog = () => {
   const [sortBy, setSortBy] = useState('relevance');
   const [resultsCount, setResultsCount] = useState(0);
   const [viewMode, setViewMode] = useState('grid'); // grid or list
+
+  // Sort options for the dropdown
+  const sortOptions = [
+    { value: 'relevance', label: 'Most Relevant', icon: 'Target' },
+    { value: 'price-low', label: 'Price: Low to High', icon: 'ArrowUp' },
+    { value: 'price-high', label: 'Price: High to Low', icon: 'ArrowDown' },
+    { value: 'rating', label: 'Highest Rated', icon: 'Star' },
+    { value: 'newest', label: 'Newest First', icon: 'Clock' },
+    { value: 'popular', label: 'Most Popular', icon: 'TrendingUp' }
+  ];
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   // CRITICAL FIX: Ensure component re-renders on navigation changes (2025)
@@ -51,20 +62,88 @@ const ProductCatalog = () => {
   // Dynamic categories based on real data - matching landing page icons
   const [categories, setCategories] = useState([
     { id: 'all', name: 'All Categories', icon: 'Grid3X3', count: 0 },
-    { id: 'electronics', name: 'Electronics', icon: 'Smartphone', count: 0 },
-    { id: 'fashion', name: 'Fashion', icon: 'Shirt', count: 0 },
-    { id: 'sports', name: 'Sports', icon: 'Dumbbell', count: 0 },
-    { id: 'home', name: 'Home & Living', icon: 'Home', count: 0 },
-    { id: 'beauty', name: 'Health & Beauty', icon: 'Heart', count: 0 },
-    { id: 'food', name: 'Food & Agriculture', icon: 'Apple', count: 0 },
-    { id: 'automotive', name: 'Automotive', icon: 'Car', count: 0 }
+    { id: 'electronics', name: 'Electronics', icon: 'Smartphone', color: 'teal', count: 0 },
+    { id: 'fashion', name: 'Fashion', icon: 'Shirt', color: 'teal', count: 0 },
+    { id: 'sports', name: 'Sports', icon: 'Dumbbell', color: 'teal', count: 0 },
+    { id: 'home', name: 'Home & Living', icon: 'Home', color: 'teal', count: 0 },
+    { id: 'beauty', name: 'Health & Beauty', icon: 'Heart', color: 'teal', count: 0 },
+    { id: 'food', name: 'Food & Agriculture', icon: 'Apple', color: 'teal', count: 0 },
+    { id: 'automotive', name: 'Automotive', icon: 'Car', color: 'teal', count: 0 }
   ]);
 
   // Load real products from API on component mount
   useEffect(() => {
     console.log('ProductCatalog component mounted');
-    loadProducts(''); // Load all products initially
+    loadProducts('', selectedCategory); // Load all products initially
+    loadCategories(); // Load categories from API
   }, []);
+
+  // Load categories from API
+  const loadCategories = useCallback(async () => {
+    try {
+      const categoriesData = await api.getCategories();
+      console.log('Categories loaded from API:', categoriesData);
+      
+      // Transform API data to match component format
+      const transformedCategories = categoriesData.map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        icon: getCategoryIcon(cat.id),
+        count: cat.product_count || 0
+      }));
+      
+      console.log('Transformed categories:', transformedCategories);
+      
+      // Ensure we always have all categories, even if API returns fewer
+      const defaultCategories = [
+        { id: 'all', name: 'All Categories', icon: 'Grid3X3', count: 0 },
+        { id: 'electronics', name: 'Electronics', icon: 'Smartphone', count: 0 },
+        { id: 'fashion', name: 'Fashion', icon: 'Shirt', count: 0 },
+        { id: 'sports', name: 'Sports', icon: 'Dumbbell', count: 0 },
+        { id: 'home', name: 'Home & Living', icon: 'Home', count: 0 },
+        { id: 'beauty', name: 'Health & Beauty', icon: 'Heart', count: 0 },
+        { id: 'food', name: 'Food & Agriculture', icon: 'Apple', count: 0 },
+        { id: 'automotive', name: 'Automotive', icon: 'Car', count: 0 },
+        { id: 'books', name: 'Books & Media', icon: 'Book', count: 0 },
+        { id: 'toys', name: 'Toys & Games', icon: 'Star', count: 0 },
+        { id: 'health', name: 'Health & Fitness', icon: 'Activity', count: 0 },
+        { id: 'jewelry', name: 'Jewelry', icon: 'Diamond', count: 0 },
+        { id: 'art', name: 'Art & Crafts', icon: 'Brush', count: 0 },
+        { id: 'music', name: 'Music & Instruments', icon: 'Music', count: 0 },
+        { id: 'travel', name: 'Travel & Outdoors', icon: 'MapPin', count: 0 },
+        { id: 'pets', name: 'Pet Supplies', icon: 'Heart', count: 0 },
+        { id: 'office', name: 'Office Supplies', icon: 'Briefcase', count: 0 },
+        { id: 'garden', name: 'Garden & Tools', icon: 'Wrench', count: 0 }
+      ];
+      
+      // Merge API data with default categories
+      const mergedCategories = defaultCategories.map(defaultCat => {
+        const apiCat = transformedCategories.find(apiCat => apiCat.id === defaultCat.id);
+        return apiCat ? { ...defaultCat, count: apiCat.count } : defaultCat;
+      });
+      
+      setCategories(mergedCategories);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      // Keep default categories if API fails
+    }
+  }, []);
+
+  // Map category IDs to icons
+  const getCategoryIcon = (categoryId) => {
+    const iconMap = {
+      'all': 'Grid3X3',
+      'electronics': 'Smartphone',
+      'fashion': 'Shirt',
+      'sports': 'Dumbbell',
+      'home': 'Home',
+      'beauty': 'Heart',
+      'food': 'Apple',
+      'automotive': 'Car',
+      'books': 'Book'
+    };
+    return iconMap[categoryId] || 'Package';
+  };
 
   // Handle URL params and search
   useEffect(() => {
@@ -78,9 +157,9 @@ const ProductCatalog = () => {
     setSelectedCategory(category);
     setSortBy(sort);
     
-    // Load products from API if we have a search query
-    if (query) {
-      loadProducts(query);
+    // Load products from API if we have a search query or category
+    if (query || category !== 'all') {
+      loadProducts(query, category);
     }
   }, [searchParams]);
 
@@ -89,7 +168,9 @@ const ProductCatalog = () => {
     console.log('Products state updated:', products);
     console.log('Loading state:', loading);
     console.log('Results count:', resultsCount);
-  }, [products, loading, resultsCount]);
+    console.log('Selected category:', selectedCategory);
+    console.log('Categories:', categories);
+  }, [products, loading, resultsCount, selectedCategory, categories]);
 
   // Generate mock products when API is not available
   const generateMockProducts = (searchQuery = '') => {
@@ -154,15 +235,15 @@ const ProductCatalog = () => {
     };
   };
 
-  const loadProducts = async (searchQuery = '') => {
+  const loadProducts = useCallback(async (searchQuery = '', category = 'all') => {
     try {
       setLoading(true);
-      console.log('Starting to load products with query:', searchQuery);
+      console.log('Starting to load products with query:', searchQuery, 'category:', category);
       
       // First try to fetch real products from API
       try {
         console.log('Fetching real products from API...');
-        const response = await api.getAllProducts(0, 100, true, searchQuery);
+        const response = await api.getAllProducts(0, 100, true, searchQuery, category);
         console.log('Real API response received:', response);
         
         if (Array.isArray(response) && response.length > 0) {
@@ -206,7 +287,7 @@ const ProductCatalog = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const updateCategoryCounts = (products) => {
     const totalCount = products.length;
@@ -218,6 +299,7 @@ const ProductCatalog = () => {
 
   // Handle category change
   const handleCategoryChange = useCallback((categoryId) => {
+    console.log('Category changed to:', categoryId);
     setSelectedCategory(categoryId);
     const newParams = new URLSearchParams(searchParams);
     if (categoryId !== 'all') {
@@ -226,7 +308,16 @@ const ProductCatalog = () => {
       newParams.delete('category');
     }
     setSearchParams(newParams);
-  }, [searchParams, setSearchParams]);
+    
+    // Reload products with new category
+    const query = searchParams.get('q') || '';
+    loadProducts(query, categoryId);
+  }, [searchParams, setSearchParams, loadProducts]);
+
+  // Handle category click - same as landing page
+  const handleCategoryClick = (categoryId) => {
+    handleCategoryChange(categoryId);
+  };
 
   // Handle filter changes
   const handleFilterChange = useCallback((filterType, value) => {
@@ -238,11 +329,39 @@ const ProductCatalog = () => {
 
   // Handle sort change
   const handleSortChange = useCallback((newSort) => {
+    console.log('Sort changed to:', newSort);
     setSortBy(newSort);
     const newParams = new URLSearchParams(searchParams);
     newParams.set('sort', newSort);
     setSearchParams(newParams);
+    
+    // Apply sorting to current products
+    applySorting(newSort);
   }, [searchParams, setSearchParams]);
+
+  // Apply sorting to products
+  const applySorting = useCallback((sortType) => {
+    setProducts(prevProducts => {
+      const sortedProducts = [...prevProducts];
+      
+      switch (sortType) {
+        case 'price-low':
+          return sortedProducts.sort((a, b) => a.price - b.price);
+        case 'price-high':
+          return sortedProducts.sort((a, b) => b.price - a.price);
+        case 'rating':
+          return sortedProducts.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        case 'newest':
+          return sortedProducts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        case 'popular':
+          return sortedProducts.sort((a, b) => (b.sales_count || 0) - (a.sales_count || 0));
+        case 'relevance':
+        default:
+          // Keep original order for relevance
+          return sortedProducts;
+      }
+    });
+  }, []);
 
   // Remove filter
   const handleRemoveFilter = useCallback((filterType, value) => {
@@ -336,14 +455,6 @@ const ProductCatalog = () => {
         setSearchParams={setSearchParams}
       />
       
-      {/* Category Navigation */}
-      <CategoryNavigation 
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onCategoryChange={handleCategoryChange}
-      />
-      
-      
       <div className="flex h-screen">
         {/* Desktop Filter Sidebar */}
         <div className="hidden lg:block w-80 bg-white border-r border-gray-200 h-full">
@@ -398,33 +509,57 @@ const ProductCatalog = () => {
                 {/* Sort & View Options */}
                 <div className="flex items-center gap-4">
                   {/* Sort Dropdown */}
-                  <select
+                  <CustomDropdown
+                    options={sortOptions}
                     value={sortBy}
-                    onChange={(e) => handleSortChange(e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-300 hover:shadow-md"
-                  >
-                    <option value="relevance">Most Relevant</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                    <option value="rating">Highest Rated</option>
-                    <option value="newest">Newest First</option>
-                    <option value="popular">Most Popular</option>
-                  </select>
+                    onChange={handleSortChange}
+                    placeholder="Sort by"
+                    className="min-w-[200px]"
+                  />
 
                   {/* View Mode Toggle */}
-                  <div className="hidden md:flex border border-gray-300 rounded-lg overflow-hidden shadow-sm">
+                  <div className="hidden md:flex items-center">
+                    <div className="relative bg-gray-200 rounded-full p-1 border border-gray-300 flex flex-row">
+                      {/* Sliding Selector */}
+                      <div 
+                        className={`
+                          absolute top-1 bottom-1 bg-white rounded-full shadow-sm
+                        `}
+                        style={{
+                          width: 'calc(50% - 4px)',
+                          left: viewMode === 'grid' ? '2px' : 'calc(50% - 2px)',
+                          transition: 'left 0.3s ease-out'
+                        }}
+                      />
+                      
+                      {/* Grid Button */}
                     <button
                       onClick={() => setViewMode('grid')}
-                      className={`p-2 transition-all duration-300 ${viewMode === 'grid' ? 'bg-teal-500 text-white scale-105' : 'bg-white text-gray-600 hover:bg-gray-50 hover:scale-102'}`}
-                    >
-                      <Icon name="Grid3X3" size={16} />
+                        className={`
+                          relative z-10 flex items-center justify-center p-3 rounded-full transition-all duration-300 ease-out
+                          ${viewMode === 'grid' 
+                            ? 'text-teal-600' 
+                            : 'text-gray-600 hover:text-gray-800'
+                          }
+                        `}
+                      >
+                        <Icon name="Grid3X3" size={18} />
                     </button>
+                      
+                      {/* List Button */}
                     <button
                       onClick={() => setViewMode('list')}
-                      className={`p-2 transition-all duration-300 ${viewMode === 'list' ? 'bg-teal-500 text-white scale-105' : 'bg-white text-gray-600 hover:bg-gray-50 hover:scale-102'}`}
-                    >
-                      <Icon name="List" size={16} />
+                        className={`
+                          relative z-10 flex items-center justify-center p-3 rounded-full transition-all duration-300 ease-out
+                          ${viewMode === 'list' 
+                            ? 'text-teal-600' 
+                            : 'text-gray-600 hover:text-gray-800'
+                          }
+                        `}
+                      >
+                        <Icon name="List" size={18} />
                     </button>
+                    </div>
                   </div>
                 </div>
               </div>

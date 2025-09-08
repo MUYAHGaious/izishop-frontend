@@ -60,7 +60,7 @@ const DeliveryOptions = ({
   };
 
   return (
-    <div className={`bg-card border border-border rounded-lg marketplace-shadow-card ${className}`}>
+    <div className={`bg-white border border-gray-200 rounded-xl shadow-lg ${className}`}>
       <div className="p-6">
         <h3 className="text-lg font-semibold text-foreground mb-4">
           Delivery Options

@@ -2,82 +2,9 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
-import Image from '../../../components/AppImage';
+import ProductRecommendations from './ProductRecommendations';
 
 const EmptyCart = ({ className = "" }) => {
-  const suggestedProducts = [
-    {
-      id: 1,
-      name: 'iPhone 14 Pro',
-      price: 850000,
-      originalPrice: 950000,
-      image: 'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=300&h=300&fit=crop',
-      rating: 4.8,
-      shop: 'TechHub Store'
-    },
-    {
-      id: 2,
-      name: 'Samsung Galaxy Buds Pro',
-      price: 125000,
-      originalPrice: null,
-      image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=300&h=300&fit=crop',
-      rating: 4.6,
-      shop: 'Audio World'
-    },
-    {
-      id: 3,
-      name: 'MacBook Air M2',
-      price: 1200000,
-      originalPrice: null,
-      image: 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=300&h=300&fit=crop',
-      rating: 4.9,
-      shop: 'Apple Store'
-    },
-    {
-      id: 4,
-      name: 'Nike Air Max 270',
-      price: 85000,
-      originalPrice: 95000,
-      image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&h=300&fit=crop',
-      rating: 4.5,
-      shop: 'SportZone'
-    }
-  ];
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'XAF',
-      minimumFractionDigits: 0
-    }).format(price).replace('XAF', 'XAF ');
-  };
-
-  const renderStars = (rating) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 !== 0;
-
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(
-        <Icon key={i} name="Star" size={12} className="text-accent fill-current" />
-      );
-    }
-
-    if (hasHalfStar) {
-      stars.push(
-        <Icon key="half" name="Star" size={12} className="text-accent fill-current opacity-50" />
-      );
-    }
-
-    const remainingStars = 5 - Math.ceil(rating);
-    for (let i = 0; i < remainingStars; i++) {
-      stars.push(
-        <Icon key={`empty-${i}`} name="Star" size={12} className="text-border" />
-      );
-    }
-
-    return stars;
-  };
 
   return (
     <div className={`${className}`}>
@@ -97,90 +24,25 @@ const EmptyCart = ({ className = "" }) => {
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link to="/product-catalog">
-            <Button variant="default" size="lg" iconName="Search" iconPosition="left">
+            <Button variant="default" size="lg" iconName="Search" iconPosition="left" className="bg-teal-500 hover:bg-teal-600 text-white">
               Browse Products
             </Button>
           </Link>
           
           <Link to="/landing-page">
-            <Button variant="outline" size="lg" iconName="Home" iconPosition="left">
+            <Button variant="outline" size="lg" iconName="Home" iconPosition="left" className="border-teal-300 text-teal-600 hover:bg-teal-50 hover:border-teal-500 transition-all duration-300">
               Back to Home
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* Suggested Products */}
+      {/* Real Product Recommendations */}
       <div className="mt-12">
-        <div className="text-center mb-8">
-          <h3 className="text-xl font-semibold text-foreground mb-2">
-            You might like these
-          </h3>
-          <p className="text-text-secondary">
-            Popular products from our marketplace
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {suggestedProducts.map((product) => (
-            <div key={product.id} className="bg-card border border-border rounded-lg marketplace-shadow-card overflow-hidden group">
-              <Link to={`/product-detail?id=${product.id}`}>
-                <div className="aspect-square overflow-hidden">
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 marketplace-transition"
-                  />
-                </div>
-              </Link>
-
-              <div className="p-4">
-                <Link 
-                  to={`/product-detail?id=${product.id}`}
-                  className="text-sm font-semibold text-foreground hover:text-primary marketplace-transition line-clamp-2 mb-2"
-                >
-                  {product.name}
-                </Link>
-
-                <div className="flex items-center mb-2">
-                  <div className="flex items-center space-x-1 mr-2">
-                    {renderStars(product.rating)}
-                  </div>
-                  <span className="text-xs text-text-secondary">
-                    ({product.rating})
-                  </span>
-                </div>
-
-                <p className="text-xs text-text-secondary mb-3">
-                  <Icon name="Store" size={10} className="inline mr-1" />
-                  {product.shop}
-                </p>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-sm font-bold text-primary font-mono">
-                      {formatPrice(product.price)}
-                    </span>
-                    {product.originalPrice && (
-                      <span className="text-xs text-text-secondary line-through font-mono ml-2">
-                        {formatPrice(product.originalPrice)}
-                      </span>
-                    )}
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    iconName="Plus"
-                    className="text-xs"
-                  >
-                    Add
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <ProductRecommendations
+          type="empty"
+          limit={4}
+        />
       </div>
 
       {/* Features */}

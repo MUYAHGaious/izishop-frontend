@@ -23,17 +23,34 @@ const LandingPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Sample data - replace with real API data
+  // Category mapping for landing page
+  const categoryMapping = {
+    'electronics': { name: 'Electronics', icon: 'Smartphone', color: 'teal' },
+    'fashion': { name: 'Fashion', icon: 'Shirt', color: 'teal' },
+    'sports': { name: 'Sports', icon: 'Dumbbell', color: 'teal' },
+    'home': { name: 'Home & Living', icon: 'Home', color: 'teal' },
+    'beauty': { name: 'Health & Beauty', icon: 'Heart', color: 'teal' },
+    'food': { name: 'Food & Agriculture', icon: 'Apple', color: 'teal' },
+    'automotive': { name: 'Automotive', icon: 'Car', color: 'teal' },
+    'books': { name: 'Books', icon: 'Book', color: 'teal' }
+  };
+
+  // Default categories for landing page
   const categories = [
-    { name: 'Personal Care', icon: 'User', color: 'teal', iconColor: 'text-gray-600' },
-    { name: 'Accessories', icon: 'Watch', color: 'teal', iconColor: 'text-gray-600' },
-    { name: 'Coats', icon: 'Shirt', color: 'teal', iconColor: 'text-gray-600' },
-    { name: 'Sweet Pants', icon: 'Package', color: 'teal', iconColor: 'text-gray-600' },
-    { name: 'Bag/Purse', icon: 'Briefcase', color: 'teal', iconColor: 'text-gray-600' },
-    { name: 'T-Shirt', icon: 'Shirt', color: 'teal', iconColor: 'text-gray-600' },
-    { name: 'Sneakers', icon: 'Zap', color: 'teal', iconColor: 'text-gray-600' },
-    { name: 'Bags', icon: 'ShoppingBag', color: 'teal', iconColor: 'text-gray-600' }
+    { id: 'electronics', name: 'Electronics', icon: 'Smartphone', color: 'teal', iconColor: 'text-gray-600' },
+    { id: 'fashion', name: 'Fashion', icon: 'Shirt', color: 'teal', iconColor: 'text-gray-600' },
+    { id: 'sports', name: 'Sports', icon: 'Dumbbell', color: 'teal', iconColor: 'text-gray-600' },
+    { id: 'home', name: 'Home & Living', icon: 'Home', color: 'teal', iconColor: 'text-gray-600' },
+    { id: 'beauty', name: 'Health & Beauty', icon: 'Heart', color: 'teal', iconColor: 'text-gray-600' },
+    { id: 'food', name: 'Food & Agriculture', icon: 'Apple', color: 'teal', iconColor: 'text-gray-600' },
+    { id: 'automotive', name: 'Automotive', icon: 'Car', color: 'teal', iconColor: 'text-gray-600' },
+    { id: 'books', name: 'Books', icon: 'Book', color: 'teal', iconColor: 'text-gray-600' }
   ];
+
+  // Handle category click
+  const handleCategoryClick = (categoryId) => {
+    navigate(`/product-catalog?category=${categoryId}`);
+  };
 
   const newArrivals = [
     { 
@@ -228,7 +245,8 @@ const LandingPage = () => {
                       icon: <Icon name={category.icon} size={24} className="text-white" />,
                       color: category.color,
                       label: category.name,
-                      customClass: "cursor-pointer"
+                      customClass: "cursor-pointer",
+                      onClick: () => handleCategoryClick(category.id)
                     }))} 
                     className="custom-class"
                   />

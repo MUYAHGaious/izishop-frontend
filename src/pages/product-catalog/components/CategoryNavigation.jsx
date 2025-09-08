@@ -1,55 +1,93 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import GlassIcons from '../../../components/ui/GlassIcons';
 
 const CategoryNavigation = ({ categories, selectedCategory, onCategoryChange }) => {
   const scrollRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScrollButtons = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
+    }
+  };
+
+  useEffect(() => {
+    checkScrollButtons();
+    const scrollContainer = scrollRef.current;
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', checkScrollButtons);
+      return () => scrollContainer.removeEventListener('scroll', checkScrollButtons);
+    }
+  }, [categories]);
 
   const scrollLeft = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+      scrollRef.current.scrollBy({ left: -300, behavior: 'smooth' });
     }
   };
 
   const scrollRight = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 200, behavior: 'smooth' });
+      scrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
     }
   };
 
   return (
     <div className="bg-white border-b border-gray-200 z-20">
       <div className="container mx-auto px-4 py-4">
-        <div className="relative">
-          {/* Scroll Left Button */}
+        <div className="relative flex items-center">
+          {/* Scroll Left Button - Always visible */}
           <button
             onClick={scrollLeft}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors"
+            disabled={!canScrollLeft}
+            className={`flex-shrink-0 w-12 h-12 bg-white shadow-lg rounded-full flex items-center justify-center transition-all duration-200 border border-gray-200 mr-4 ${
+              canScrollLeft 
+                ? 'hover:bg-gray-50 cursor-pointer text-gray-600' 
+                : 'opacity-30 cursor-not-allowed text-gray-400'
+            }`}
           >
-            <Icon name="ChevronLeft" size={16} className="text-gray-600" />
+            <Icon name="ArrowLeft" size={20} />
           </button>
 
           {/* Categories Container - Glass Icons */}
-          <div className="flex justify-center px-10">
-            <GlassIcons 
-              items={categories.map((category) => ({
-                icon: <Icon name={category.icon} size={24} className="text-white" />,
-                color: 'teal',
-                label: `${category.name} (${category.count})`,
-                customClass: `cursor-pointer ${selectedCategory === category.id ? 'selected' : ''}`,
-                onClick: () => onCategoryChange(category.id)
-              }))} 
-              className="category-navigation"
-            />
+          <div className="flex-1 overflow-hidden">
+            <div 
+              ref={scrollRef}
+              className="overflow-x-auto scrollbar-hide"
+              style={{ 
+                scrollbarWidth: 'none', 
+                msOverflowStyle: 'none'
+              }}
+            >
+              <GlassIcons 
+                items={categories.map((category) => ({
+                  icon: <Icon name={category.icon} size={24} className="text-white" />,
+                  color: 'teal',
+                  label: `${category.name} (${category.count})`,
+                  customClass: `cursor-pointer ${selectedCategory === category.id ? 'selected' : ''}`,
+                  onClick: () => onCategoryChange(category.id)
+                }))} 
+                className="category-navigation"
+              />
+            </div>
           </div>
 
-          {/* Scroll Right Button */}
+          {/* Scroll Right Button - Always visible */}
           <button
             onClick={scrollRight}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors"
+            disabled={!canScrollRight}
+            className={`flex-shrink-0 w-12 h-12 bg-white shadow-lg rounded-full flex items-center justify-center transition-all duration-200 border border-gray-200 ml-4 ${
+              canScrollRight 
+                ? 'hover:bg-gray-50 cursor-pointer text-gray-600' 
+                : 'opacity-30 cursor-not-allowed text-gray-400'
+            }`}
           >
-            <Icon name="ChevronRight" size={16} className="text-gray-600" />
+            <Icon name="ArrowRight" size={20} />
           </button>
         </div>
       </div>

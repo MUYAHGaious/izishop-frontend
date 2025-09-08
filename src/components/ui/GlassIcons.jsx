@@ -1,20 +1,18 @@
 import React from 'react';
 import './GlassIcons.css';
-import { colorPalette } from '../../styles/colorPalette';
 
 const gradientMapping = {
-  teal: colorPalette.primary.teal.gradient,
-  blue: colorPalette.primary.blue.gradient,
-  cyan: "linear-gradient(135deg, #0891b2, #0e7490)",
-  indigo: "linear-gradient(135deg, #4f46e5, #4338ca)",
-  purple: "linear-gradient(135deg, #7c3aed, #6d28d9)",
-  emerald: "linear-gradient(135deg, #059669, #047857)",
-  sky: "linear-gradient(135deg, #0284c7, #0369a1)",
-  ocean: "linear-gradient(135deg, #0e7490, #155e75)",
+  blue: 'linear-gradient(hsl(223, 90%, 50%), hsl(208, 90%, 50%))',
+  purple: 'linear-gradient(hsl(283, 90%, 50%), hsl(268, 90%, 50%))',
+  red: 'linear-gradient(hsl(3, 90%, 50%), hsl(348, 90%, 50%))',
+  indigo: 'linear-gradient(hsl(253, 90%, 50%), hsl(238, 90%, 50%))',
+  orange: 'linear-gradient(hsl(43, 90%, 50%), hsl(28, 90%, 50%))',
+  green: 'linear-gradient(hsl(123, 90%, 40%), hsl(108, 90%, 40%))',
+  teal: 'linear-gradient(hsl(173, 90%, 40%), hsl(158, 90%, 40%))'
 };
 
 const GlassIcons = ({ items, className }) => {
-  const getBackgroundStyle = (color) => {
+  const getBackgroundStyle = color => {
     if (gradientMapping[color]) {
       return { background: gradientMapping[color] };
     }
@@ -22,21 +20,14 @@ const GlassIcons = ({ items, className }) => {
   };
 
   return (
-    <div className={`icon-btns ${className || ""}`}>
+    <div className={`icon-btns ${className || ''}`}>
       {items.map((item, index) => (
-        <button
-          key={index}
-          className={`icon-btn ${item.customClass || ""}`}
-          aria-label={item.label}
-          type="button"
-          onClick={item.onClick}
-        >
-          <span
-            className="icon-btn__back"
-            style={getBackgroundStyle(item.color)}
-          ></span>
+        <button key={index} className={`icon-btn ${item.customClass || ''}`} aria-label={item.label} type="button" onClick={item.onClick}>
+          <span className="icon-btn__back" style={getBackgroundStyle(item.color)}></span>
           <span className="icon-btn__front">
-            <span className="icon-btn__icon" aria-hidden="true">{item.icon}</span>
+            <span className="icon-btn__icon" aria-hidden="true">
+              {item.icon}
+            </span>
           </span>
           <span className="icon-btn__label">{item.label}</span>
         </button>

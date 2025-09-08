@@ -69,7 +69,7 @@ const OrderSummary = ({
   ];
 
   return (
-    <div className={`bg-card border border-border rounded-lg marketplace-shadow-card ${className}`}>
+    <div className={`bg-white border border-gray-200 rounded-xl shadow-lg ${className}`}>
       <div className="p-6">
         <h3 className="text-lg font-semibold text-foreground mb-4">
           Order Summary
@@ -130,7 +130,7 @@ const OrderSummary = ({
             <span className="text-base font-semibold text-foreground">
               Total
             </span>
-            <span className="text-xl font-bold text-primary font-mono">
+            <span className="text-xl font-bold text-teal-600 font-mono">
               {formatPrice(total)}
             </span>
           </div>
@@ -144,7 +144,7 @@ const OrderSummary = ({
           onClick={onProceedToCheckout}
           iconName="ArrowRight"
           iconPosition="right"
-          className="mb-4"
+          className="mb-4 bg-teal-500 hover:bg-teal-600 text-white"
         >
           Proceed to Checkout
         </Button>

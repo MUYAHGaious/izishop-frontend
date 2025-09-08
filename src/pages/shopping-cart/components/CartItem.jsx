@@ -58,7 +58,7 @@ const CartItem = ({
   const stockStatus = getStockStatus();
 
   return (
-    <div className={`bg-card border border-border rounded-lg marketplace-shadow-card ${className}`}>
+    <div className={`bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 ${className}`}>
       <div className="p-4">
         <div className="flex items-start space-x-4">
           {/* Product Image */}
@@ -68,7 +68,7 @@ const CartItem = ({
                 <Image
                   src={item.image}
                   alt={item.name}
-                  className="w-full h-full object-cover hover:scale-105 marketplace-transition"
+                  className="w-full h-full object-cover"
                 />
               </div>
             </Link>
@@ -80,14 +80,14 @@ const CartItem = ({
               <div className="flex-1 min-w-0">
                 <Link 
                   to={`/product-detail?id=${item.productId}`}
-                  className="text-sm sm:text-base font-semibold text-foreground hover:text-primary marketplace-transition line-clamp-2"
+                  className="text-sm sm:text-base font-semibold text-foreground line-clamp-2"
                 >
                   {item.name}
                 </Link>
                 
                 <Link 
                   to={`/shop-profile?id=${item.shopId}`}
-                  className="text-xs sm:text-sm text-text-secondary hover:text-primary marketplace-transition mt-1 block"
+                  className="text-xs sm:text-sm text-text-secondary mt-1 block"
                 >
                   <Icon name="Store" size={12} className="inline mr-1" />
                   {item.shopName}
@@ -112,7 +112,7 @@ const CartItem = ({
 
               {/* Price */}
               <div className="text-right ml-4">
-                <p className="text-sm sm:text-base font-bold text-primary font-mono">
+                <p className="text-sm sm:text-base font-bold text-teal-600 font-mono">
                   {formatPrice(item.price)}
                 </p>
                 {item.originalPrice && item.originalPrice > item.price && (
@@ -130,7 +130,7 @@ const CartItem = ({
                   <button
                     onClick={handleQuantityDecrease}
                     disabled={item.quantity <= 1}
-                    className="p-2 text-text-secondary hover:text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed marketplace-transition"
+                    className="p-2 text-text-secondary hover:text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed "
                   >
                     <Icon name="Minus" size={14} />
                   </button>
@@ -140,13 +140,13 @@ const CartItem = ({
                   <button
                     onClick={handleQuantityIncrease}
                     disabled={item.quantity >= item.maxStock || item.stock <= 0}
-                    className="p-2 text-text-secondary hover:text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed marketplace-transition"
+                    className="p-2 text-text-secondary hover:text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed "
                   >
                     <Icon name="Plus" size={14} />
                   </button>
                 </div>
 
-                <span className="text-sm font-semibold text-foreground font-mono">
+                <span className="text-sm font-semibold text-teal-600 font-mono">
                   {formatPrice(item.price * item.quantity)}
                 </span>
               </div>
@@ -154,7 +154,7 @@ const CartItem = ({
               {/* Mobile Expand Button */}
               <button
                 onClick={toggleExpanded}
-                className="sm:hidden p-2 text-text-secondary hover:text-foreground hover:bg-muted rounded-md marketplace-transition"
+                className="sm:hidden p-2 text-text-secondary hover:text-foreground hover:bg-muted rounded-md "
               >
                 <Icon name={isExpanded ? "ChevronUp" : "ChevronDown"} size={16} />
               </button>
@@ -175,7 +175,7 @@ const CartItem = ({
               <div className="flex items-center space-x-4">
                 <button
                   onClick={handleSaveForLater}
-                  className="flex items-center text-xs text-text-secondary hover:text-primary marketplace-transition"
+                  className="flex items-center text-xs text-text-secondary hover:text-primary "
                 >
                   <Icon name="Heart" size={12} className="mr-1" />
                   Save for later
@@ -184,7 +184,7 @@ const CartItem = ({
                 <button
                   onClick={handleRemove}
                   disabled={isRemoving}
-                  className="flex items-center text-xs text-text-secondary hover:text-error marketplace-transition disabled:opacity-50"
+                  className="flex items-center text-xs text-text-secondary hover:text-error  disabled:opacity-50"
                 >
                   <Icon name="Trash2" size={12} className="mr-1" />
                   {isRemoving ? 'Removing...' : 'Remove'}

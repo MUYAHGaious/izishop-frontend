@@ -28,7 +28,7 @@ const StickyCheckoutBar = ({
                 {itemCount} {itemCount === 1 ? 'item' : 'items'}
               </span>
             </div>
-            <div className="text-lg font-bold text-primary font-mono">
+            <div className="text-lg font-bold text-teal-600 font-mono">
               {formatPrice(total)}
             </div>
           </div>
@@ -40,7 +40,7 @@ const StickyCheckoutBar = ({
             onClick={onProceedToCheckout}
             iconName="ArrowRight"
             iconPosition="right"
-            className="px-8"
+            className="px-8 bg-teal-500 hover:bg-teal-600 text-white"
           >
             Checkout
           </Button>

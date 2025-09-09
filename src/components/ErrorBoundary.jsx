@@ -4,7 +4,11 @@ import Icon from "./AppIcon";
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { 
+      hasError: false,
+      error: null,
+      errorInfo: null
+    };
   }
 
   static getDerivedStateFromError(error) {
@@ -12,32 +16,12 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Safely add ErrorBoundary marker - using defineProperty to avoid issues with frozen objects
-    try {
-      if (error && typeof error === 'object') {
-        Object.defineProperty(error, '__ErrorBoundary', {
-          value: true,
-          writable: false,
-          enumerable: false,
-          configurable: false
-        });
-      }
-    } catch (e) {
-      // Ignore if object is frozen/sealed - this is expected in production builds
-      console.debug("Could not add ErrorBoundary marker (expected in production):", e.message);
-    }
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
     
-    // Safely call global error handler
-    try {
-      if (typeof window !== 'undefined' && typeof window.__COMPONENT_ERROR__ === 'function') {
-        window.__COMPONENT_ERROR__(error, errorInfo);
-      }
-    } catch (e) {
-      console.warn("Global error handler failed:", e);
-    }
-    
-    console.error("Error caught by ErrorBoundary:", error, errorInfo);
-    this.setState({ error, errorInfo });
+    this.setState({
+      error: error,
+      errorInfo: errorInfo
+    });
   }
 
   render() {
@@ -69,16 +53,17 @@ class ErrorBoundary extends React.Component {
             <div className="flex justify-center items-center mt-6">
               <button
                 onClick={() => {
-                  window.location.href = "/";
+                  this.setState({ hasError: false, error: null, errorInfo: null });
+                  window.location.reload();
                 }}
                 className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded flex items-center gap-2 transition-colors duration-200 shadow-sm"
               >
                 <Icon name="ArrowLeft" size={18} color="#fff" />
-                Back
+                Reload Application
               </button>
             </div>
-          </div >
-        </div >
+          </div>
+        </div>
       );
     }
 

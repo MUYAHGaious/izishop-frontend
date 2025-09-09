@@ -113,7 +113,7 @@ const ShopsListing = () => {
       try {
         console.log('🔄 loadInitialData triggered - URL searchParams changed');
         setLoading(true);
-        setError(null);
+        setError(null); // Clear any previous errors
 
         // Get URL parameters
         const query = searchParams.get('q') || '';
@@ -135,8 +135,12 @@ const ShopsListing = () => {
           sort: sort
         };
 
+        console.log('=== CACHE DEBUG ===');
+        console.log('fetchWithCache available:', !!fetchWithCache);
+        console.log('shopsParams:', shopsParams);
+
         const [shopsData, featuredData] = await Promise.all([
-          fetchWithCache ? fetchWithCache('shops', () => fetchShops(shopsParams), shopsParams) : fetchShops(shopsParams),
+          fetchWithCache ? fetchWithCache('shops', fetchShops, shopsParams) : fetchShops(shopsParams),
           fetchWithCache ? fetchWithCache('featured-shops', fetchFeaturedShops, {}) : fetchFeaturedShops()
         ]);
 
@@ -155,12 +159,13 @@ const ShopsListing = () => {
             setResultsCount(meta.total_count || shops.length);
             setHasMore(meta.has_more || false);
             setCurrentPage(meta.pagination?.page || 1);
+            setError(null); // Clear any previous errors
           } else if (shopsData.success === true && Array.isArray(shopsData.data) && shopsData.data.length === 0) {
-            // Empty data response
-
+            // Empty data response - this is normal, not an error
             setShops([]);
             setResultsCount(0);
             setHasMore(false);
+            setError(null); // Clear any previous errors
             
             // Show the reason if provided
             if (shopsData.reason) {

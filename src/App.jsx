@@ -15,35 +15,7 @@ import { useNavigationHandler } from './hooks/useNavigationListener';
 import './styles/index.css';
 
 function App() {
-  const [hasError, setHasError] = React.useState(false);
-  const [errorInfo, setErrorInfo] = React.useState(null);
-
-  // Global error boundary effect
-  React.useEffect(() => {
-    const handleError = (event) => {
-      console.error('Global error caught:', event.error);
-      if (event.error && !event.error.message.includes('extension')) {
-        setHasError(true);
-        setErrorInfo(event.error.message);
-      }
-    };
-
-    const handleUnhandledRejection = (event) => {
-      console.error('Unhandled promise rejection:', event.reason);
-      if (event.reason && !event.reason.message?.includes('extension')) {
-        setHasError(true);
-        setErrorInfo(event.reason.message || 'Unknown error');
-      }
-    };
-
-    window.addEventListener('error', handleError);
-    window.addEventListener('unhandledrejection', handleUnhandledRejection);
-
-    return () => {
-      window.removeEventListener('error', handleError);
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
-    };
-  }, []);
+  // Remove conflicting error handling - let ErrorBoundary handle all errors
 
   // Handle extension communication errors
   React.useEffect(() => {
@@ -106,8 +78,7 @@ function App() {
         type: navigationType
       });
       // Force re-render by clearing any cached component state that might prevent updates
-      setHasError(false);
-      setErrorInfo(null);
+      // ErrorBoundary will handle error state
     },
     onBackNavigation: ({ location, action }) => {
       console.log('⬅️ Browser back/forward navigation detected:', {
@@ -118,33 +89,7 @@ function App() {
     }
   });
 
-  // Error fallback UI
-  if (hasError) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-6">
-          <div className="text-red-500 mb-4">
-            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-          </div>
-          <h1 className="text-xl font-semibold text-gray-900 mb-2">Something went wrong</h1>
-          <p className="text-gray-600 mb-4">The application encountered an error and needs to be reloaded.</p>
-          {errorInfo && (
-            <div className="text-sm text-gray-500 mb-4 p-3 bg-gray-100 rounded">
-              Error: {errorInfo}
-            </div>
-          )}
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-          >
-            Reload Application
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Remove conflicting error UI - let ErrorBoundary handle all error display
 
   return (
     <ErrorBoundary>

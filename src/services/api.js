@@ -2,7 +2,7 @@
 // Best practices for authentication and error handling
 import authService from './authService';
 
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_BASE_URL = 'https://izishop-backend.onrender.com';
 
 class ApiService {
   constructor() {
@@ -560,7 +560,7 @@ class ApiService {
         }
       });
       
-      const url = `/shops?${params.toString()}`;
+      const url = `/api/shops?${params.toString()}`;
       console.log('=== API CALL DEBUG ===');
       console.log('Full URL:', `${this.baseURL}${url}`);
       console.log('Params:', Object.fromEntries(params));
@@ -578,7 +578,7 @@ class ApiService {
 
   async getFeaturedShops() {
     try {
-      return this.request('/shops/featured', {}, false); // false = no auth required
+      return this.request('/api/shops/featured', {}, false); // false = no auth required
     } catch (error) {
       console.warn('API not available for featured shops:', error.message);
       
@@ -1344,6 +1344,13 @@ class ApiService {
     return await this.request('/auth/upgrade-role', {
       method: 'PATCH',
       body: JSON.stringify({ role: newRole })
+    });
+  }
+
+  // Create shop owner subscription
+  async createShopSubscription() {
+    return await this.request('/tranzak/create-shop-subscription', {
+      method: 'POST'
     });
   }
 

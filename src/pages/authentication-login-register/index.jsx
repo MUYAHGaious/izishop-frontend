@@ -124,10 +124,13 @@ const AuthenticationLoginRegister = () => {
       const response = await login(credentials);
       console.log('Login successful, user role:', response.user.role);
       
-      // Force immediate redirect after successful login
+      // Wait a bit longer to ensure all state updates are complete
       setTimeout(() => {
+        console.log('=== REDIRECTING AFTER LOGIN ===');
+        console.log('Auth state before redirect:', isAuthenticated());
+        console.log('User state before redirect:', user);
         redirectToDashboard(response.user.role);
-      }, 500);
+      }, 1000);
       
       setIsLoading(false);
     } catch (error) {

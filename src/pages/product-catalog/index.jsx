@@ -40,7 +40,7 @@ const ProductCatalog = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   // CRITICAL FIX: Ensure component re-renders on navigation changes (2025)
-  useRouteRefresh(({ location, navigationType }) => {
+  const handleRouteChange = useCallback(({ location, navigationType }) => {
     console.log('📦 ProductCatalog - Route changed:', {
       path: location.pathname,
       search: location.search,
@@ -57,7 +57,9 @@ const ProductCatalog = () => {
       setSortBy('relevance');
       setSelectedCategory('all');
     }
-  });
+  }, []);
+
+  useRouteRefresh(handleRouteChange);
 
   // Dynamic categories based on real data - matching landing page icons
   const [categories, setCategories] = useState([

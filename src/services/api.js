@@ -2,7 +2,7 @@
 // Best practices for authentication and error handling
 import authService from './authService';
 
-const API_BASE_URL = 'https://izishop-backend.onrender.com';
+const API_BASE_URL = 'http://localhost:8000';
 
 class ApiService {
   constructor() {
@@ -360,7 +360,7 @@ class ApiService {
 
   // Authentication methods with enhanced token handling
   async login(email, password) {
-    const response = await this.request('/auth/login', {
+    const response = await this.request('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password })
     }, false); // false = no authentication required
@@ -416,11 +416,11 @@ class ApiService {
   }
 
   async getCurrentUser() {
-    return this.request('/auth/me');
+    return this.request('/api/auth/me');
   }
 
   async adminLogin(email, password, adminCode) {
-    const response = await this.request('/auth/admin-login', {
+    const response = await this.request('/api/auth/admin-login', {
       method: 'POST',
       body: JSON.stringify({ email, password, admin_code: adminCode })
     }, false); // false = no authentication required
@@ -436,7 +436,7 @@ class ApiService {
   async logout() {
     try {
       // Call logout endpoint to invalidate tokens on server
-      await this.request('/auth/logout', {
+      await this.request('/api/auth/logout', {
         method: 'POST'
       });
     } catch (error) {
@@ -1201,7 +1201,7 @@ class ApiService {
 
   async getUserDaysActive() {
     try {
-      const result = await this.request('/auth/profile/days-active', {
+      const result = await this.request('/api/auth/profile/days-active', {
         method: 'GET'
       });
       return result.days_active || 1;
@@ -1341,16 +1341,22 @@ class ApiService {
 
   // Role upgrade method
   async upgradeUserRole(newRole) {
-    return await this.request('/auth/upgrade-role', {
+    return await this.request('/api/auth/upgrade-role', {
       method: 'PATCH',
       body: JSON.stringify({ role: newRole })
     });
   }
 
   // Create shop owner subscription
-  async createShopSubscription() {
-    return await this.request('/tranzak/create-shop-subscription', {
-      method: 'POST'
+  async createShopSubscription(paymentData = {}) {
+    return await this.request('/api/tranzak/create-shop-subscription', {
+      method: 'POST',
+      body: JSON.stringify({
+        paymentMethod: paymentData.paymentMethod || 'visa_mastercard',
+        phoneNumber: paymentData.phoneNumber || null,
+        operator: paymentData.operator || null,
+        cardDetails: paymentData.cardDetails || null
+      })
     });
   }
 

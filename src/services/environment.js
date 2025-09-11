@@ -43,7 +43,7 @@ class EnvironmentDetector {
       backends: [
         'https://staging-api.izishopin.com',
         'https://izishop-backend-staging.onrender.com',
-        'https://izishop-backend.onrender.com'
+        'http://localhost:8000'
       ],
       features: {
         debugging: true,
@@ -58,7 +58,7 @@ class EnvironmentDetector {
       priority: 2,
       backends: [
         'https://staging-api.izishopin.com',
-        'https://izishop-backend.onrender.com'
+        'http://localhost:8000'
       ],
       features: {
         debugging: false,
@@ -72,7 +72,7 @@ class EnvironmentDetector {
       type: 'production',
       priority: 3,
       backends: [
-        'https://izishop-backend.onrender.com',
+        'http://localhost:8000',
         'https://api.izishopin.com'
       ],
       features: {

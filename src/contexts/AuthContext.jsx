@@ -99,7 +99,9 @@ export const AuthProvider = ({ children }) => {
       console.log('AuthContext: AuthService authentication status:', isAuthServiceAuthenticated);
       console.log('AuthContext: Session validity:', isSessionValid);
       
-      if (!accessToken || !storedUser || !isAuthServiceAuthenticated || !isSessionValid) {
+      // During initialization, be more lenient with session validation
+      // If we have tokens and user data, but session is not valid, try to create a new session
+      if (!accessToken || !storedUser || !isAuthServiceAuthenticated) {
         console.log('AuthContext: No valid authentication or session found, checking backup...');
         
         // Try to recover from backup - ONLY if tokens are actually available
@@ -161,48 +163,72 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
+      // Parse user data first
+      let currentUser;
       try {
-        // Parse user data first
-        const currentUser = JSON.parse(storedUser);
+        currentUser = JSON.parse(storedUser);
         console.log('AuthContext: Parsed user data:', currentUser.email, 'role:', currentUser.role);
-        
-        // Set user immediately for faster UI response
-        setUser(currentUser);
-        
-        // Create backup authentication state for reload persistence - ONLY if authService confirms
-        const isAuthServiceValid = authService.isAuthenticated();
-        if (isAuthServiceValid) {
-          localStorage.setItem('authBackup', JSON.stringify({
-            user: currentUser,
-            timestamp: Date.now(),
-            accessToken: !!accessToken
-          }));
-        } else {
-          console.warn('AuthContext: AuthService does not confirm authentication, skipping backup creation');
-        }
-        
-        // Restore or create secure session using sessionService
-        const sessionRestored = sessionService.initializeSession();
-        
-        if (sessionRestored) {
-          // Use existing valid session
-          setSessionId(sessionService.sessionId);
+      } catch (parseError) {
+        console.error('AuthContext: Failed to parse stored user data:', parseError);
+        // Clear corrupted data
+        await authService.logout();
+        setUser(null);
+        setSessionId(null);
+        setCurrentRole(null);
+        setLoading(false);
+        setIsInitializing(false);
+        setAuthCheckComplete(true);
+        return;
+      }
+      
+      // Set user immediately for faster UI response
+      setUser(currentUser);
+      
+      // Create backup authentication state for reload persistence - ONLY if authService confirms
+      const isAuthServiceValid = authService.isAuthenticated();
+      if (isAuthServiceValid) {
+        localStorage.setItem('authBackup', JSON.stringify({
+          user: currentUser,
+          timestamp: Date.now(),
+          accessToken: !!accessToken
+        }));
+      } else {
+        console.warn('AuthContext: AuthService does not confirm authentication, skipping backup creation');
+      }
+      
+      // Restore or create secure session using sessionService
+      const sessionRestored = sessionService.initializeSession();
+      
+      if (sessionRestored) {
+        // Use existing valid session
+        setSessionId(sessionService.sessionId);
+        setSessionStartTime(sessionService.sessionStartTime?.toString());
+        console.log('AuthContext: Restored existing secure session:', sessionService.getSessionInfo());
+      } else {
+        // Create new secure session
+        const newSessionId = sessionService.createSession(currentUser);
+        if (newSessionId) {
+          setSessionId(newSessionId);
           setSessionStartTime(sessionService.sessionStartTime?.toString());
-          console.log('AuthContext: Restored existing secure session:', sessionService.getSessionInfo());
+          console.log('AuthContext: Created new secure session:', sessionService.getSessionInfo());
         } else {
-          // Create new secure session
-          const newSessionId = sessionService.createSession(currentUser);
-          if (newSessionId) {
-            setSessionId(newSessionId);
-            setSessionStartTime(sessionService.sessionStartTime?.toString());
-            console.log('AuthContext: Created new secure session:', sessionService.getSessionInfo());
-          } else {
-            console.error('Failed to create secure session');
-            await authService.logout();
-            setLoading(false);
-            setIsInitializing(false);
-            return;
-          }
+          console.error('Failed to create secure session');
+          await authService.logout();
+          setLoading(false);
+          setIsInitializing(false);
+          return;
+        }
+      }
+      
+      // Session validation handled above
+        // We have valid tokens and user data, but session is invalid
+        // Create a new session to fix this
+        console.log('AuthContext: Valid tokens but invalid session, creating new session...');
+        const newSessionId = sessionService.createSession(currentUser);
+        if (newSessionId) {
+          setSessionId(newSessionId);
+          setSessionStartTime(sessionService.sessionStartTime?.toString());
+          console.log('AuthContext: Created new session for existing user:', sessionService.getSessionInfo());
         }
         
         // Use stored role if available, otherwise use user role
@@ -279,15 +305,6 @@ export const AuthProvider = ({ children }) => {
             setCurrentRole(null);
           }
         }
-        
-      } catch (parseError) {
-        console.error('AuthContext: Failed to parse stored user data:', parseError);
-        // Clear corrupted data
-        await authService.logout();
-        setUser(null);
-        setSessionId(null);
-        setCurrentRole(null);
-      }
       
     } catch (error) {
       console.error('AuthContext: Initialization error:', error);
@@ -358,6 +375,16 @@ export const AuthProvider = ({ children }) => {
       
       // Log security event
       console.log(`Secure login successful for role: ${newUser.role}, Session: ${newSessionId.substring(0, 8)}...`);
+      
+      // Debug: Check authentication state after login
+      console.log('=== AUTH STATE AFTER LOGIN ===');
+      console.log('User set:', !!user);
+      console.log('SessionId set:', !!sessionId);
+      console.log('CurrentRole set:', !!currentRole);
+      console.log('isAuthenticated():', isAuthenticated());
+      console.log('AuthService isAuthenticated():', authService.isAuthenticated());
+      console.log('SessionService isValidSession():', sessionService.isValidSession());
+      console.log('================================');
       
       return response;
     } catch (error) {
@@ -892,6 +919,28 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Method to refresh user data from server
+  const refreshUserData = async () => {
+    try {
+      console.log('AuthContext: Refreshing user data from server...');
+      const response = await api.getCurrentUser();
+      if (response) {
+        // The response is the user object directly, not wrapped in a user property
+        const updatedUser = response;
+        setUser(updatedUser);
+        setCurrentRole(updatedUser.role);
+        
+        // Update localStorage with fresh user data
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        
+        console.log('AuthContext: User data refreshed successfully', updatedUser);
+        return updatedUser;
+      }
+    } catch (error) {
+      console.error('AuthContext: Failed to refresh user data:', error);
+    }
+  };
+
   const value = {
     // State
     user,
@@ -937,6 +986,9 @@ export const AuthProvider = ({ children }) => {
     
     // Clear error
     clearError: () => setError(null),
+    
+    // Refresh user data
+    refreshUserData,
     
     // Initialization state
     isInitializing,

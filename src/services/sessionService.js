@@ -179,12 +179,21 @@ class SessionService {
    */
   isValidSession() {
     if (!this.sessionId || !this.sessionStartTime) {
+      console.log('SessionService: No session ID or start time');
       return false;
     }
     
     const now = Date.now();
     const sessionAge = now - this.sessionStartTime;
     const idleTime = this.lastActivityTime ? now - this.lastActivityTime : 0;
+    
+    console.log('SessionService: Checking session validity:', {
+      sessionId: this.sessionId?.substring(0, 8),
+      sessionAge: Math.round(sessionAge / 1000) + 's',
+      idleTime: Math.round(idleTime / 1000) + 's',
+      absoluteTimeout: Math.round(this.sessionConfig.ABSOLUTE_TIMEOUT / 1000) + 's',
+      idleTimeout: Math.round(this.sessionConfig.IDLE_TIMEOUT / 1000) + 's'
+    });
     
     // Check absolute timeout
     if (sessionAge >= this.sessionConfig.ABSOLUTE_TIMEOUT) {
@@ -200,6 +209,7 @@ class SessionService {
       return false;
     }
     
+    console.log('SessionService: Session is valid');
     return true;
   }
 

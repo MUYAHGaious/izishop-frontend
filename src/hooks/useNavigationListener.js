@@ -52,6 +52,12 @@ export const useRouteRefresh = (callback) => {
   const location = useLocation();
   const navigationType = useNavigationType();
   const initialRender = useRef(true);
+  const callbackRef = useRef(callback);
+  
+  // Update callback ref when callback changes
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
   
   useEffect(() => {
     // Skip initial render
@@ -67,10 +73,10 @@ export const useRouteRefresh = (callback) => {
     });
     
     // Call callback on any route change
-    if (callback) {
-      callback({ location, navigationType });
+    if (callbackRef.current) {
+      callbackRef.current({ location, navigationType });
     }
-  }, [location, navigationType, callback]); // Use entire location object as dependency
+  }, [location.pathname, location.search, navigationType]); // Only depend on location properties, not callback
 };
 
 /**

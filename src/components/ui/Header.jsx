@@ -4,7 +4,6 @@ import Icon from '../AppIcon';
 import Button from './Button';
 import Input from './Input';
 import NotificationBell from './NotificationBell';
-import SettingsOverlay from './SettingsOverlay';
 import { useAuth } from '../../contexts/AuthContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 
@@ -15,7 +14,6 @@ const Header = () => {
   const [notificationCount, setNotificationCount] = useState(0);
   const [cartAnimating, setCartAnimating] = useState(false);
   const [notificationAnimating, setNotificationAnimating] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [userProfileImage, setUserProfileImage] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -305,7 +303,7 @@ const Header = () => {
                     <div className="border-t border-gray-100 my-1"></div>
                     
                     <button
-                      onClick={() => setIsSettingsOpen(true)}
+                      onClick={() => navigate('/settings')}
                       className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                     >
                       <Icon name="Settings" size={16} className="mr-3 text-gray-500" />
@@ -538,11 +536,6 @@ const Header = () => {
           </div>
         </div>
       )}
-
-      <SettingsOverlay
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-      />
     </header>
   );
 };

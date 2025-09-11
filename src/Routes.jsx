@@ -44,6 +44,7 @@ import OrderManagement from "./pages/order-management";
 import CustomerDashboard from "./pages/customer-dashboard";
 import DeliveryAgentDashboard from "./pages/delivery-agent-dashboard";
 import UserSettings from "./pages/user-settings";
+import Settings from "./pages/Settings";
 import CasualMarketplace from "./pages/casual-marketplace";
 
 // Protected Route Component
@@ -173,6 +174,15 @@ const AppRoutes = () => {
       
       <Route 
         path="/settings" 
+        element={
+          <AuthenticatedRouteGuard>
+            <Settings />
+          </AuthenticatedRouteGuard>
+        } 
+      />
+      
+      <Route 
+        path="/user-settings" 
         element={
           <AuthenticatedRouteGuard>
             <UserSettings />

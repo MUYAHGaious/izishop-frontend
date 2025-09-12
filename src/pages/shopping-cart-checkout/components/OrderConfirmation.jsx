@@ -10,7 +10,7 @@ const OrderConfirmation = ({ orderData }) => {
       currency: 'XAF',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
-    }).format(price).replace('XAF', 'FCFA');
+    }).format(price);
   };
 
   const formatDate = (date) => {

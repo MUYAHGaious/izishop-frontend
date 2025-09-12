@@ -194,7 +194,7 @@ const Analytics = () => {
 
   const formatCurrency = (amount) => {
     if (amount === null || amount === undefined) return 'XAF 0';
-    return new Intl.NumberFormat('fr-CM', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'XAF',
       minimumFractionDigits: 0
@@ -370,13 +370,13 @@ const Analytics = () => {
               <select
                 value={timeRange}
                 onChange={(e) => setTimeRange(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white"
               >
                 {timeRanges.map(range => (
                   <option key={range.value} value={range.value}>{range.label}</option>
                 ))}
               </select>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+              <button className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors flex items-center space-x-2">
                 <Icon name="Download" size={16} />
                 <span>Export</span>
               </button>
@@ -401,8 +401,8 @@ const Analytics = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Icon name="DollarSign" size={24} className="text-green-600" />
+                <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+                  <Icon name="DollarSign" size={24} className="text-teal-600" />
                 </div>
                 {realTimeEnabled && (
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
@@ -429,8 +429,8 @@ const Analytics = () => {
 
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Icon name="ShoppingBag" size={24} className="text-blue-600" />
+                <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+                  <Icon name="ShoppingBag" size={24} className="text-teal-600" />
                 </div>
                 {realTimeEnabled && (
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
@@ -457,8 +457,8 @@ const Analytics = () => {
 
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Icon name="Users" size={24} className="text-purple-600" />
+                <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+                  <Icon name="Users" size={24} className="text-teal-600" />
                 </div>
                 {realTimeEnabled && (
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
@@ -485,8 +485,8 @@ const Analytics = () => {
 
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <Icon name="Store" size={24} className="text-orange-600" />
+                <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+                  <Icon name="Store" size={24} className="text-teal-600" />
                 </div>
                 {realTimeEnabled && (
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>

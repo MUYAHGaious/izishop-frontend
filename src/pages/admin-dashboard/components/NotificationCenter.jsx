@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import GlassmorphismToast from '../../../components/ui/GlassmorphismToast';
 import api from '../../../services/api';
 
 const NotificationCenter = () => {
@@ -54,15 +55,15 @@ const NotificationCenter = () => {
     offset: 0
   });
 
-  const [alert, setAlert] = useState({ show: false, type: '', message: '' });
+  const [toast, setToast] = useState({ show: false, type: 'success', message: '' });
   const [tagInput, setTagInput] = useState('');
 
   // Predefined categories and tags
   const categories = [
     { value: 'general', label: 'General', color: 'bg-gray-100 text-gray-800' },
     { value: 'urgent', label: 'Urgent', color: 'bg-red-100 text-red-800' },
-    { value: 'promotional', label: 'Promotional', color: 'bg-blue-100 text-blue-800' },
-    { value: 'system_update', label: 'System Update', color: 'bg-purple-100 text-purple-800' },
+    { value: 'promotional', label: 'Promotional', color: 'bg-teal-100 text-teal-800' },
+    { value: 'system_update', label: 'System Update', color: 'bg-teal-100 text-teal-800' },
     { value: 'policy_change', label: 'Policy Change', color: 'bg-yellow-100 text-yellow-800' },
     { value: 'maintenance', label: 'Maintenance', color: 'bg-orange-100 text-orange-800' },
     { value: 'security', label: 'Security', color: 'bg-red-100 text-red-800' },
@@ -84,7 +85,7 @@ const NotificationCenter = () => {
   const fetchUsers = async () => {
     // Check if user has admin privileges
     if (!user || (user.role !== 'ADMIN' && user.role !== 'admin')) {
-      showAlert('error', 'Admin access required to fetch users');
+      showToast('error', 'Admin access required to fetch users');
       return;
     }
 
@@ -99,18 +100,18 @@ const NotificationCenter = () => {
       } else {
         console.warn('NotificationCenter: Invalid response format:', response);
         setUsers([]);
-        showAlert('warning', 'No users found with current filters');
+        showToast('warning', 'No users found with current filters');
       }
     } catch (error) {
       console.error('NotificationCenter: Error fetching users:', error);
       setUsers([]);
       
       if (error.message.includes('403') || error.message.includes('Forbidden')) {
-        showAlert('error', 'Access denied. Admin privileges required.');
+        showToast('error', 'Access denied. Admin privileges required.');
       } else if (error.message.includes('Network Error') || error.message.includes('fetch')) {
-        showAlert('error', 'Network error. Please check your connection and try again.');
+        showToast('error', 'Network error. Please check your connection and try again.');
       } else {
-        showAlert('error', 'Failed to fetch users: ' + error.message);
+        showToast('error', 'Failed to fetch users: ' + error.message);
       }
     } finally {
       setLoading(false);
@@ -159,9 +160,12 @@ const NotificationCenter = () => {
     }
   };
 
-  const showAlert = (type, message) => {
-    setAlert({ show: true, type, message });
-    setTimeout(() => setAlert({ show: false, type: '', message: '' }), 5000);
+  const showToast = (type, message) => {
+    setToast({ show: true, type, message });
+  };
+
+  const closeToast = () => {
+    setToast({ show: false, type: 'success', message: '' });
   };
 
   const handleSearch = (value) => {
@@ -196,15 +200,15 @@ const NotificationCenter = () => {
 
   const validateForm = () => {
     if (!notificationForm.title.trim()) {
-      showAlert('error', 'Title is required');
+      showToast('error', 'Title is required');
       return false;
     }
     if (!notificationForm.message.trim()) {
-      showAlert('error', 'Message is required');
+      showToast('error', 'Message is required');
       return false;
     }
     if (selectedUsers.length === 0) {
-      showAlert('error', 'Please select at least one recipient');
+      showToast('error', 'Please select at least one recipient');
       return false;
     }
     return true;
@@ -261,9 +265,9 @@ const NotificationCenter = () => {
   const getRoleColor = (role) => {
     const colors = {
       admin: 'bg-red-100 text-red-800',
-      shop_owner: 'bg-blue-100 text-blue-800',
+      shop_owner: 'bg-teal-100 text-teal-800',
       customer: 'bg-green-100 text-green-800',
-      delivery_agent: 'bg-purple-100 text-purple-800'
+      delivery_agent: 'bg-teal-100 text-teal-800'
     };
     return colors[role] || 'bg-gray-100 text-gray-800';
   };
@@ -280,9 +284,9 @@ const NotificationCenter = () => {
 
   const getTypeColor = (type) => {
     const colors = {
-      order: 'bg-blue-50 text-blue-700',
+      order: 'bg-teal-50 text-teal-700',
       payment: 'bg-green-50 text-green-700',
-      system: 'bg-purple-50 text-purple-700',
+      system: 'bg-teal-50 text-teal-700',
       marketing: 'bg-pink-50 text-pink-700',
       shop: 'bg-orange-50 text-orange-700',
       security: 'bg-red-50 text-red-700',
@@ -345,7 +349,7 @@ const NotificationCenter = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-r from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
                   <Icon name="Send" size={24} className="text-white" />
                 </div>
                 <span>Notification Center</span>
@@ -379,14 +383,14 @@ const NotificationCenter = () => {
                       placeholder="Search users..."
                       value={searchTerm}
                       onChange={(e) => handleSearch(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     />
                   </div>
                   
                   <select
                     value={roleFilter}
                     onChange={(e) => handleRoleFilter(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   >
                     <option value="">All Roles</option>
                     <option value="CUSTOMER">Customers</option>
@@ -406,7 +410,7 @@ const NotificationCenter = () => {
                       type="checkbox"
                       checked={selectedUsers.length === users.length && users.length > 0}
                       onChange={selectAllUsers}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
                     />
                     <span className="text-sm font-medium text-gray-700">
                       Select All ({users.length} users)
@@ -416,7 +420,7 @@ const NotificationCenter = () => {
 
                 {loading ? (
                   <div className="p-6 text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto"></div>
                     <p className="text-gray-500 mt-2">Loading users...</p>
                   </div>
                 ) : users.length === 0 ? (
@@ -432,7 +436,7 @@ const NotificationCenter = () => {
                           type="checkbox"
                           checked={selectedUsers.includes(user.id)}
                           onChange={() => handleUserSelection(user.id)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 truncate">{user.full_name}</p>
@@ -448,8 +452,8 @@ const NotificationCenter = () => {
               </div>
 
               {selectedUsers.length > 0 && (
-                <div className="p-4 bg-blue-50 border-t border-gray-200">
-                  <p className="text-sm font-medium text-blue-900">
+                <div className="p-4 bg-teal-50 border-t border-gray-200">
+                  <p className="text-sm font-medium text-teal-900">
                     {selectedUsers.length} user{selectedUsers.length !== 1 ? 's' : ''} selected
                   </p>
                 </div>
@@ -477,7 +481,7 @@ const NotificationCenter = () => {
                     <select
                       value={notificationForm.type}
                       onChange={(e) => setNotificationForm(prev => ({ ...prev, type: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     >
                       {notificationTypes.types.map(type => (
                         <option key={type.value} value={type.value}>{type.label}</option>
@@ -492,7 +496,7 @@ const NotificationCenter = () => {
                     <select
                       value={notificationForm.priority}
                       onChange={(e) => setNotificationForm(prev => ({ ...prev, priority: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     >
                       {notificationTypes.priorities.map(priority => (
                         <option key={priority.value} value={priority.value}>{priority.label}</option>
@@ -507,7 +511,7 @@ const NotificationCenter = () => {
                     <select
                       value={notificationForm.category}
                       onChange={(e) => setNotificationForm(prev => ({ ...prev, category: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     >
                       {categories.map(category => (
                         <option key={category.value} value={category.value}>{category.label}</option>
@@ -526,7 +530,7 @@ const NotificationCenter = () => {
                     value={notificationForm.title}
                     onChange={(e) => setNotificationForm(prev => ({ ...prev, title: e.target.value }))}
                     placeholder="Enter notification title..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   />
                 </div>
 
@@ -540,7 +544,7 @@ const NotificationCenter = () => {
                     value={notificationForm.message}
                     onChange={(e) => setNotificationForm(prev => ({ ...prev, message: e.target.value }))}
                     placeholder="Enter your notification message..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   />
                 </div>
 
@@ -556,13 +560,13 @@ const NotificationCenter = () => {
                         {notificationForm.tags.map((tag, index) => (
                           <span
                             key={index}
-                            className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
+                            className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-teal-100 text-teal-800"
                           >
                             #{tag}
                             <button
                               type="button"
                               onClick={() => removeTag(tag)}
-                              className="ml-2 text-blue-600 hover:text-blue-800"
+                              className="ml-2 text-teal-600 hover:text-teal-800"
                             >
                               <Icon name="X" size={14} />
                             </button>
@@ -579,13 +583,13 @@ const NotificationCenter = () => {
                         onChange={(e) => setTagInput(e.target.value)}
                         onKeyPress={handleTagInputKeyPress}
                         placeholder="Add a tag..."
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                       />
                       <button
                         type="button"
                         onClick={() => addTag(tagInput.trim())}
                         disabled={!tagInput.trim()}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Add
                       </button>
@@ -622,7 +626,7 @@ const NotificationCenter = () => {
                     <select
                       value={notificationForm.icon}
                       onChange={(e) => setNotificationForm(prev => ({ ...prev, icon: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     >
                       {notificationTypes.icons.map(icon => (
                         <option key={icon} value={icon}>{icon}</option>
@@ -639,7 +643,7 @@ const NotificationCenter = () => {
                       value={notificationForm.action_url}
                       onChange={(e) => setNotificationForm(prev => ({ ...prev, action_url: e.target.value }))}
                       placeholder="/path/to/action"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     />
                   </div>
 
@@ -652,7 +656,7 @@ const NotificationCenter = () => {
                       value={notificationForm.action_label}
                       onChange={(e) => setNotificationForm(prev => ({ ...prev, action_label: e.target.value }))}
                       placeholder="View Details"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -667,7 +671,7 @@ const NotificationCenter = () => {
                     max="720"
                     value={notificationForm.expires_in_hours}
                     onChange={(e) => setNotificationForm(prev => ({ ...prev, expires_in_hours: parseInt(e.target.value) }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   />
                 </div>
 
@@ -679,21 +683,27 @@ const NotificationCenter = () => {
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getTypeColor(notificationForm.type)}`}>
                         <Icon name={notificationForm.icon} size={16} />
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <h5 className="font-medium text-gray-900">
+                          <h5 className="font-medium text-gray-900 truncate pr-2">
                             {notificationForm.title || 'Notification Title'}
                           </h5>
-                          <div className="flex items-center space-x-2">
-                            <span className={`text-xs px-2 py-1 rounded-full ${getCategoryColor(notificationForm.category)}`}>
+                          <div className="flex items-center space-x-2 flex-shrink-0">
+                            <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${getCategoryColor(notificationForm.category)}`}>
                               {categories.find(cat => cat.value === notificationForm.category)?.label || 'General'}
                             </span>
-                            <span className={`text-xs font-medium ${getPriorityColor(notificationForm.priority)}`}>
+                            <span className={`text-xs font-medium whitespace-nowrap ${getPriorityColor(notificationForm.priority)}`}>
                               {notificationForm.priority}
                             </span>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-sm text-gray-600 mt-1 break-words overflow-hidden" 
+                           style={{
+                             display: '-webkit-box',
+                             WebkitLineClamp: 3,
+                             WebkitBoxOrient: 'vertical',
+                             wordBreak: 'break-word'
+                           }}>
                           {notificationForm.message || 'Your notification message will appear here...'}
                         </p>
                         
@@ -712,7 +722,7 @@ const NotificationCenter = () => {
                         )}
                         
                         {notificationForm.action_label && (
-                          <button className="mt-3 text-xs text-blue-600 hover:text-blue-800 font-medium">
+                          <button className="mt-3 text-xs text-teal-600 hover:text-teal-800 font-medium">
                             {notificationForm.action_label}
                           </button>
                         )}
@@ -726,7 +736,7 @@ const NotificationCenter = () => {
                   <Button
                     onClick={sendNotification}
                     disabled={sending || selectedUsers.length === 0 || !notificationForm.title || !notificationForm.message}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    className="px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                   >
                     {sending ? (
                       <>

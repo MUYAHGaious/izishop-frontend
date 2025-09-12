@@ -203,7 +203,7 @@ const LandingPage = () => {
                           <Card customClass="bg-gradient-to-br from-teal-400 to-teal-600 text-white flex flex-col justify-center items-center text-center p-4">
                             <Icon name="Truck" size={32} className="text-white mb-3" />
                             <h3 className="text-xl font-bold mb-1">Free Delivery</h3>
-                            <p className="text-sm text-teal-100">Orders 50K+ FCFA</p>
+                            <p className="text-sm text-teal-100">Orders 50K+ XAF</p>
                           </Card>
 
                           {/* Card 2: Secure Payments - EXACT ScrollStack gray-900 */}

@@ -78,7 +78,9 @@ const MyShopProfile = () => {
       if (shopId) {
         shopData = await api.getShop(shopId);
       } else {
-        shopData = await api.getMyShop();
+        // Use the same method as the dashboard for consistency
+        const shopResponse = await api.get('/api/shops/my-shop');
+        shopData = shopResponse.data || shopResponse;
       }
       
       setShop(shopData);

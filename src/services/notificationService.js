@@ -424,7 +424,7 @@ export class NotificationService {
       };
 
       try {
-        await api.request('/notifications/create', {
+        await api.request('/api/notifications/create', {
           method: 'POST',
           body: JSON.stringify(notificationRequest)
         });
@@ -718,6 +718,56 @@ export class NotificationService {
       this.notifySubscribers();
     } catch (error) {
       console.error('Failed to clear all notifications:', error);
+      throw error;
+    }
+  }
+
+  // Trash functionality methods
+  async getTrashNotifications() {
+    try {
+      const response = await api.getTrashNotifications();
+      return Array.isArray(response) ? response : [];
+    } catch (error) {
+      console.error('Failed to get trash notifications:', error);
+      throw error;
+    }
+  }
+
+  async getTrashCount() {
+    try {
+      const response = await api.getTrashCount();
+      return response?.count || 0;
+    } catch (error) {
+      console.error('Failed to get trash count:', error);
+      return 0;
+    }
+  }
+
+  async restoreFromTrash(notificationId) {
+    try {
+      await api.restoreNotificationFromTrash(notificationId);
+      // Refresh notifications to update UI
+      await this.fetchNotifications();
+    } catch (error) {
+      console.error('Failed to restore notification from trash:', error);
+      throw error;
+    }
+  }
+
+  async permanentlyDelete(notificationId) {
+    try {
+      await api.permanentlyDeleteNotification(notificationId);
+    } catch (error) {
+      console.error('Failed to permanently delete notification:', error);
+      throw error;
+    }
+  }
+
+  async emptyTrash() {
+    try {
+      await api.emptyTrash();
+    } catch (error) {
+      console.error('Failed to empty trash:', error);
       throw error;
     }
   }

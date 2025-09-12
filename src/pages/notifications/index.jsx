@@ -4,6 +4,8 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import Icon from '../../components/AppIcon';
 import { useAuth } from '../../contexts/AuthContext';
 import NotificationDetailModal from '../../components/ui/NotificationDetailModal';
+import Header from '../../components/ui/Header';
+import api from '../../services/api';
 import '../../styles/notifications-page.css';
 
 const NotificationsPage = () => {
@@ -18,6 +20,7 @@ const NotificationsPage = () => {
     markAllAsRead,
     deleteNotification,
     getFilteredNotifications,
+    loadUserNotifications,
     clearError
   } = useNotifications();
 
@@ -27,11 +30,103 @@ const NotificationsPage = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'cards'
   const [selectedNotificationDetail, setSelectedNotificationDetail] = useState(null);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  
+  // Trash-related state
+  const [trashNotifications, setTrashNotifications] = useState([]);
+  const [trashCount, setTrashCount] = useState(0);
+  const [isLoadingTrash, setIsLoadingTrash] = useState(false);
+  const [showEmptyTrashConfirm, setShowEmptyTrashConfirm] = useState(false);
 
-  const filteredNotifications = getFilteredNotifications(activeTab).filter(notification =>
-    notification.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    notification.message.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const getDisplayNotifications = () => {
+    if (activeTab === 'trash') {
+      return trashNotifications.filter(notification =>
+        notification.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        notification.message.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    return getFilteredNotifications(activeTab).filter(notification =>
+      notification.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      notification.message.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  };
+
+  const filteredNotifications = getDisplayNotifications();
+
+  // Load notifications and trash when page mounts
+  useEffect(() => {
+    if (user?.email && loadUserNotifications && !hasLoaded) {
+      console.log('Loading notifications on page mount...');
+      setHasLoaded(true);
+      loadUserNotifications();
+      loadTrashNotifications();
+    }
+  }, [user?.email, loadUserNotifications, hasLoaded]);
+
+  // Load trash when switching to trash tab
+  useEffect(() => {
+    if (activeTab === 'trash' && user?.email) {
+      loadTrashNotifications();
+    }
+  }, [activeTab, user?.email]);
+
+  // Trash-related functions
+  const loadTrashNotifications = async () => {
+    try {
+      setIsLoadingTrash(true);
+      const [trashData, countData] = await Promise.all([
+        api.getTrashNotifications({ limit: 50 }),
+        api.getTrashCount()
+      ]);
+      setTrashNotifications(trashData || []);
+      setTrashCount(countData?.count || 0);
+    } catch (error) {
+      console.error('Failed to load trash notifications:', error);
+    } finally {
+      setIsLoadingTrash(false);
+    }
+  };
+
+  const moveToTrash = async (notificationId) => {
+    try {
+      await api.deleteNotification(notificationId);
+      // Refresh both regular notifications and trash
+      loadUserNotifications();
+      loadTrashNotifications();
+    } catch (error) {
+      console.error('Failed to move notification to trash:', error);
+    }
+  };
+
+  const restoreFromTrash = async (notificationId) => {
+    try {
+      await api.restoreNotificationFromTrash(notificationId);
+      // Refresh both trash and regular notifications
+      loadTrashNotifications();
+      loadUserNotifications();
+    } catch (error) {
+      console.error('Failed to restore notification from trash:', error);
+    }
+  };
+
+  const permanentlyDelete = async (notificationId) => {
+    try {
+      await api.permanentlyDeleteNotification(notificationId);
+      loadTrashNotifications();
+    } catch (error) {
+      console.error('Failed to permanently delete notification:', error);
+    }
+  };
+
+  const emptyTrash = async () => {
+    try {
+      await api.emptyTrash();
+      loadTrashNotifications();
+      setShowEmptyTrashConfirm(false);
+    } catch (error) {
+      console.error('Failed to empty trash:', error);
+    }
+  };
 
   const handleSelectAll = () => {
     if (selectedNotifications.size === filteredNotifications.length) {
@@ -59,7 +154,14 @@ const NotificationsPage = () => {
           await Promise.all(selectedIds.map(id => markAsRead(id)));
           break;
         case 'delete':
-          await Promise.all(selectedIds.map(id => deleteNotification(id)));
+          if (activeTab === 'trash') {
+            await Promise.all(selectedIds.map(id => permanentlyDelete(id)));
+          } else {
+            await Promise.all(selectedIds.map(id => moveToTrash(id)));
+          }
+          break;
+        case 'restore':
+          await Promise.all(selectedIds.map(id => restoreFromTrash(id)));
           break;
       }
       setSelectedNotifications(new Set());
@@ -133,13 +235,17 @@ const NotificationsPage = () => {
   const tabs = [
     { key: 'all', label: 'All', count: notifications.length },
     { key: 'unread', label: 'Unread', count: unreadCount },
-    { key: 'read', label: 'Read', count: notifications.length - unreadCount }
+    { key: 'read', label: 'Read', count: notifications.length - unreadCount },
+    { key: 'trash', label: 'Trash', count: trashCount }
   ];
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Header - like product catalog */}
+      <Header />
+      
       {/* Mobile Header */}
-      <div className="lg:hidden bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="lg:hidden bg-white border-b border-gray-200 sticky top-16 z-10">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-3">
             <button
@@ -150,7 +256,7 @@ const NotificationsPage = () => {
             </button>
             <h1 className="text-lg font-semibold text-gray-900">Notifications</h1>
             {unreadCount > 0 && (
-              <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+              <span className="bg-teal-500 text-white text-xs px-2 py-1 rounded-full">
                 {unreadCount}
               </span>
             )}
@@ -172,15 +278,15 @@ const NotificationsPage = () => {
               placeholder="Search notifications..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto lg:flex lg:gap-6 lg:p-6">
+      <div className="max-w-7xl mx-auto lg:flex lg:gap-6 lg:p-6 pt-20 lg:pt-24">
         {/* Desktop Sidebar */}
-        <div className="hidden lg:block w-64 bg-white rounded-lg shadow-sm h-fit sticky top-6">
+        <div className="hidden lg:block w-64 bg-white rounded-lg shadow-sm h-fit sticky top-24">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
@@ -188,7 +294,7 @@ const NotificationsPage = () => {
                 onClick={() => navigate(-1)}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <Icon name="X" size={20} />
+                <Icon name="ArrowLeft" size={20} />
               </button>
             </div>
 
@@ -200,7 +306,7 @@ const NotificationsPage = () => {
                 placeholder="Search notifications..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               />
             </div>
 
@@ -212,7 +318,7 @@ const NotificationsPage = () => {
                   onClick={() => setActiveTab(tab.key)}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors ${
                     activeTab === tab.key
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                      ? 'bg-teal-50 text-teal-700 border border-teal-200'
                       : 'text-gray-700 hover:bg-gray-50'
                   }`}
                 >
@@ -220,7 +326,7 @@ const NotificationsPage = () => {
                   {tab.count > 0 && (
                     <span className={`text-xs px-2 py-1 rounded-full ${
                       activeTab === tab.key
-                        ? 'bg-blue-100 text-blue-700'
+                        ? 'bg-teal-100 text-teal-700'
                         : 'bg-gray-100 text-gray-600'
                     }`}>
                       {tab.count}
@@ -235,12 +341,40 @@ const NotificationsPage = () => {
               <h3 className="text-sm font-medium text-gray-900 mb-3">Quick Actions</h3>
               <div className="space-y-2">
                 <button
-                  onClick={markAllAsRead}
-                  disabled={unreadCount === 0}
+                  onClick={() => {
+                    loadUserNotifications();
+                    if (activeTab === 'trash') {
+                      loadTrashNotifications();
+                    }
+                  }}
+                  disabled={isLoading || isLoadingTrash}
                   className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors disabled:text-gray-400 disabled:hover:bg-transparent"
                 >
-                  Mark all as read
+                  <div className="flex items-center space-x-2">
+                    <Icon name="RefreshCw" size={16} />
+                    <span>Reload</span>
+                  </div>
                 </button>
+                {activeTab !== 'trash' && (
+                  <button
+                    onClick={markAllAsRead}
+                    disabled={unreadCount === 0}
+                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors disabled:text-gray-400 disabled:hover:bg-transparent"
+                  >
+                    Mark all as read
+                  </button>
+                )}
+                {activeTab === 'trash' && trashCount > 0 && (
+                  <button
+                    onClick={() => setShowEmptyTrashConfirm(true)}
+                    className="w-full text-left px-3 py-2 text-sm text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Icon name="Trash2" size={16} />
+                      <span>Empty Trash</span>
+                    </div>
+                  </button>
+                )}
                 <button
                   onClick={() => setViewMode(viewMode === 'list' ? 'cards' : 'list')}
                   className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
@@ -253,7 +387,7 @@ const NotificationsPage = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 lg:bg-white lg:rounded-lg lg:shadow-sm">
+        <div className="flex-1 min-w-0 lg:bg-white lg:rounded-lg lg:shadow-sm">
           {/* Desktop Header */}
           <div className="hidden lg:block border-b border-gray-200 p-6">
             <div className="flex items-center justify-between">
@@ -267,18 +401,37 @@ const NotificationsPage = () => {
                     <span className="text-sm text-gray-600">
                       {selectedNotifications.size} selected
                     </span>
-                    <button
-                      onClick={() => handleBulkAction('markRead')}
-                      className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors"
-                    >
-                      Mark read
-                    </button>
-                    <button
-                      onClick={() => handleBulkAction('delete')}
-                      className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-full hover:bg-red-200 transition-colors"
-                    >
-                      Delete
-                    </button>
+                    {activeTab === 'trash' ? (
+                      <>
+                        <button
+                          onClick={() => handleBulkAction('restore')}
+                          className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors"
+                        >
+                          Restore
+                        </button>
+                        <button
+                          onClick={() => handleBulkAction('delete')}
+                          className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-full hover:bg-red-200 transition-colors"
+                        >
+                          Delete Forever
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleBulkAction('markRead')}
+                          className="px-3 py-1 text-xs bg-teal-100 text-teal-700 rounded-full hover:bg-teal-200 transition-colors"
+                        >
+                          Mark read
+                        </button>
+                        <button
+                          onClick={() => handleBulkAction('delete')}
+                          className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-full hover:bg-red-200 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -308,7 +461,7 @@ const NotificationsPage = () => {
           </div>
 
           {/* Mobile Tabs */}
-          <div className="lg:hidden bg-white border-b border-gray-200 sticky top-16 z-10">
+          <div className="lg:hidden bg-white border-b border-gray-200 sticky top-32 z-10">
             <div className="flex overflow-x-auto">
               {tabs.map((tab) => (
                 <button
@@ -316,7 +469,7 @@ const NotificationsPage = () => {
                   onClick={() => setActiveTab(tab.key)}
                   className={`flex-shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === tab.key
-                      ? 'border-blue-500 text-blue-600'
+                      ? 'border-teal-500 text-teal-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
                 >
@@ -336,7 +489,7 @@ const NotificationsPage = () => {
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
-                  <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+                  <div className="w-8 h-8 border-2 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-4"></div>
                   <p className="text-gray-500">Loading notifications...</p>
                 </div>
               </div>
@@ -358,7 +511,7 @@ const NotificationsPage = () => {
                 </p>
               </div>
             ) : (
-              <div className={viewMode === 'cards' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4' : 'space-y-1'}>
+              <div className={viewMode === 'cards' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4' : 'space-y-1 w-full overflow-hidden'}>
                 {filteredNotifications.map((notification) => (
                   <NotificationItem
                     key={notification.id}
@@ -366,12 +519,14 @@ const NotificationsPage = () => {
                     isSelected={selectedNotifications.has(notification.id)}
                     onSelect={() => handleSelectNotification(notification.id)}
                     onMarkAsRead={() => markAsRead(notification.id)}
-                    onDelete={() => deleteNotification(notification.id)}
+                    onDelete={() => activeTab === 'trash' ? permanentlyDelete(notification.id) : moveToTrash(notification.id)}
+                    onRestore={() => restoreFromTrash(notification.id)}
                     onNotificationClick={handleNotificationClick}
                     viewMode={viewMode}
                     formatTime={formatTime}
                     getNotificationIcon={getNotificationIcon}
                     getNotificationColor={getNotificationColor}
+                    isTrashView={activeTab === 'trash'}
                   />
                 ))}
               </div>
@@ -428,6 +583,37 @@ const NotificationsPage = () => {
         onMarkAsRead={(id) => markAsRead(id)}
         onDelete={(id) => deleteNotification(id)}
       />
+
+      {/* Empty Trash Confirmation Modal */}
+      {showEmptyTrashConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                <Icon name="Trash2" size={20} className="text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Empty Trash</h3>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to permanently delete all notifications in trash? This action cannot be undone.
+            </p>
+            <div className="flex space-x-3 justify-end">
+              <button
+                onClick={() => setShowEmptyTrashConfirm(false)}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={emptyTrash}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Empty Trash
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -439,11 +625,13 @@ const NotificationItem = ({
   onSelect, 
   onMarkAsRead, 
   onDelete, 
+  onRestore,
   onNotificationClick,
   viewMode,
   formatTime,
   getNotificationIcon,
-  getNotificationColor
+  getNotificationColor,
+  isTrashView = false
 }) => {
   const [showActions, setShowActions] = useState(false);
 
@@ -451,8 +639,8 @@ const NotificationItem = ({
     return (
       <div 
         className={`relative bg-white border rounded-lg p-4 transition-all duration-200 hover:shadow-md cursor-pointer ${
-          !notification.read ? 'border-blue-200 bg-blue-50/30' : 'border-gray-200'
-        } ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+          !notification.read ? 'border-teal-200 bg-teal-50/30' : 'border-gray-200'
+        } ${isSelected ? 'ring-2 ring-teal-500' : ''}`}
         onClick={() => onNotificationClick(notification)}
       >
         {/* Card Header */}
@@ -468,7 +656,7 @@ const NotificationItem = ({
               <Icon 
                 name={isSelected ? 'CheckSquare' : 'Square'} 
                 size={18} 
-                className={isSelected ? 'text-blue-600' : 'text-gray-400'} 
+                className={isSelected ? 'text-teal-600' : 'text-gray-400'} 
               />
             </button>
             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getNotificationColor(notification.type, notification.priority)}`}>
@@ -488,25 +676,29 @@ const NotificationItem = ({
 
         {/* Card Content */}
         <div className="space-y-2">
-          <h3 className={`font-medium text-sm leading-tight ${
+          <h3 className={`font-medium text-sm leading-tight truncate ${
             !notification.read ? 'text-gray-900' : 'text-gray-700'
           }`}>
             {notification.title}
           </h3>
-          <p className="text-xs text-gray-600 line-clamp-2">
-            {notification.message.length > 100 
-              ? `${notification.message.substring(0, 100)}...` 
-              : notification.message
-            }
+          <p className="text-xs text-gray-600 break-words"
+             style={{
+               display: '-webkit-box',
+               WebkitLineClamp: 3,
+               WebkitBoxOrient: 'vertical',
+               overflow: 'hidden',
+               wordBreak: 'break-word'
+             }}>
+            {notification.message}
           </p>
           <div className="flex items-center justify-between pt-2">
-            <span className="text-xs text-gray-500">{formatTime(notification.timestamp)}</span>
-            <div className="flex items-center space-x-2">
+            <span className="text-xs text-gray-500 truncate">{formatTime(notification.timestamp)}</span>
+            <div className="flex items-center space-x-2 flex-shrink-0">
               {notification.message.length > 100 && (
-                <span className="text-xs text-blue-600 font-medium">Click to read more</span>
+                <span className="text-xs text-teal-600 font-medium whitespace-nowrap">Read more</span>
               )}
               {!notification.read && (
-                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                <span className="w-2 h-2 bg-teal-500 rounded-full flex-shrink-0"></span>
               )}
             </div>
           </div>
@@ -515,28 +707,55 @@ const NotificationItem = ({
         {/* Actions Menu */}
         {showActions && (
           <div className="absolute top-12 right-4 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10">
-            {!notification.read && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onMarkAsRead();
-                  setShowActions(false);
-                }}
-                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors"
-              >
-                Mark as read
-              </button>
+            {isTrashView ? (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRestore();
+                    setShowActions(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 transition-colors"
+                >
+                  Restore
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete();
+                    setShowActions(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  Delete Forever
+                </button>
+              </>
+            ) : (
+              <>
+                {!notification.read && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMarkAsRead();
+                      setShowActions(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors"
+                  >
+                    Mark as read
+                  </button>
+                )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete();
+                    setShowActions(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  Move to Trash
+                </button>
+              </>
             )}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-                setShowActions(false);
-              }}
-              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
-            >
-              Delete
-            </button>
           </div>
         )}
       </div>
@@ -546,9 +765,9 @@ const NotificationItem = ({
   // List View
   return (
     <div 
-      className={`flex items-center space-x-4 p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 cursor-pointer ${
-        !notification.read ? 'bg-blue-50/30' : ''
-      } ${isSelected ? 'bg-blue-100' : ''}`}
+      className={`flex items-center space-x-4 p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 cursor-pointer w-full min-w-0 ${
+        !notification.read ? 'bg-teal-50/30' : ''
+      } ${isSelected ? 'bg-teal-100' : ''}`}
       onClick={() => onNotificationClick(notification)}
     >
       {/* Selection Checkbox */}
@@ -562,14 +781,14 @@ const NotificationItem = ({
         <Icon 
           name={isSelected ? 'CheckSquare' : 'Square'} 
           size={18} 
-          className={isSelected ? 'text-blue-600' : 'text-gray-400'} 
+          className={isSelected ? 'text-teal-600' : 'text-gray-400'} 
         />
       </button>
 
       {/* Unread Indicator */}
       <div className="flex-shrink-0 w-2">
         {!notification.read && (
-          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+          <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
         )}
       </div>
 
@@ -581,49 +800,82 @@ const NotificationItem = ({
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 pr-2">
             <h3 className={`text-sm font-medium truncate ${
               !notification.read ? 'text-gray-900' : 'text-gray-700'
             }`}>
               {notification.title}
             </h3>
-            <p className="text-sm text-gray-600 mt-1 line-clamp-1">
-              {notification.message.length > 120 
-                ? `${notification.message.substring(0, 120)}...` 
-                : notification.message
-              }
-            </p>
-            {notification.message.length > 120 && (
-              <span className="text-xs text-blue-600 font-medium">Click to read more</span>
-            )}
+            <div className="mt-1">
+              <p className="text-sm text-gray-600 break-words" 
+                 style={{
+                   display: '-webkit-box',
+                   WebkitLineClamp: 2,
+                   WebkitBoxOrient: 'vertical',
+                   overflow: 'hidden',
+                   wordBreak: 'break-word'
+                 }}>
+                {notification.message}
+              </p>
+              {notification.message.length > 120 && (
+                <span className="text-xs text-teal-600 font-medium mt-1 block">Click to read more</span>
+              )}
+            </div>
           </div>
-          <div className="flex items-center space-x-2 ml-4">
+          <div className="flex items-center space-x-2 flex-shrink-0">
             <span className="text-xs text-gray-500 whitespace-nowrap">
               {formatTime(notification.timestamp)}
             </span>
             <div className="flex items-center space-x-1">
-              {!notification.read && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onMarkAsRead();
-                  }}
-                  className="p-1 hover:bg-blue-100 rounded transition-colors"
-                  title="Mark as read"
-                >
-                  <Icon name="Check" size={14} className="text-blue-600" />
-                </button>
+              {isTrashView ? (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRestore();
+                    }}
+                    className="p-1 hover:bg-green-100 rounded transition-colors flex-shrink-0"
+                    title="Restore"
+                  >
+                    <Icon name="RotateCcw" size={14} className="text-green-600" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete();
+                    }}
+                    className="p-1 hover:bg-red-100 rounded transition-colors flex-shrink-0"
+                    title="Delete Forever"
+                  >
+                    <Icon name="Trash2" size={14} className="text-red-600" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  {!notification.read && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onMarkAsRead();
+                      }}
+                      className="p-1 hover:bg-teal-100 rounded transition-colors flex-shrink-0"
+                      title="Mark as read"
+                    >
+                      <Icon name="Check" size={14} className="text-teal-600" />
+                    </button>
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete();
+                    }}
+                    className="p-1 hover:bg-red-100 rounded transition-colors flex-shrink-0"
+                    title="Move to Trash"
+                  >
+                    <Icon name="Trash2" size={14} className="text-red-600" />
+                  </button>
+                </>
               )}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete();
-                }}
-                className="p-1 hover:bg-red-100 rounded transition-colors"
-                title="Delete"
-              >
-                <Icon name="Trash2" size={14} className="text-red-600" />
-              </button>
             </div>
           </div>
         </div>

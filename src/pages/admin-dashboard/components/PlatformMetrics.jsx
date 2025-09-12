@@ -60,7 +60,7 @@ const PlatformMetrics = () => {
   ];
 
   const formatNumber = (num) => {
-    return new Intl.NumberFormat('fr-CM').format(num);
+    return new Intl.NumberFormat('en-US').format(num);
   };
 
   return (

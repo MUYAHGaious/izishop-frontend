@@ -49,29 +49,30 @@ const AdminDashboard = () => {
     }
   }, [user, isAuthenticated, navigate]);
 
-  // Real notification service
+  // Real notification service - temporarily disabled for debugging
   useEffect(() => {
-    try {
-      // Subscribe to real notifications
-      const unsubscribe = notificationService.subscribe((data) => {
-        setNotifications(data.notifications);
-        setNotificationCount(data.count);
-      });
+    console.log('Admin dashboard: Notification service temporarily disabled for debugging');
+    // try {
+    //   // Subscribe to real notifications
+    //   const unsubscribe = notificationService.subscribe((data) => {
+    //     setNotifications(data.notifications);
+    //     setNotificationCount(data.count);
+    //   });
 
-      // Start real-time notifications
-      notificationService.startRealTimeNotifications();
+    //   // Start real-time notifications
+    //   notificationService.startRealTimeNotifications();
 
-      return () => {
-        try {
-          unsubscribe();
-          notificationService.stopNotifications();
-        } catch (error) {
-          console.error('Error cleaning up notifications:', error);
-        }
-      };
-    } catch (error) {
-      console.error('Error initializing notifications:', error);
-    }
+    //   return () => {
+    //     try {
+    //       unsubscribe();
+    //       notificationService.stopNotifications();
+    //     } catch (error) {
+    //       console.error('Error cleaning up notifications:', error);
+    //     }
+    //   };
+    // } catch (error) {
+    //   console.error('Error initializing notifications:', error);
+    // }
   }, []);
 
   const handleLogout = async () => {
@@ -123,40 +124,50 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 relative overflow-hidden">
+      {/* Background blur effects inspired by landing page */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-blue-400/8 rounded-full -translate-y-48 translate-x-48 pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-80 h-80 bg-teal-400/5 rounded-full translate-y-40 -translate-x-40 pointer-events-none"></div>
+      
       {/* Top Navigation Bar */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="flex items-center justify-between h-16 px-4 lg:px-6">
+      <div className="bg-gradient-to-r from-teal-500 to-teal-600 shadow-2xl fixed top-0 left-0 right-0 z-50 overflow-hidden">
+        {/* Blur circle effects like landing page */}
+        <div className="absolute top-0 left-0 w-48 h-48 bg-white/10 rounded-full -translate-y-24 -translate-x-24 pointer-events-none"></div>
+        <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/5 rounded-full translate-y-16 translate-x-16 pointer-events-none"></div>
+        <div className="relative z-10 flex items-center justify-between h-16 px-4 lg:px-6">
           {/* Left Side - Logo and Title */}
           <div className="flex items-center space-x-4">
             <button
               onClick={() => navigate('/landing-page')}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center space-x-2 text-white/80 hover:text-white transition-colors"
             >
               <Icon name="ArrowLeft" size={20} />
               <span className="text-sm font-medium hidden sm:block">Back to Site</span>
             </button>
-            <div className="hidden sm:block w-px h-6 bg-gray-300"></div>
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Icon name="Shield" size={16} color="white" />
+            <div className="hidden sm:block w-px h-6 bg-white/30"></div>
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/10">
+                <Icon name="Shield" size={20} className="text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">Admin Dashboard</h1>
+                <h1 className="text-xl font-bold text-white">
+                  Admin Dashboard
+                </h1>
+                <p className="text-blue-100 text-sm">System Management</p>
               </div>
             </div>
           </div>
 
           {/* Center - Quick Navigation */}
-          <div className="hidden lg:flex items-center space-x-1">
+          <div className="hidden lg:flex items-center space-x-2">
             {tabs.slice(0, 5).map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-300 ${
                   activeTab === tab.id
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    ? 'bg-white/20 backdrop-blur-sm text-white border border-white/30'
+                    : 'text-white/80 hover:text-white hover:bg-white/10'
                 }`}
               >
                 {tab.label}
@@ -168,14 +179,14 @@ const AdminDashboard = () => {
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="lg:hidden p-2 text-white/80 hover:text-white transition-colors"
             >
               <Icon name="Menu" size={20} />
             </button>
             
             <button 
               onClick={handleLogout}
-              className="hidden lg:flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+              className="hidden lg:flex items-center space-x-2 px-4 py-2 text-sm font-semibold bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 rounded-xl transition-all duration-300 border border-white/30"
             >
               <Icon name="LogOut" size={16} />
               <span>Logout</span>
@@ -185,7 +196,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Mobile Header */}
-      <div className="lg:hidden bg-white border-b border-gray-200 sticky top-16 z-40" style={{display: 'none'}}>
+      <div className="lg:hidden bg-white border-b border-gray-200 fixed top-16 left-0 right-0 z-40" style={{display: 'none'}}>
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-3">
             <button
@@ -211,46 +222,57 @@ const AdminDashboard = () => {
 
       {/* Desktop Sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col lg:pt-16 lg:z-30">
-        <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
+        <div className="flex flex-col flex-grow bg-white/80 backdrop-blur-sm border-r border-gray-200/50 shadow-2xl">
           {/* Logo */}
-          <div className="flex items-center h-16 px-6 border-b border-gray-200">
+          <div className="flex items-center h-16 px-6 border-b border-gray-200/50">
             <h1 className="text-2xl font-bold text-gray-900">IziShopin</h1>
-            <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">Admin</span>
+            <span className="ml-2 px-2 py-1 text-xs bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-full shadow-lg">Admin</span>
           </div>
           
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
+          <nav className="flex-1 px-4 py-6 space-y-3">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                className={`w-full flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300 group relative ${
                   activeTab === tab.id
-                    ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 hover:shadow-md'
                 }`}
               >
-                <Icon name={tab.icon} size={20} className={activeTab === tab.id ? 'text-blue-700' : tab.color} />
-                <span className="ml-3">{tab.label}</span>
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 transition-all duration-300 ${
+                  activeTab === tab.id
+                    ? 'bg-white/20 backdrop-blur-sm'
+                    : 'bg-gray-100 group-hover:bg-white group-hover:shadow-sm'
+                }`}>
+                  <Icon name={tab.icon} size={16} className={activeTab === tab.id ? 'text-white' : tab.color} />
+                </div>
+                <span>{tab.label}</span>
+                
+                {/* Active indicator */}
+                {activeTab === tab.id && (
+                  <div className="absolute right-2 w-2 h-2 bg-white rounded-full"></div>
+                )}
               </button>
             ))}
           </nav>
           
           {/* User Profile */}
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-6 border-t border-gray-200/30 bg-gradient-to-r from-gray-50/80 to-white/50 backdrop-blur-sm">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <Icon name="User" size={20} className="text-blue-600" />
+              <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg border border-white/20">
+                <Icon name="User" size={20} className="text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">Admin User</p>
+                <p className="text-sm font-semibold text-gray-900 truncate">Admin User</p>
                 <p className="text-xs text-gray-500 truncate">admin@izishopin.com</p>
               </div>
               <button 
                 onClick={handleLogout}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-xl hover:bg-red-50 transition-all duration-300 group border border-transparent hover:border-red-200"
               >
-                <Icon name="LogOut" size={16} className="text-gray-500" />
+                <Icon name="LogOut" size={16} className="text-gray-500 group-hover:text-red-600" />
               </button>
             </div>
           </div>
@@ -295,7 +317,7 @@ const AdminDashboard = () => {
       )}
 
       {/* Main Content */}
-      <div className="lg:pl-64">
+      <div className="lg:pl-64 pt-16">
         <main className="p-4 lg:p-8 pb-20 lg:pb-8">
           {/* Desktop Header */}
           <div className="hidden lg:flex items-center justify-between mb-8">
@@ -320,8 +342,14 @@ const AdminDashboard = () => {
           </div>
 
           {/* Tab Content */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 min-h-[600px]">
-            {renderTabContent()}
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 min-h-[600px] relative overflow-hidden">
+            {/* Subtle background blur effects */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400/3 rounded-full -translate-y-32 translate-x-32 pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-teal-400/3 rounded-full translate-y-24 -translate-x-24 pointer-events-none"></div>
+            
+            <div className="relative z-10">
+              {renderTabContent()}
+            </div>
           </div>
         </main>
       </div>

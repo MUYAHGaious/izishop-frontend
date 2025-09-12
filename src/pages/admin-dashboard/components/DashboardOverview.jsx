@@ -76,17 +76,18 @@ const DashboardOverview = ({ onTabChange }) => {
   };
 
   const quickActions = [
-    { id: 1, title: 'Review Orders', description: `${stats.totalOrders || 0} total orders`, icon: 'ShoppingBag', color: 'bg-yellow-500', action: 'review-orders' },
-    { id: 2, title: 'User Management', description: `${stats.totalUsers || 0} total users`, icon: 'Users', color: 'bg-blue-500', action: 'user-management' },
-    { id: 3, title: 'Analytics', description: 'View detailed analytics', icon: 'BarChart3', color: 'bg-indigo-500', action: 'analytics' },
-    { id: 4, title: 'System Health', description: `${stats.systemHealth || 0}% healthy`, icon: 'Activity', color: 'bg-green-500', action: 'system-health' }
+    { id: 1, title: 'Review Orders', description: `${stats.totalOrders || 0} total orders`, icon: 'ShoppingBag', color: 'bg-teal-500', action: 'review-orders' },
+    { id: 2, title: 'User Management', description: `${stats.totalUsers || 0} total users`, icon: 'Users', color: 'bg-teal-500', action: 'user-management' },
+    { id: 3, title: 'Analytics', description: 'View detailed analytics', icon: 'BarChart3', color: 'bg-teal-500', action: 'analytics' },
+    { id: 4, title: 'System Health', description: `${stats.systemHealth || 0}% healthy`, icon: 'Activity', color: 'bg-teal-500', action: 'system-health' }
   ];
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('fr-CM', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'XAF',
-      minimumFractionDigits: 0
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     }).format(amount);
   };
 
@@ -215,11 +216,14 @@ const DashboardOverview = ({ onTabChange }) => {
   return (
     <div className="p-4 lg:p-6 space-y-6">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
+      <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-xl p-6 text-white relative overflow-hidden">
+        {/* Blur Circle Effects */}
+        <div className="absolute top-0 left-0 w-48 h-48 bg-white/15 rounded-full -translate-y-24 -translate-x-24 pointer-events-none"></div>
+        <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 translate-x-16 pointer-events-none"></div>
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold mb-2">Welcome back, Admin!</h2>
-            <p className="text-blue-100">Here's what's happening with your platform today.</p>
+            <p className="text-teal-100">Here's what's happening with your platform today.</p>
           </div>
           <Button
             onClick={() => setShowReportModal(true)}
@@ -255,8 +259,8 @@ const DashboardOverview = ({ onTabChange }) => {
               <p className="text-sm text-gray-600 mb-1">Total Users</p>
               <p className="text-2xl font-bold text-gray-900">{formatNumber(stats.totalUsers)}</p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Icon name="Users" size={24} className="text-blue-600" />
+            <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+              <Icon name="Users" size={24} className="text-teal-600" />
             </div>
           </div>
           {renderTrendIndicator('total_users')}
@@ -269,8 +273,8 @@ const DashboardOverview = ({ onTabChange }) => {
               <p className="text-sm text-gray-600 mb-1">Active Shops</p>
               <p className="text-2xl font-bold text-gray-900">{formatNumber(stats.activeShops)}</p>
             </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Icon name="Store" size={24} className="text-purple-600" />
+            <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+              <Icon name="Store" size={24} className="text-teal-600" />
             </div>
           </div>
           {renderTrendIndicator('shop_owners')}
@@ -283,8 +287,8 @@ const DashboardOverview = ({ onTabChange }) => {
               <p className="text-sm text-gray-600 mb-1">Total Orders</p>
               <p className="text-2xl font-bold text-gray-900">{formatNumber(stats.totalOrders)}</p>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <Icon name="ShoppingBag" size={24} className="text-green-600" />
+            <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+              <Icon name="ShoppingBag" size={24} className="text-teal-600" />
             </div>
           </div>
           {renderTrendIndicator('orders')}
@@ -297,8 +301,8 @@ const DashboardOverview = ({ onTabChange }) => {
               <p className="text-sm text-gray-600 mb-1">Monthly Revenue</p>
               <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.monthlyRevenue)}</p>
             </div>
-            <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <Icon name="DollarSign" size={24} className="text-yellow-600" />
+            <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+              <Icon name="DollarSign" size={24} className="text-teal-600" />
             </div>
           </div>
           {renderTrendIndicator('revenue')}
@@ -312,14 +316,14 @@ const DashboardOverview = ({ onTabChange }) => {
               <p className="text-sm text-gray-600 mb-1">System Health</p>
               <p className="text-2xl font-bold text-gray-900">{stats.systemHealth}%</p>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <Icon name="Activity" size={24} className="text-green-600" />
+            <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+              <Icon name="Activity" size={24} className="text-teal-600" />
             </div>
           </div>
           <div className="mt-4">
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div 
-                className="bg-green-500 h-2 rounded-full transition-all duration-300" 
+                className="bg-teal-500 h-2 rounded-full transition-all duration-300" 
                 style={{ width: `${stats.systemHealth}%` }}
               ></div>
             </div>
@@ -333,8 +337,8 @@ const DashboardOverview = ({ onTabChange }) => {
               <p className="text-sm text-gray-600 mb-1">New Users Today</p>
               <p className="text-2xl font-bold text-gray-900">{formatNumber(stats.usersToday)}</p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Icon name="UserPlus" size={24} className="text-blue-600" />
+            <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+              <Icon name="UserPlus" size={24} className="text-teal-600" />
             </div>
           </div>
           {renderTrendIndicator('users_today')}
@@ -347,13 +351,13 @@ const DashboardOverview = ({ onTabChange }) => {
               <p className="text-sm text-gray-600 mb-1">New Users This Month</p>
               <p className="text-2xl font-bold text-gray-900">{formatNumber(stats.newUsersThisMonth)}</p>
             </div>
-            <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-              <Icon name="TrendingUp" size={24} className="text-indigo-600" />
+            <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+              <Icon name="TrendingUp" size={24} className="text-teal-600" />
             </div>
           </div>
           <div className="mt-4 flex items-center text-sm">
-            <Icon name="Calendar" size={16} className="text-indigo-500 mr-1" />
-            <span className="text-indigo-500 font-medium">This Month</span>
+            <Icon name="Calendar" size={16} className="text-teal-500 mr-1" />
+            <span className="text-teal-500 font-medium">This Month</span>
           </div>
         </div>
       </div>
@@ -366,19 +370,19 @@ const DashboardOverview = ({ onTabChange }) => {
             <button
               key={action.id}
               onClick={() => handleQuickAction(action.action)}
-              className="p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md hover:bg-blue-50 transition-all text-left group active:scale-95"
+              className="p-4 rounded-lg border border-gray-200 hover:border-teal-300 hover:shadow-md hover:bg-teal-50 transition-all text-left group active:scale-95"
             >
               <div className="flex items-center space-x-3">
                 <div className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
                   <Icon name={action.icon} size={20} className="text-white" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900 group-hover:text-blue-700">{action.title}</p>
-                  <p className="text-sm text-gray-500 group-hover:text-blue-600">{action.description}</p>
+                  <p className="font-medium text-gray-900 group-hover:text-teal-700">{action.title}</p>
+                  <p className="text-sm text-gray-500 group-hover:text-teal-600">{action.description}</p>
                 </div>
               </div>
               <div className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="flex items-center text-xs text-blue-600">
+                <div className="flex items-center text-xs text-teal-600">
                   <span>Click to navigate</span>
                   <Icon name="ArrowRight" size={12} className="ml-1" />
                 </div>
@@ -394,7 +398,7 @@ const DashboardOverview = ({ onTabChange }) => {
           <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
           <button 
             onClick={() => setShowActivitiesModal(true)}
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-1 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+            className="text-sm text-teal-600 hover:text-teal-700 font-medium flex items-center space-x-1 hover:bg-teal-50 px-2 py-1 rounded transition-colors"
           >
             <span>View All</span>
             <Icon name="ExternalLink" size={14} />

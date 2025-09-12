@@ -76,12 +76,14 @@ const ShopProfile = () => {
       console.log('Loading shop data for:', { shopId: currentShopId, slug, id });
       
       if (currentShopId) {
-        // Use caching for shop data
-        shop = await fetchWithCache(`shop-${currentShopId}`, () => api.getShop(currentShopId), { shopId: currentShopId });
+        // Direct API call without caching for debugging
+        console.log('Making direct API call for shop:', currentShopId);
+        shop = await api.getShop(currentShopId);
         console.log('Shop data loaded:', shop);
       } else if (slug) {
         // For slug-based URLs, search for shop by slug
-        const response = await fetchWithCache(`shop-slug-${slug}`, () => api.getAllShops(1, 100, slug), { slug });
+        console.log('Searching for shop by slug:', slug);
+        const response = await api.getAllShops(1, 100, slug);
         if (response && response.shops) {
           shop = response.shops.find(s => s.slug === slug || s.name.toLowerCase().includes(slug.toLowerCase()));
         }
@@ -120,7 +122,8 @@ const ShopProfile = () => {
 
   const loadProducts = async (shopId) => {
     try {
-      const response = await fetchWithCache(`shop-products-${shopId}`, () => api.getShopProducts(shopId), { shopId });
+      console.log('Loading products for shop:', shopId);
+      const response = await api.getShopProducts(shopId);
       console.log('Products loaded for shop:', response);
       setProducts(response.products || response || []);
     } catch (error) {
@@ -131,7 +134,8 @@ const ShopProfile = () => {
 
   const loadReviews = async (shopId) => {
     try {
-      const response = await fetchWithCache(`shop-reviews-${shopId}`, () => api.getShopReviews(shopId), { shopId });
+      console.log('Loading reviews for shop:', shopId);
+      const response = await api.getShopReviews(shopId);
       console.log('Reviews loaded for shop:', response);
       setReviews(response.reviews || response || []);
     } catch (error) {

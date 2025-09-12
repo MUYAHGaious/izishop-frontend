@@ -82,7 +82,7 @@ const SystemSettings = () => {
           type="text"
           value={settings.general.siteName}
           onChange={(e) => handleSettingChange('general', 'siteName', e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
         />
       </div>
 
@@ -92,7 +92,7 @@ const SystemSettings = () => {
           value={settings.general.siteDescription}
           onChange={(e) => handleSettingChange('general', 'siteDescription', e.target.value)}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
         />
       </div>
 
@@ -102,7 +102,7 @@ const SystemSettings = () => {
           <select
             value={settings.general.defaultLanguage}
             onChange={(e) => handleSettingChange('general', 'defaultLanguage', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           >
             <option value="en">English</option>
             <option value="fr">French</option>
@@ -114,9 +114,9 @@ const SystemSettings = () => {
           <select
             value={settings.general.defaultCurrency}
             onChange={(e) => handleSettingChange('general', 'defaultCurrency', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           >
-            <option value="XAF">XAF (Central African CFA Franc)</option>
+            <option value="XAF">XAF (Central African Franc)</option>
             <option value="USD">USD (US Dollar)</option>
             <option value="EUR">EUR (Euro)</option>
           </select>
@@ -128,7 +128,7 @@ const SystemSettings = () => {
         <select
           value={settings.general.timezone}
           onChange={(e) => handleSettingChange('general', 'timezone', e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
         >
           <option value="Africa/Douala">Africa/Douala</option>
           <option value="UTC">UTC</option>
@@ -144,7 +144,7 @@ const SystemSettings = () => {
           <button
             onClick={() => handleSettingChange('general', 'maintenanceMode', !settings.general.maintenanceMode)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.general.maintenanceMode ? 'bg-blue-600' : 'bg-gray-200'
+              settings.general.maintenanceMode ? 'bg-teal-600' : 'bg-gray-200'
             }`}
           >
             <span
@@ -163,7 +163,7 @@ const SystemSettings = () => {
           <button
             onClick={() => handleSettingChange('general', 'allowRegistration', !settings.general.allowRegistration)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.general.allowRegistration ? 'bg-blue-600' : 'bg-gray-200'
+              settings.general.allowRegistration ? 'bg-teal-600' : 'bg-gray-200'
             }`}
           >
             <span
@@ -182,7 +182,7 @@ const SystemSettings = () => {
           <button
             onClick={() => handleSettingChange('general', 'emailVerificationRequired', !settings.general.emailVerificationRequired)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.general.emailVerificationRequired ? 'bg-blue-600' : 'bg-gray-200'
+              settings.general.emailVerificationRequired ? 'bg-teal-600' : 'bg-gray-200'
             }`}
           >
             <span
@@ -212,7 +212,7 @@ const SystemSettings = () => {
             <button
               onClick={() => handleSettingChange('payment', 'enableMobileMoney', !settings.payment.enableMobileMoney)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                settings.payment.enableMobileMoney ? 'bg-blue-600' : 'bg-gray-200'
+                settings.payment.enableMobileMoney ? 'bg-teal-600' : 'bg-gray-200'
               }`}
             >
               <span
@@ -225,7 +225,7 @@ const SystemSettings = () => {
 
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Icon name="Building" size={20} className="text-blue-600" />
+              <Icon name="Building" size={20} className="text-teal-600" />
               <div>
                 <p className="font-medium text-gray-900">Bank Transfer</p>
                 <p className="text-sm text-gray-500">Direct bank transfers</p>
@@ -234,7 +234,7 @@ const SystemSettings = () => {
             <button
               onClick={() => handleSettingChange('payment', 'enableBankTransfer', !settings.payment.enableBankTransfer)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                settings.payment.enableBankTransfer ? 'bg-blue-600' : 'bg-gray-200'
+                settings.payment.enableBankTransfer ? 'bg-teal-600' : 'bg-gray-200'
               }`}
             >
               <span
@@ -247,7 +247,7 @@ const SystemSettings = () => {
 
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Icon name="CreditCard" size={20} className="text-purple-600" />
+              <Icon name="CreditCard" size={20} className="text-teal-600" />
               <div>
                 <p className="font-medium text-gray-900">Credit/Debit Cards</p>
                 <p className="text-sm text-gray-500">Visa, Mastercard</p>
@@ -256,7 +256,7 @@ const SystemSettings = () => {
             <button
               onClick={() => handleSettingChange('payment', 'enableCreditCard', !settings.payment.enableCreditCard)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                settings.payment.enableCreditCard ? 'bg-blue-600' : 'bg-gray-200'
+                settings.payment.enableCreditCard ? 'bg-teal-600' : 'bg-gray-200'
               }`}
             >
               <span
@@ -277,7 +277,7 @@ const SystemSettings = () => {
             step="0.1"
             value={settings.payment.commissionRate}
             onChange={(e) => handleSettingChange('payment', 'commissionRate', parseFloat(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         </div>
 
@@ -287,7 +287,7 @@ const SystemSettings = () => {
             type="number"
             value={settings.payment.minimumWithdrawal}
             onChange={(e) => handleSettingChange('payment', 'minimumWithdrawal', parseInt(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         </div>
       </div>
@@ -297,7 +297,7 @@ const SystemSettings = () => {
         <select
           value={settings.payment.payoutSchedule}
           onChange={(e) => handleSettingChange('payment', 'payoutSchedule', e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
         >
           <option value="daily">Daily</option>
           <option value="weekly">Weekly</option>
@@ -313,7 +313,7 @@ const SystemSettings = () => {
         <button
           onClick={() => handleSettingChange('payment', 'autoPayoutEnabled', !settings.payment.autoPayoutEnabled)}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            settings.payment.autoPayoutEnabled ? 'bg-blue-600' : 'bg-gray-200'
+            settings.payment.autoPayoutEnabled ? 'bg-teal-600' : 'bg-gray-200'
           }`}
         >
           <span
@@ -337,7 +337,7 @@ const SystemSettings = () => {
           <button
             onClick={() => handleSettingChange('notifications', 'emailNotifications', !settings.notifications.emailNotifications)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.notifications.emailNotifications ? 'bg-blue-600' : 'bg-gray-200'
+              settings.notifications.emailNotifications ? 'bg-teal-600' : 'bg-gray-200'
             }`}
           >
             <span
@@ -356,7 +356,7 @@ const SystemSettings = () => {
           <button
             onClick={() => handleSettingChange('notifications', 'smsNotifications', !settings.notifications.smsNotifications)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.notifications.smsNotifications ? 'bg-blue-600' : 'bg-gray-200'
+              settings.notifications.smsNotifications ? 'bg-teal-600' : 'bg-gray-200'
             }`}
           >
             <span
@@ -375,7 +375,7 @@ const SystemSettings = () => {
           <button
             onClick={() => handleSettingChange('notifications', 'pushNotifications', !settings.notifications.pushNotifications)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.notifications.pushNotifications ? 'bg-blue-600' : 'bg-gray-200'
+              settings.notifications.pushNotifications ? 'bg-teal-600' : 'bg-gray-200'
             }`}
           >
             <span
@@ -394,7 +394,7 @@ const SystemSettings = () => {
           <button
             onClick={() => handleSettingChange('notifications', 'orderNotifications', !settings.notifications.orderNotifications)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.notifications.orderNotifications ? 'bg-blue-600' : 'bg-gray-200'
+              settings.notifications.orderNotifications ? 'bg-teal-600' : 'bg-gray-200'
             }`}
           >
             <span
@@ -413,7 +413,7 @@ const SystemSettings = () => {
           <button
             onClick={() => handleSettingChange('notifications', 'userRegistrationNotifications', !settings.notifications.userRegistrationNotifications)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.notifications.userRegistrationNotifications ? 'bg-blue-600' : 'bg-gray-200'
+              settings.notifications.userRegistrationNotifications ? 'bg-teal-600' : 'bg-gray-200'
             }`}
           >
             <span
@@ -432,7 +432,7 @@ const SystemSettings = () => {
           <button
             onClick={() => handleSettingChange('notifications', 'systemAlerts', !settings.notifications.systemAlerts)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.notifications.systemAlerts ? 'bg-blue-600' : 'bg-gray-200'
+              settings.notifications.systemAlerts ? 'bg-teal-600' : 'bg-gray-200'
             }`}
           >
             <span
@@ -451,7 +451,7 @@ const SystemSettings = () => {
           <button
             onClick={() => handleSettingChange('notifications', 'marketingEmails', !settings.notifications.marketingEmails)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.notifications.marketingEmails ? 'bg-blue-600' : 'bg-gray-200'
+              settings.notifications.marketingEmails ? 'bg-teal-600' : 'bg-gray-200'
             }`}
           >
             <span
@@ -474,7 +474,7 @@ const SystemSettings = () => {
             type="number"
             value={settings.security.sessionTimeout}
             onChange={(e) => handleSettingChange('security', 'sessionTimeout', parseInt(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         </div>
 
@@ -484,7 +484,7 @@ const SystemSettings = () => {
             type="number"
             value={settings.security.maxLoginAttempts}
             onChange={(e) => handleSettingChange('security', 'maxLoginAttempts', parseInt(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         </div>
 
@@ -494,7 +494,7 @@ const SystemSettings = () => {
             type="number"
             value={settings.security.passwordMinLength}
             onChange={(e) => handleSettingChange('security', 'passwordMinLength', parseInt(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         </div>
       </div>
@@ -506,7 +506,7 @@ const SystemSettings = () => {
           onChange={(e) => handleSettingChange('security', 'ipWhitelist', e.target.value)}
           placeholder="Enter IP addresses separated by commas"
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
         />
         <p className="text-sm text-gray-500 mt-1">Leave empty to allow all IPs</p>
       </div>
@@ -520,7 +520,7 @@ const SystemSettings = () => {
           <button
             onClick={() => handleSettingChange('security', 'twoFactorAuth', !settings.security.twoFactorAuth)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.security.twoFactorAuth ? 'bg-blue-600' : 'bg-gray-200'
+              settings.security.twoFactorAuth ? 'bg-teal-600' : 'bg-gray-200'
             }`}
           >
             <span
@@ -539,7 +539,7 @@ const SystemSettings = () => {
           <button
             onClick={() => handleSettingChange('security', 'requireSpecialChars', !settings.security.requireSpecialChars)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.security.requireSpecialChars ? 'bg-blue-600' : 'bg-gray-200'
+              settings.security.requireSpecialChars ? 'bg-teal-600' : 'bg-gray-200'
             }`}
           >
             <span
@@ -558,7 +558,7 @@ const SystemSettings = () => {
           <button
             onClick={() => handleSettingChange('security', 'enableAuditLog', !settings.security.enableAuditLog)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.security.enableAuditLog ? 'bg-blue-600' : 'bg-gray-200'
+              settings.security.enableAuditLog ? 'bg-teal-600' : 'bg-gray-200'
             }`}
           >
             <span
@@ -583,7 +583,7 @@ const SystemSettings = () => {
           <button
             onClick={() => handleSettingChange('shipping', 'enableLocalDelivery', !settings.shipping.enableLocalDelivery)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.shipping.enableLocalDelivery ? 'bg-blue-600' : 'bg-gray-200'
+              settings.shipping.enableLocalDelivery ? 'bg-teal-600' : 'bg-gray-200'
             }`}
           >
             <span
@@ -602,7 +602,7 @@ const SystemSettings = () => {
           <button
             onClick={() => handleSettingChange('shipping', 'enableNationalShipping', !settings.shipping.enableNationalShipping)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.shipping.enableNationalShipping ? 'bg-blue-600' : 'bg-gray-200'
+              settings.shipping.enableNationalShipping ? 'bg-teal-600' : 'bg-gray-200'
             }`}
           >
             <span
@@ -621,7 +621,7 @@ const SystemSettings = () => {
           <button
             onClick={() => handleSettingChange('shipping', 'enableInternationalShipping', !settings.shipping.enableInternationalShipping)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.shipping.enableInternationalShipping ? 'bg-blue-600' : 'bg-gray-200'
+              settings.shipping.enableInternationalShipping ? 'bg-teal-600' : 'bg-gray-200'
             }`}
           >
             <span
@@ -640,7 +640,7 @@ const SystemSettings = () => {
             type="number"
             value={settings.shipping.defaultShippingCost}
             onChange={(e) => handleSettingChange('shipping', 'defaultShippingCost', parseInt(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         </div>
 
@@ -650,7 +650,7 @@ const SystemSettings = () => {
             type="number"
             value={settings.shipping.freeShippingThreshold}
             onChange={(e) => handleSettingChange('shipping', 'freeShippingThreshold', parseInt(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         </div>
 
@@ -660,7 +660,7 @@ const SystemSettings = () => {
             type="number"
             value={settings.shipping.maxDeliveryDays}
             onChange={(e) => handleSettingChange('shipping', 'maxDeliveryDays', parseInt(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         </div>
       </div>
@@ -694,7 +694,7 @@ const SystemSettings = () => {
         </div>
         <button
           onClick={handleSaveSettings}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+          className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors flex items-center space-x-2"
         >
           <Icon name="Save" size={16} />
           <span>Save Changes</span>
@@ -712,7 +712,7 @@ const SystemSettings = () => {
                   onClick={() => setActiveSection(section.id)}
                   className={`w-full flex items-center space-x-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                     activeSection === section.id
-                      ? 'bg-blue-50 text-blue-700'
+                      ? 'bg-teal-50 text-teal-700'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >

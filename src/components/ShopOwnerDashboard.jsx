@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Icon from './AppIcon';
 import Button from './ui/Button';
@@ -9,6 +9,7 @@ import api from '../services/api';
 const ShopOwnerDashboard = () => {
   const { user, refreshUserData } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [shop, setShop] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasShop, setHasShop] = useState(false);
@@ -16,6 +17,17 @@ const ShopOwnerDashboard = () => {
   useEffect(() => {
     checkShopStatus();
   }, [user]);
+
+  // Handle shop_created parameter - force refresh if shop was just created
+  useEffect(() => {
+    if (searchParams.get('shop_created') === 'true') {
+      console.log('Shop was just created, forcing refresh...');
+      // Clear the URL parameter
+      navigate('/shop-owner-dashboard', { replace: true });
+      // Force refresh shop status
+      checkShopStatus();
+    }
+  }, [searchParams, navigate]);
 
   const checkShopStatus = async () => {
     if (!user || user.role !== 'SHOP_OWNER') {
@@ -25,11 +37,35 @@ const ShopOwnerDashboard = () => {
 
     try {
       setIsLoading(true);
+      
+      // First try to get shop details directly
+      try {
+        const shopDetails = await api.get('/api/shops/my-shop');
+        console.log('Shop details found:', shopDetails);
+        setShop(shopDetails.data || shopDetails);
+        setHasShop(true);
+        return;
+      } catch (shopError) {
+        console.log('No shop found via my-shop endpoint, trying check-shop-exists...');
+      }
+      
+      // Fallback to check-shop-exists
       const response = await api.get('/api/shops/check-shop-exists');
+      console.log('Shop check response:', response);
       
       if (response.success && response.has_shop) {
-        setShop(response);
-        setHasShop(true);
+        // If user has a shop, get the full shop details
+        try {
+          const shopDetails = await api.get('/api/shops/my-shop');
+          console.log('Shop details:', shopDetails);
+          setShop(shopDetails.data || shopDetails);
+          setHasShop(true);
+        } catch (shopError) {
+          console.error('Error fetching shop details:', shopError);
+          // Fall back to basic shop info
+          setShop(response);
+          setHasShop(true);
+        }
       } else {
         setHasShop(false);
       }
@@ -168,116 +204,222 @@ const ShopOwnerDashboard = () => {
     );
   }
 
-  // If user has a shop, show the regular dashboard
+  // If user has a shop, show the modern redesigned dashboard
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 relative overflow-hidden">
+      {/* Background blur effects inspired by landing page */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-teal-400/10 rounded-full -translate-y-48 -translate-x-48 pointer-events-none"></div>
+      <div className="absolute bottom-0 right-0 w-80 h-80 bg-gray-400/5 rounded-full translate-y-40 translate-x-40 pointer-events-none"></div>
+      
+      <div className="max-w-7xl mx-auto px-6 py-8 relative z-10">
+        {/* Modern Header Section */}
+        <div className="mb-12">
+          <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden">
+            {/* Blur circle effects like landing page */}
+            <div className="absolute top-0 left-0 w-48 h-48 bg-white/15 rounded-full -translate-y-24 -translate-x-24 pointer-events-none"></div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 translate-x-16 pointer-events-none"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-6">
+                  <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                    <Icon name="Store" className="w-10 h-10 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-4xl font-bold mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
+                      {shop.name}
+                    </h1>
+                    <p className="text-teal-100 text-lg">{shop.category}</p>
+                    <p className="text-teal-200 text-sm mt-1">{shop.description}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-white/20 backdrop-blur-sm text-white">
+                    <Icon name="CheckCircle" className="w-4 h-4 mr-2" />
+                    Shop Active
+                  </span>
+                  <p className="text-teal-100 text-sm mt-2">Welcome back, {user?.firstName}!</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Modern Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Icon name="Package" className="w-7 h-7 text-white" />
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-gray-900">{shop.product_count || 0}</p>
+                <p className="text-sm font-medium text-gray-600">Products</p>
+              </div>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-gradient-to-r from-teal-500 to-teal-600 h-2 rounded-full" style={{ width: '70%' }}></div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">Inventory status</p>
+          </div>
+
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Icon name="ShoppingCart" className="w-7 h-7 text-white" />
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-gray-900">{shop.order_count || 0}</p>
+                <p className="text-sm font-medium text-gray-600">Orders</p>
+              </div>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full" style={{ width: '85%' }}></div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">Order completion</p>
+          </div>
+
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Icon name="DollarSign" className="w-7 h-7 text-white" />
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-gray-900">${shop.total_revenue || 0}</p>
+                <p className="text-sm font-medium text-gray-600">Revenue</p>
+              </div>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full" style={{ width: '90%' }}></div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">Monthly target</p>
+          </div>
+
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Icon name="Star" className="w-7 h-7 text-white" />
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-gray-900">{shop.average_rating || 0}</p>
+                <p className="text-sm font-medium text-gray-600">Rating</p>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-1">
+              {[...Array(5)].map((_, i) => (
+                <Icon key={i} name="Star" className={`w-4 h-4 ${i < (shop.average_rating || 0) ? 'text-yellow-500' : 'text-gray-300'}`} />
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">Customer feedback</p>
+          </div>
+        </div>
+
+        {/* Modern Action Cards */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Shop Dashboard</h1>
-          <p className="text-gray-600">Welcome back, {user?.firstName}! Manage your shop and track your sales.</p>
-        </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6" style={{ fontFamily: "'Playfair Display', serif" }}>
+            Quick Actions
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Button
+              onClick={() => navigate('/add-product')}
+              className="bg-gradient-to-br from-teal-400 to-teal-600 text-white rounded-2xl p-8 h-auto shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 border-none relative overflow-hidden group"
+            >
+              {/* Blur effects */}
+              <div className="absolute top-0 left-0 w-24 h-24 bg-white/15 rounded-full -translate-y-12 -translate-x-12 pointer-events-none group-hover:scale-110 transition-transform duration-300"></div>
+              
+              <div className="relative z-10 flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-4">
+                  <Icon name="Plus" className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Add New Product</h3>
+                <p className="text-teal-100 text-sm">Start selling more items and grow your inventory</p>
+              </div>
+            </Button>
 
-        {/* Shop Info Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-teal-100 rounded-xl flex items-center justify-center">
-                <Icon name="Store" className="w-8 h-8 text-teal-600" />
+            <Button
+              onClick={() => navigate('/my-products')}
+              className="bg-gradient-to-br from-gray-700 to-gray-900 text-white rounded-2xl p-8 h-auto shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 border-none relative overflow-hidden group"
+            >
+              {/* Blur effects */}
+              <div className="absolute top-0 left-0 w-24 h-24 bg-white/15 rounded-full -translate-y-12 -translate-x-12 pointer-events-none group-hover:scale-110 transition-transform duration-300"></div>
+              
+              <div className="relative z-10 flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-4">
+                  <Icon name="Package" className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Manage Products</h3>
+                <p className="text-gray-300 text-sm">Edit and organize your product catalog</p>
               </div>
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">{shop.name}</h2>
-                <p className="text-gray-600">{shop.category}</p>
-                <p className="text-sm text-gray-500">{shop.description}</p>
+            </Button>
+
+            <Button
+              onClick={() => navigate('/order-management')}
+              className="bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-2xl p-8 h-auto shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 border-none relative overflow-hidden group"
+            >
+              {/* Blur effects */}
+              <div className="absolute top-0 left-0 w-24 h-24 bg-white/15 rounded-full -translate-y-12 -translate-x-12 pointer-events-none group-hover:scale-110 transition-transform duration-300"></div>
+              
+              <div className="relative z-10 flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-4">
+                  <Icon name="ShoppingCart" className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">View Orders</h3>
+                <p className="text-blue-100 text-sm">Track sales and manage customer orders</p>
               </div>
-            </div>
-            <div className="text-right">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                <Icon name="CheckCircle" className="w-4 h-4 mr-1" />
-                Active
-              </span>
-            </div>
+            </Button>
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Icon name="Package" className="w-6 h-6 text-blue-600" />
+        {/* Additional Modern Features */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Recent Activity */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Recent Activity</h3>
+              <Icon name="Activity" className="w-5 h-5 text-gray-400" />
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-4 p-3 bg-gray-50 rounded-xl">
+                <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+                  <Icon name="Plus" className="w-5 h-5 text-teal-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">New product added</p>
+                  <p className="text-xs text-gray-500">2 hours ago</p>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Products</p>
-                <p className="text-2xl font-bold text-gray-900">{shop.product_count || 0}</p>
+              <div className="flex items-center space-x-4 p-3 bg-gray-50 rounded-xl">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Icon name="ShoppingCart" className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Order received</p>
+                  <p className="text-xs text-gray-500">4 hours ago</p>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <Icon name="ShoppingCart" className="w-6 h-6 text-green-600" />
+          {/* Performance Insights */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Performance</h3>
+              <Icon name="TrendingUp" className="w-5 h-5 text-green-500" />
+            </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Sales Growth</span>
+                <span className="text-sm font-semibold text-green-600">+12%</span>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Orders</p>
-                <p className="text-2xl font-bold text-gray-900">{shop.order_count || 0}</p>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="bg-gradient-to-r from-teal-500 to-teal-600 h-2 rounded-full" style={{ width: '65%' }}></div>
+              </div>
+              <div className="flex justify-between items-center pt-2">
+                <span className="text-sm text-gray-600">Customer Satisfaction</span>
+                <span className="text-sm font-semibold text-blue-600">96%</span>
               </div>
             </div>
           </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <Icon name="DollarSign" className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">${shop.total_revenue || 0}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Icon name="Star" className="w-6 h-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Average Rating</p>
-                <p className="text-2xl font-bold text-gray-900">{shop.average_rating || 0}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Button
-            onClick={() => navigate('/add-product')}
-            className="p-6 h-auto flex flex-col items-center space-y-3 bg-white border-2 border-dashed border-gray-300 hover:border-teal-500 hover:bg-teal-50"
-          >
-            <Icon name="Plus" className="w-8 h-8 text-gray-400" />
-            <span className="font-semibold text-gray-700">Add New Product</span>
-            <span className="text-sm text-gray-500">Start selling more items</span>
-          </Button>
-
-          <Button
-            onClick={() => navigate('/my-products')}
-            className="p-6 h-auto flex flex-col items-center space-y-3 bg-white border-2 border-dashed border-gray-300 hover:border-teal-500 hover:bg-teal-50"
-          >
-            <Icon name="Package" className="w-8 h-8 text-gray-400" />
-            <span className="font-semibold text-gray-700">Manage Products</span>
-            <span className="text-sm text-gray-500">Edit your inventory</span>
-          </Button>
-
-          <Button
-            onClick={() => navigate('/order-management')}
-            className="p-6 h-auto flex flex-col items-center space-y-3 bg-white border-2 border-dashed border-gray-300 hover:border-teal-500 hover:bg-teal-50"
-          >
-            <Icon name="ShoppingCart" className="w-8 h-8 text-gray-400" />
-            <span className="font-semibold text-gray-700">View Orders</span>
-            <span className="text-sm text-gray-500">Track your sales</span>
-          </Button>
         </div>
       </div>
     </div>

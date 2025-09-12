@@ -84,7 +84,7 @@ const ShopManagement = () => {
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('fr-CM', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'XAF',
       minimumFractionDigits: 0
@@ -197,7 +197,7 @@ const ShopManagement = () => {
       <div className="p-4 lg:p-6 space-y-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading shops data...</p>
           </div>
         </div>
@@ -241,21 +241,21 @@ const ShopManagement = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <div className="flex items-center space-x-2">
-            <Icon name="Store" size={20} className="text-purple-600" />
+            <Icon name="Store" size={20} className="text-teal-600" />
             <span className="text-sm text-gray-600">Total Shops</span>
           </div>
           <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total_shops}</p>
         </div>
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <div className="flex items-center space-x-2">
-            <Icon name="CheckCircle" size={20} className="text-green-600" />
+            <Icon name="CheckCircle" size={20} className="text-teal-600" />
             <span className="text-sm text-gray-600">Active Shops</span>
           </div>
           <p className="text-2xl font-bold text-gray-900 mt-1">{stats.active_shops}</p>
         </div>
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <div className="flex items-center space-x-2">
-            <Icon name="DollarSign" size={20} className="text-blue-600" />
+            <Icon name="DollarSign" size={20} className="text-teal-600" />
             <span className="text-sm text-gray-600">Total Revenue</span>
           </div>
           <p className="text-lg font-bold text-gray-900 mt-1">
@@ -276,7 +276,7 @@ const ShopManagement = () => {
                 placeholder="Search shops by name, owner, or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -285,7 +285,7 @@ const ShopManagement = () => {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           >
             {statuses.map(status => (
               <option key={status.value} value={status.value}>{status.label}</option>
@@ -299,7 +299,7 @@ const ShopManagement = () => {
             <span className="text-sm text-gray-600">{selectedShops.length} selected</span>
             <button
               onClick={() => handleBulkAction('approve')}
-              className="px-3 py-1 bg-green-100 text-green-800 rounded text-sm hover:bg-green-200 transition-colors"
+              className="px-3 py-1 bg-teal-100 text-teal-800 rounded text-sm hover:bg-teal-200 transition-colors"
             >
               Approve
             </button>
@@ -331,10 +331,10 @@ const ShopManagement = () => {
                     type="checkbox"
                     checked={selectedShops.includes(shop.id)}
                     onChange={() => toggleShopSelection(shop.id)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                   />
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <Icon name="Store" size={20} className="text-purple-600" />
+                  <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+                    <Icon name="Store" size={20} className="text-teal-600" />
                   </div>
                 </div>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(shop.status)}`}>
@@ -390,7 +390,7 @@ const ShopManagement = () => {
               <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                 <button
                   onClick={() => handleShopAction('view', shop.id)}
-                  className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm"
+                  className="flex items-center space-x-1 text-teal-600 hover:text-teal-700 text-sm"
                 >
                   <Icon name="Eye" size={14} />
                   <span>View</span>

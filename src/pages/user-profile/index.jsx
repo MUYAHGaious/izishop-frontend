@@ -361,27 +361,36 @@ const UserProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 relative overflow-hidden">
+      {/* Modern blur effects similar to other pages */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-blue-400/8 rounded-full -translate-y-48 translate-x-48 pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-80 h-80 bg-teal-400/5 rounded-full translate-y-40 -translate-x-40 pointer-events-none"></div>
+      <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-purple-400/4 rounded-full -translate-x-32 -translate-y-32 pointer-events-none"></div>
+      
       <Header />
       
-      <main className="pt-16 pb-20 lg:pb-8">
+      <main className="pt-16 pb-20 lg:pb-8 relative z-10">
         {/* Cover/Header Section - Facebook Style */}
         <div className="relative">
           <div 
-            className="h-48 sm:h-56 lg:h-72 bg-gradient-to-r from-blue-600 to-purple-600 bg-cover bg-center relative cursor-pointer group"
+            className="h-48 sm:h-56 lg:h-72 bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 bg-cover bg-center relative cursor-pointer group overflow-hidden"
             style={{
               backgroundImage: profileData.coverImage ? `url(${profileData.coverImage})` : 'none'
             }}
             onClick={handleCoverPhotoClick}
           >
-            {/* Cover Photo Overlay */}
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors"></div>
+            {/* Modern blur effects on cover */}
+            <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 -translate-x-32 pointer-events-none group-hover:scale-110 transition-transform duration-500"></div>
+            <div className="absolute bottom-0 right-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 translate-x-24 pointer-events-none group-hover:scale-110 transition-transform duration-500"></div>
             
-            {/* Edit Cover Button */}
-            <div className="absolute top-4 right-4 bg-white/90 hover:bg-white rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Cover Photo Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-transparent to-black/30 group-hover:from-black/40 group-hover:to-black/50 transition-all duration-300"></div>
+            
+            {/* Edit Cover Button with glass morphism */}
+            <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 rounded-2xl px-4 py-2 opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg">
               <div className="flex items-center space-x-2">
-                <Icon name="Camera" size={16} className="text-gray-700" />
-                <span className="text-sm font-medium text-gray-700">Edit Cover</span>
+                <Icon name="Camera" size={16} className="text-white" />
+                <span className="text-sm font-semibold text-white">Edit Cover</span>
               </div>
             </div>
             
@@ -436,14 +445,17 @@ const UserProfile = () => {
         </div>
 
         {/* Profile Info Section */}
-        <div className="bg-white border-b border-gray-200">
-          <div className="max-w-4xl mx-auto px-4 pt-20 pb-6">
+        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 relative overflow-hidden">
+          {/* Subtle background effects */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-400/5 rounded-full -translate-y-16 translate-x-16 pointer-events-none"></div>
+          
+          <div className="max-w-4xl mx-auto px-4 pt-20 pb-6 relative z-10">
             <div className="text-center lg:text-left lg:flex lg:items-end lg:justify-between">
               <div className="lg:ml-40">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
                   {profileData.firstName} {profileData.lastName}
                 </h1>
-                <p className="text-gray-600 mb-4">
+                <p className="text-gray-600 mb-4 text-lg font-medium">
                   {user?.role === 'SHOP_OWNER' ? 'Shop Owner' : user?.role === 'ADMIN' ? 'Administrator' : 'Customer'}
                 </p>
                 
@@ -494,9 +506,14 @@ const UserProfile = () => {
             <div className="lg:col-span-2 space-y-6">
               
               {/* About Section */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <Icon name="User" size={20} className="mr-2 text-blue-600" />
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 relative overflow-hidden">
+                {/* Subtle blur effect */}
+                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-400/5 rounded-full -translate-y-12 translate-x-12 pointer-events-none"></div>
+                
+                <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center relative z-10" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                    <Icon name="User" size={18} className="text-white" />
+                  </div>
                   About
                 </h2>
                 
@@ -585,9 +602,14 @@ const UserProfile = () => {
 
               {/* My Shops Section - Only for Shop Owners */}
               {(user?.role === 'SHOP_OWNER' || user?.role === 'shop_owner') && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <Icon name="Store" size={20} className="mr-2 text-green-600" />
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 relative overflow-hidden">
+                  {/* Subtle blur effect */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-green-400/5 rounded-full -translate-y-16 translate-x-16 pointer-events-none"></div>
+                  
+                  <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center relative z-10" style={{ fontFamily: "'Playfair Display', serif" }}>
+                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                      <Icon name="Store" size={18} className="text-white" />
+                    </div>
                     My Shops ({userShops.length})
                   </h2>
                   
@@ -642,9 +664,14 @@ const UserProfile = () => {
               )}
 
               {/* Recent Activity */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <Icon name="Activity" size={20} className="mr-2 text-blue-600" />
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 relative overflow-hidden">
+                {/* Subtle blur effect */}
+                <div className="absolute top-0 right-0 w-28 h-28 bg-purple-400/5 rounded-full -translate-y-14 translate-x-14 pointer-events-none"></div>
+                
+                <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center relative z-10" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                    <Icon name="Activity" size={18} className="text-white" />
+                  </div>
                   Recent Activity
                 </h2>
                 
@@ -676,31 +703,42 @@ const UserProfile = () => {
             <div className="space-y-6">
               
               {/* Quick Actions */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                <div className="space-y-2">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 relative overflow-hidden">
+                {/* Subtle blur effect */}
+                <div className="absolute top-0 right-0 w-24 h-24 bg-teal-400/5 rounded-full -translate-y-12 translate-x-12 pointer-events-none"></div>
+                
+                <h3 className="text-xl font-bold text-gray-900 mb-6 relative z-10" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  Quick Actions
+                </h3>
+                <div className="space-y-3 relative z-10">
                   <button
                     onClick={navigateToDashboard}
-                    className="w-full flex items-center space-x-3 p-4 hover:bg-blue-50 rounded-lg transition-colors text-left active:scale-95"
+                    className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50/50 to-blue-100/30 hover:from-blue-100/70 hover:to-blue-200/50 rounded-xl transition-all duration-300 text-left active:scale-95 border border-blue-200/30 hover:border-blue-300/50 shadow-sm hover:shadow-md"
                   >
-                    <Icon name="LayoutDashboard" size={20} className="text-blue-600" />
-                    <span className="text-sm font-medium text-gray-700">Dashboard</span>
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
+                      <Icon name="LayoutDashboard" size={18} className="text-white" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">Dashboard</span>
                   </button>
                   
                   <button
                     onClick={() => navigate('/shopping-cart')}
-                    className="w-full flex items-center space-x-3 p-4 hover:bg-green-50 rounded-lg transition-colors text-left active:scale-95"
+                    className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-green-50/50 to-green-100/30 hover:from-green-100/70 hover:to-green-200/50 rounded-xl transition-all duration-300 text-left active:scale-95 border border-green-200/30 hover:border-green-300/50 shadow-sm hover:shadow-md"
                   >
-                    <Icon name="ShoppingCart" size={20} className="text-green-600" />
-                    <span className="text-sm font-medium text-gray-700">My Cart</span>
+                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-lg">
+                      <Icon name="ShoppingCart" size={18} className="text-white" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">My Cart</span>
                   </button>
                   
                   <button
                     onClick={() => navigate('/order-management')}
-                    className="w-full flex items-center space-x-3 p-4 hover:bg-orange-50 rounded-lg transition-colors text-left active:scale-95"
+                    className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-orange-50/50 to-orange-100/30 hover:from-orange-100/70 hover:to-orange-200/50 rounded-xl transition-all duration-300 text-left active:scale-95 border border-orange-200/30 hover:border-orange-300/50 shadow-sm hover:shadow-md"
                   >
-                    <Icon name="Package" size={20} className="text-orange-600" />
-                    <span className="text-sm font-medium text-gray-700">Orders</span>
+                    <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-lg">
+                      <Icon name="Package" size={18} className="text-white" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">Orders</span>
                   </button>
                   
                   {(user?.role === 'SHOP_OWNER' || user?.role === 'shop_owner') && (
@@ -716,39 +754,52 @@ const UserProfile = () => {
               </div>
 
               {/* Account Settings */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Settings</h3>
-                <div className="space-y-2">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 relative overflow-hidden">
+                {/* Subtle blur effect */}
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gray-400/5 rounded-full -translate-y-12 translate-x-12 pointer-events-none"></div>
+                
+                <h3 className="text-xl font-bold text-gray-900 mb-6 relative z-10" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  Settings
+                </h3>
+                <div className="space-y-3 relative z-10">
                   <button 
                     onClick={() => showToast('Security settings coming soon', 'info')}
-                    className="w-full flex items-center space-x-3 p-4 hover:bg-gray-50 rounded-lg transition-colors text-left"
+                    className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-gray-50/50 to-gray-100/30 hover:from-gray-100/70 hover:to-gray-200/50 rounded-xl transition-all duration-300 text-left border border-gray-200/30 hover:border-gray-300/50 shadow-sm hover:shadow-md"
                   >
-                    <Icon name="Lock" size={20} className="text-gray-600" />
-                    <span className="text-sm font-medium text-gray-700">Security</span>
+                    <div className="w-10 h-10 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center shadow-lg">
+                      <Icon name="Lock" size={18} className="text-white" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">Security</span>
                   </button>
                   
                   <button 
                     onClick={() => showToast('Notification settings coming soon', 'info')}
-                    className="w-full flex items-center space-x-3 p-4 hover:bg-gray-50 rounded-lg transition-colors text-left"
+                    className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-indigo-50/50 to-indigo-100/30 hover:from-indigo-100/70 hover:to-indigo-200/50 rounded-xl transition-all duration-300 text-left border border-indigo-200/30 hover:border-indigo-300/50 shadow-sm hover:shadow-md"
                   >
-                    <Icon name="Bell" size={20} className="text-gray-600" />
-                    <span className="text-sm font-medium text-gray-700">Notifications</span>
+                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
+                      <Icon name="Bell" size={18} className="text-white" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">Notifications</span>
                   </button>
                   
                   <button 
                     onClick={() => showToast('Privacy settings coming soon', 'info')}
-                    className="w-full flex items-center space-x-3 p-4 hover:bg-gray-50 rounded-lg transition-colors text-left"
+                    className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-teal-50/50 to-teal-100/30 hover:from-teal-100/70 hover:to-teal-200/50 rounded-xl transition-all duration-300 text-left border border-teal-200/30 hover:border-teal-300/50 shadow-sm hover:shadow-md"
                   >
-                    <Icon name="Shield" size={20} className="text-gray-600" />
-                    <span className="text-sm font-medium text-gray-700">Privacy</span>
+                    <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg">
+                      <Icon name="Shield" size={18} className="text-white" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">Privacy</span>
                   </button>
                   
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center space-x-3 p-4 hover:bg-red-50 rounded-lg transition-colors text-left active:scale-95"
+                    className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-red-50/50 to-red-100/30 hover:from-red-100/70 hover:to-red-200/50 rounded-xl transition-all duration-300 text-left active:scale-95 border border-red-200/30 hover:border-red-300/50 shadow-sm hover:shadow-md"
                   >
-                    <Icon name="LogOut" size={20} className="text-red-600" />
-                    <span className="text-sm font-medium text-red-700">Sign Out</span>
+                    <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center shadow-lg">
+                      <Icon name="LogOut" size={18} className="text-white" />
+                    </div>
+                    <span className="text-sm font-semibold text-red-700">Sign Out</span>
                   </button>
                 </div>
               </div>

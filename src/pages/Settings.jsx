@@ -871,7 +871,7 @@ const Settings = () => {
                 onChange={(e) => handleSettingChange('preferences', 'currency', e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 >
-                  <option value="XAF">XAF (Franc CFA)</option>
+                  <option value="XAF">XAF (Central African Franc)</option>
                   <option value="USD">USD (US Dollar)</option>
                   <option value="EUR">EUR (Euro)</option>
               </select>

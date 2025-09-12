@@ -212,21 +212,27 @@ const NotificationCenter = () => {
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0 pr-2">
                         <div className="flex items-center space-x-2">
-                          <h4 className={`text-sm font-medium ${
+                          <h4 className={`text-sm font-medium truncate ${
                             !notification.isRead ? 'text-foreground' : 'text-muted-foreground'
                           }`}>
                             {notification.title}
                           </h4>
                           {notification.priority === 'high' && (
-                            <div className="w-2 h-2 bg-error rounded-full"></div>
+                            <div className="w-2 h-2 bg-error rounded-full flex-shrink-0"></div>
                           )}
                           {!notification.isRead && (
-                            <div className="w-2 h-2 bg-primary rounded-full"></div>
+                            <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                        <p className="text-sm text-muted-foreground mt-1 break-words overflow-hidden" 
+                           style={{
+                             display: '-webkit-box',
+                             WebkitLineClamp: 2,
+                             WebkitBoxOrient: 'vertical',
+                             wordBreak: 'break-word'
+                           }}>
                           {notification.message}
                         </p>
                         <p className="text-xs text-muted-foreground mt-2">
@@ -244,7 +250,7 @@ const NotificationCenter = () => {
                           }}
                           iconName="Check"
                           iconSize={14}
-                          className="ml-2"
+                          className="ml-2 flex-shrink-0"
                         />
                       )}
                     </div>

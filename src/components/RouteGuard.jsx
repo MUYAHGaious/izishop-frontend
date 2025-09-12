@@ -49,8 +49,21 @@ const RouteGuard = ({
         return;
       }
       
+      // Additional check: if this is an admin route and we just logged in as admin, give it more time
+      if (adminOnly && localStorage.getItem('adminSession') === 'true' && !user) {
+        console.log('RouteGuard: Admin route detected but user not loaded yet, waiting...');
+        setTimeout(() => {
+          if (!isInitializing && !loading && authCheckComplete) {
+            checkAccess();
+          }
+        }, 100);
+        return;
+      }
+      
       // Add a small delay to ensure AuthContext is fully stabilized
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Reduce delay for admin routes to prevent flash
+      const delay = adminOnly ? 50 : 200;
+      await new Promise(resolve => setTimeout(resolve, delay));
 
       // Check if user is authenticated
       const authResult = isAuthenticated();
@@ -131,25 +144,49 @@ const RouteGuard = ({
 
       // Validate the session only if user is loaded
       if (user && !validateSession()) {
-        console.log('RouteGuard: Invalid session detected, forcing logout');
-        await forceLogout('Invalid session detected');
-        navigate(redirectTo);
-        return;
+        console.log('RouteGuard: Invalid session detected');
+        console.log('RouteGuard: Session validation failed - user:', user, 'sessionId:', localStorage.getItem('sessionId'), 'currentRole:', localStorage.getItem('currentRole'), 'adminSession:', localStorage.getItem('adminSession'));
+        console.log('RouteGuard: AuthContext state - isInitializing:', isInitializing, 'loading:', loading, 'authCheckComplete:', authCheckComplete);
+        
+        // Only force logout if this is not an admin session or if we're absolutely sure the session is invalid
+        const isAdminSession = localStorage.getItem('adminSession') === 'true';
+        const hasValidTokens = localStorage.getItem('accessToken') && localStorage.getItem('user');
+        
+        if (!isAdminSession || !hasValidTokens) {
+          console.log('RouteGuard: Forcing logout due to invalid session');
+          await forceLogout('Invalid session detected');
+          navigate(redirectTo);
+          return;
+        } else {
+          console.log('RouteGuard: Admin session with valid tokens, not forcing logout');
+          // Allow the admin session to continue
+        }
       }
 
       // Check for admin-only routes
-      if (adminOnly && user?.role !== 'ADMIN') {
-        console.log('RouteGuard: Admin access required, current role:', user?.role);
+      if (adminOnly) {
+        // Check both AuthContext state and localStorage as fallback
+        const isAdmin = user?.role === 'ADMIN' || 
+                       localStorage.getItem('currentRole') === 'ADMIN' ||
+                       localStorage.getItem('adminSession') === 'true';
         
-        showToast({
-          type: 'error',
-          message: 'Admin access required for this page',
-          duration: 4000
-        });
+        console.log('RouteGuard: Admin check - user role:', user?.role, 'localStorage role:', localStorage.getItem('currentRole'), 'adminSession:', localStorage.getItem('adminSession'), 'isAdmin:', isAdmin);
         
-        // Redirect admin-only routes to admin login
-        navigate('/admin-login');
-        return;
+        if (!isAdmin) {
+          console.log('RouteGuard: Admin access denied, redirecting to admin login');
+          
+          showToast({
+            type: 'error',
+            message: 'Admin access required for this page',
+            duration: 4000
+          });
+          
+          // Redirect admin-only routes to admin login
+          navigate('/admin-login');
+          return;
+        } else {
+          console.log('RouteGuard: Admin access granted');
+        }
       }
 
       // Check for specific role requirements

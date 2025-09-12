@@ -226,21 +226,21 @@ class ApiService {
   }
 
   async markNotificationAsRead(notificationId) {
-    const response = await this.request(`/notifications/${notificationId}/read`, {
+    const response = await this.request(`/api/notifications/${notificationId}/read`, {
       method: 'PUT'
     });
     return await this.handleResponse(response);
   }
 
   async markAllNotificationsAsRead() {
-    const response = await this.request('/notifications/mark-all-read', {
+    const response = await this.request('/api/notifications/mark-all-read', {
       method: 'PUT'
     });
     return await this.handleResponse(response);
   }
 
   async deleteNotification(notificationId) {
-    const response = await this.request(`/notifications/${notificationId}`, {
+    const response = await this.request(`/api/notifications/${notificationId}`, {
       method: 'DELETE'
     });
     return await this.handleResponse(response);

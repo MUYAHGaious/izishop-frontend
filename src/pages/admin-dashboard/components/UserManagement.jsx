@@ -84,10 +84,10 @@ const UserManagement = () => {
 
   const getRoleColor = (role) => {
     switch (role) {
-      case 'shop_owner': return 'bg-purple-100 text-purple-800';
-      case 'customer': return 'bg-blue-100 text-blue-800';
-      case 'casual_seller': return 'bg-green-100 text-green-800';
-      case 'delivery_agent': return 'bg-orange-100 text-orange-800';
+      case 'shop_owner': return 'bg-teal-100 text-teal-800';
+      case 'customer': return 'bg-teal-100 text-teal-800';
+      case 'casual_seller': return 'bg-teal-100 text-teal-800';
+      case 'delivery_agent': return 'bg-teal-100 text-teal-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -102,7 +102,7 @@ const UserManagement = () => {
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('fr-CM', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'XAF',
       minimumFractionDigits: 0
@@ -152,7 +152,7 @@ const UserManagement = () => {
           <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
           <p className="text-gray-600">Manage all platform users and their permissions</p>
         </div>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+        <button className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors flex items-center space-x-2">
           <Icon name="UserPlus" size={16} />
           <span>Add User</span>
         </button>
@@ -162,14 +162,14 @@ const UserManagement = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <div className="flex items-center space-x-2">
-            <Icon name="Users" size={20} className="text-blue-600" />
+            <Icon name="Users" size={20} className="text-teal-600" />
             <span className="text-sm text-gray-600">Total Users</span>
           </div>
           <p className="text-2xl font-bold text-gray-900 mt-1">{users.length}</p>
         </div>
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <div className="flex items-center space-x-2">
-            <Icon name="UserCheck" size={20} className="text-green-600" />
+            <Icon name="UserCheck" size={20} className="text-teal-600" />
             <span className="text-sm text-gray-600">Active</span>
           </div>
           <p className="text-2xl font-bold text-gray-900 mt-1">
@@ -178,7 +178,7 @@ const UserManagement = () => {
         </div>
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <div className="flex items-center space-x-2">
-            <Icon name="Clock" size={20} className="text-yellow-600" />
+            <Icon name="Clock" size={20} className="text-teal-600" />
             <span className="text-sm text-gray-600">Pending</span>
           </div>
           <p className="text-2xl font-bold text-gray-900 mt-1">
@@ -187,7 +187,7 @@ const UserManagement = () => {
         </div>
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <div className="flex items-center space-x-2">
-            <Icon name="Store" size={20} className="text-purple-600" />
+            <Icon name="Store" size={20} className="text-teal-600" />
             <span className="text-sm text-gray-600">Shop Owners</span>
           </div>
           <p className="text-2xl font-bold text-gray-900 mt-1">
@@ -208,7 +208,7 @@ const UserManagement = () => {
                 placeholder="Search users by name or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -217,7 +217,7 @@ const UserManagement = () => {
           <select
             value={selectedRole}
             onChange={(e) => setSelectedRole(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           >
             {roles.map(role => (
               <option key={role.value} value={role.value}>{role.label}</option>
@@ -228,7 +228,7 @@ const UserManagement = () => {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           >
             {statuses.map(status => (
               <option key={status.value} value={status.value}>{status.label}</option>
@@ -242,7 +242,7 @@ const UserManagement = () => {
             <span className="text-sm text-gray-600">{selectedUsers.length} selected</span>
             <button
               onClick={() => handleBulkAction('activate')}
-              className="px-3 py-1 bg-green-100 text-green-800 rounded text-sm hover:bg-green-200 transition-colors"
+              className="px-3 py-1 bg-teal-100 text-teal-800 rounded text-sm hover:bg-teal-200 transition-colors"
             >
               Activate
             </button>
@@ -274,7 +274,7 @@ const UserManagement = () => {
                     type="checkbox"
                     checked={selectedUsers.length === getCurrentPageUsers().length && getCurrentPageUsers().length > 0}
                     onChange={selectAllUsers}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                   />
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
@@ -294,7 +294,7 @@ const UserManagement = () => {
                       type="checkbox"
                       checked={selectedUsers.includes(user.id)}
                       onChange={() => toggleUserSelection(user.id)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                     />
                   </td>
                   <td className="px-6 py-4">
@@ -325,7 +325,7 @@ const UserManagement = () => {
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => setSelectedUser(user)}
-                        className="text-blue-600 hover:text-blue-700"
+                        className="text-teal-600 hover:text-teal-700"
                       >
                         <Icon name="Eye" size={16} />
                       </button>

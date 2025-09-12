@@ -51,7 +51,7 @@ const AnalyticsTab = () => {
   ];
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('fr-CM', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'XAF',
       minimumFractionDigits: 0
@@ -59,7 +59,7 @@ const AnalyticsTab = () => {
   };
 
   const formatNumber = (value) => {
-    return new Intl.NumberFormat('fr-CM').format(value);
+    return new Intl.NumberFormat('en-US').format(value);
   };
 
   return (

@@ -152,7 +152,7 @@ const SystemReportModal = ({ isOpen, onClose }) => {
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('fr-CM', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'XAF',
       minimumFractionDigits: 0

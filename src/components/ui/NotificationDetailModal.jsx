@@ -3,7 +3,7 @@ import Icon from '../AppIcon';
 import { useNotifications } from '../../contexts/NotificationContext';
 
 const NotificationDetailModal = ({ notification, isOpen, onClose, onMarkAsRead, onDelete }) => {
-  const { markAsRead, deleteNotification } = useNotifications();
+  const { markAsRead, deleteNotification, permanentlyDelete, restoreFromTrash } = useNotifications();
 
   // Close modal on escape key
   useEffect(() => {
@@ -102,16 +102,16 @@ const NotificationDetailModal = ({ notification, isOpen, onClose, onMarkAsRead, 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4">
-      {/* Modal Container */}
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden transform transition-all duration-300 ease-out">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-4">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${getNotificationColor(notification.type, notification.priority)}`}>
+      {/* Modal Container - Fixed height with proper flexbox layout */}
+      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col transform transition-all duration-300 ease-out">
+        {/* Header - Fixed at top */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
+          <div className="flex items-center space-x-4 min-w-0 flex-1">
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${getNotificationColor(notification.type, notification.priority)}`}>
               <Icon name={getNotificationIcon(notification.type)} size={24} />
             </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 line-clamp-1">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-xl font-semibold text-gray-900 truncate">
                 {notification.title}
               </h2>
               <p className="text-sm text-gray-500 mt-1">
@@ -120,10 +120,10 @@ const NotificationDetailModal = ({ notification, isOpen, onClose, onMarkAsRead, 
             </div>
           </div>
           
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-shrink-0 ml-4">
             {/* Priority Indicator */}
             {notification.priority === 'high' && (
-              <span className="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-medium">
+              <span className="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">
                 High Priority
               </span>
             )}
@@ -131,7 +131,7 @@ const NotificationDetailModal = ({ notification, isOpen, onClose, onMarkAsRead, 
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
               aria-label="Close notification"
             >
               <Icon name="X" size={20} className="text-gray-500" />
@@ -139,11 +139,11 @@ const NotificationDetailModal = ({ notification, isOpen, onClose, onMarkAsRead, 
           </div>
         </div>
 
-        {/* Content */}
+        {/* Content - Scrollable middle section */}
         <div className="p-6 overflow-y-auto flex-1">
           {/* Message */}
           <div className="prose prose-sm max-w-none">
-            <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+            <p className="text-gray-700 leading-relaxed break-words">
               {notification.message}
             </p>
           </div>
@@ -152,16 +152,16 @@ const NotificationDetailModal = ({ notification, isOpen, onClose, onMarkAsRead, 
           {notification.actionUrl && notification.actionLabel && (
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-center justify-between">
-                <div>
+                <div className="min-w-0 flex-1 mr-4">
                   <h4 className="font-medium text-blue-900">Action Available</h4>
-                  <p className="text-sm text-blue-700 mt-1">{notification.actionLabel}</p>
+                  <p className="text-sm text-blue-700 mt-1 break-words">{notification.actionLabel}</p>
                 </div>
                 <button
                   onClick={() => {
                     window.open(notification.actionUrl, '_blank');
                     onClose();
                   }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex-shrink-0"
                 >
                   Open
                 </button>
@@ -171,10 +171,10 @@ const NotificationDetailModal = ({ notification, isOpen, onClose, onMarkAsRead, 
 
           {/* Metadata */}
           <div className="mt-6 pt-6 border-t border-gray-200">
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="font-medium text-gray-900">Type:</span>
-                <span className="ml-2 text-gray-600 capitalize">
+                <span className="ml-2 text-gray-600 capitalize break-words">
                   {notification.type.replace('_', ' ')}
                 </span>
               </div>
@@ -198,7 +198,7 @@ const NotificationDetailModal = ({ notification, isOpen, onClose, onMarkAsRead, 
               </div>
               <div>
                 <span className="font-medium text-gray-900">ID:</span>
-                <span className="ml-2 text-gray-600 font-mono text-xs">
+                <span className="ml-2 text-gray-600 font-mono text-xs break-all">
                   {notification.id}
                 </span>
               </div>
@@ -206,8 +206,8 @@ const NotificationDetailModal = ({ notification, isOpen, onClose, onMarkAsRead, 
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
+        {/* Footer Actions - Fixed at bottom */}
+        <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
           <div className="flex items-center space-x-3">
             <button
               onClick={onClose}
@@ -227,7 +227,12 @@ const NotificationDetailModal = ({ notification, isOpen, onClose, onMarkAsRead, 
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center space-x-2"
               >
                 <Icon name="ExternalLink" size={16} />
-                <span>{notification.actionLabel}</span>
+                <span className="hidden sm:inline">
+                  {notification.actionLabel.length > 15 
+                    ? `${notification.actionLabel.substring(0, 15)}...` 
+                    : notification.actionLabel
+                  }
+                </span>
               </button>
             )}
             

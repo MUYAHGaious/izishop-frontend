@@ -100,7 +100,7 @@ const CommissionTrackingTab = () => {
   };
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('fr-CM', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'XAF',
       minimumFractionDigits: 0

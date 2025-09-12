@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import notificationService from '../services/notificationService';
 
 // Error boundary for notification context
@@ -48,7 +48,12 @@ export const useNotifications = () => {
       clearError: () => {},
       requestPermission: () => Promise.resolve(false),
       loadUserNotifications: () => Promise.resolve(),
-      getFilteredNotifications: () => []
+      getFilteredNotifications: () => [],
+      getTrashNotifications: () => Promise.resolve([]),
+      getTrashCount: () => Promise.resolve(0),
+      restoreFromTrash: () => Promise.resolve(),
+      permanentlyDelete: () => Promise.resolve(),
+      emptyTrash: () => Promise.resolve()
     };
   }
   return context;
@@ -63,6 +68,7 @@ export const NotificationProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
 
   // Mark component as mounted
   useEffect(() => {
@@ -353,6 +359,85 @@ export const NotificationProvider = ({ children }) => {
     };
   };
 
+  // Trash functionality methods
+  const getTrashNotifications = async () => {
+    try {
+      return await notificationService.getTrashNotifications();
+    } catch (error) {
+      console.error('Failed to get trash notifications:', error);
+      setError(error.message);
+      return [];
+    }
+  };
+
+  const getTrashCount = async () => {
+    try {
+      return await notificationService.getTrashCount();
+    } catch (error) {
+      console.error('Failed to get trash count:', error);
+      setError(error.message);
+      return 0;
+    }
+  };
+
+  const restoreFromTrash = async (notificationId) => {
+    try {
+      await notificationService.restoreFromTrash(notificationId);
+    } catch (error) {
+      console.error('Failed to restore notification from trash:', error);
+      setError(error.message);
+      throw error;
+    }
+  };
+
+  const permanentlyDelete = async (notificationId) => {
+    try {
+      await notificationService.permanentlyDelete(notificationId);
+    } catch (error) {
+      console.error('Failed to permanently delete notification:', error);
+      setError(error.message);
+      throw error;
+    }
+  };
+
+  const emptyTrash = async () => {
+    try {
+      await notificationService.emptyTrash();
+    } catch (error) {
+      console.error('Failed to empty trash:', error);
+      setError(error.message);
+      throw error;
+    }
+  };
+
+  // Load user notifications
+  const loadUserNotifications = useCallback(async () => {
+    if (!isAuthenticated || !user) {
+      console.log('User not authenticated, skipping notification load');
+      return;
+    }
+    
+    // Prevent multiple simultaneous loads
+    if (isLoadingNotifications) {
+      console.log('Already loading notifications, skipping...');
+      return;
+    }
+    
+    try {
+      setIsLoadingNotifications(true);
+      setIsLoading(true);
+      setError(null);
+      console.log('Loading notifications for user:', user.email);
+      await notificationService.fetchNotifications();
+    } catch (error) {
+      console.error('Failed to load user notifications:', error);
+      setError(error.message || 'Failed to load notifications');
+    } finally {
+      setIsLoading(false);
+      setIsLoadingNotifications(false);
+    }
+  }, [isAuthenticated, user?.email, notificationService, isLoadingNotifications]);
+
   // Clear error
   const clearError = () => {
     setError(null);
@@ -376,7 +461,15 @@ export const NotificationProvider = ({ children }) => {
     addNotification,
     triggerTestNotification,
     requestPermission,
+    loadUserNotifications,
     clearError,
+    
+    // Trash functionality
+    getTrashNotifications,
+    getTrashCount,
+    restoreFromTrash,
+    permanentlyDelete,
+    emptyTrash,
     
     // Utilities
     getFilteredNotifications,

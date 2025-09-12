@@ -169,7 +169,7 @@ const ShopAnalytics = () => {
       <div className="p-4 lg:p-6 space-y-6">
         <div className="flex items-center justify-center min-h-96">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading analytics data...</p>
           </div>
         </div>
@@ -188,7 +188,7 @@ const ShopAnalytics = () => {
             <p className="text-gray-600 mb-4">{error}</p>
             <button 
               onClick={() => window.location.reload()} 
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
             >
               Try Again
             </button>
@@ -211,7 +211,7 @@ const ShopAnalytics = () => {
               placeholder="Search products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64"
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent w-full sm:w-64"
             />
             <Icon name="Search" size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           </div>
@@ -220,7 +220,7 @@ const ShopAnalytics = () => {
           <select
             value={selectedMetric}
             onChange={(e) => setSelectedMetric(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           >
             <option value="all">All Metrics</option>
             <option value="revenue">Revenue</option>
@@ -233,7 +233,7 @@ const ShopAnalytics = () => {
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           >
             {timeRanges.map(range => (
               <option key={range.value} value={range.value}>{range.label}</option>
@@ -261,7 +261,7 @@ const ShopAnalytics = () => {
                 message: 'Product management page will be implemented soon',
                 duration: 3000
               })}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              className="text-sm text-teal-600 hover:text-teal-700 font-medium"
             >
               View All
             </button>
@@ -272,8 +272,8 @@ const ShopAnalytics = () => {
                 <div key={product.id || index} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100">
                   <div className="flex items-center space-x-3">
                     <div className="relative">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center">
-                        <Icon name="Package" size={16} className="text-blue-600" />
+                      <div className="w-10 h-10 bg-gradient-to-br from-teal-100 to-teal-100 rounded-lg flex items-center justify-center">
+                        <Icon name="Package" size={16} className="text-teal-600" />
                       </div>
                       <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold text-white ${
                         index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-orange-500' : 'bg-gray-300'
@@ -300,7 +300,7 @@ const ShopAnalytics = () => {
                     </div>
                     <div className="w-16 bg-gray-200 rounded-full h-1 mt-1">
                       <div 
-                        className="h-1 bg-blue-500 rounded-full transition-all duration-300"
+                        className="h-1 bg-teal-500 rounded-full transition-all duration-300"
                         style={{ width: `${Math.min(100, (product.revenue / (filteredProducts[0]?.revenue || 1)) * 100)}%` }}
                       ></div>
                     </div>
@@ -321,7 +321,7 @@ const ShopAnalytics = () => {
             <div className="mt-6 pt-4 border-t border-gray-200">
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <p className="text-lg font-bold text-blue-600">{filteredProducts.length}</p>
+                  <p className="text-lg font-bold text-teal-600">{filteredProducts.length}</p>
                   <p className="text-xs text-gray-600">Products Tracked</p>
                 </div>
                 <div>
@@ -331,7 +331,7 @@ const ShopAnalytics = () => {
                   <p className="text-xs text-gray-600">Total Revenue</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-purple-600">
+                  <p className="text-lg font-bold text-teal-600">
                     {formatNumber(filteredProducts.reduce((sum, p) => sum + p.sales, 0))}
                   </p>
                   <p className="text-xs text-gray-600">Total Sales</p>
@@ -346,11 +346,11 @@ const ShopAnalytics = () => {
           <h3 className="text-lg font-semibold text-gray-900 mb-6">Customer Insights</h3>
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-100">
-                <Icon name="UserPlus" size={20} className="text-blue-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-blue-600">{formatNumber(customerInsights.newCustomers)}</p>
+              <div className="text-center p-4 bg-teal-50 rounded-lg border border-teal-100">
+                <Icon name="UserPlus" size={20} className="text-teal-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-teal-600">{formatNumber(customerInsights.newCustomers)}</p>
                 <p className="text-sm text-gray-600">New Customers</p>
-                <div className="mt-2 text-xs text-blue-600">This Period</div>
+                <div className="mt-2 text-xs text-teal-600">This Period</div>
               </div>
               <div className="text-center p-4 bg-green-50 rounded-lg border border-green-100">
                 <Icon name="UserCheck" size={20} className="text-green-600 mx-auto mb-2" />
@@ -370,7 +370,7 @@ const ShopAnalytics = () => {
                   <span className="font-medium text-gray-900">{customerInsights.customerRetentionRate}%</span>
                   <div className="w-16 bg-gray-200 rounded-full h-2">
                     <div 
-                      className="h-2 bg-blue-500 rounded-full"
+                      className="h-2 bg-teal-500 rounded-full"
                       style={{ width: `${customerInsights.customerRetentionRate}%` }}
                     ></div>
                   </div>
@@ -385,12 +385,12 @@ const ShopAnalytics = () => {
                 <span className="font-medium text-gray-900">{formatCurrency(customerInsights.averageOrderValue)}</span>
               </div>
               
-              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-100">
+              <div className="flex items-center justify-between p-3 bg-teal-50 rounded-lg border border-teal-100">
                 <div className="flex items-center space-x-2">
-                  <Icon name="Target" size={16} className="text-purple-600" />
+                  <Icon name="Target" size={16} className="text-teal-600" />
                   <span className="text-sm text-gray-600">Customer Lifetime Value</span>
                 </div>
-                <span className="font-medium text-purple-600">{formatCurrency(customerInsights.customerLifetimeValue)}</span>
+                <span className="font-medium text-teal-600">{formatCurrency(customerInsights.customerLifetimeValue)}</span>
               </div>
             </div>
             
@@ -403,7 +403,7 @@ const ShopAnalytics = () => {
                   <div className="flex items-center space-x-2">
                     <div className="w-20 bg-gray-200 rounded-full h-2">
                       <div 
-                        className="h-2 bg-blue-500 rounded-full"
+                        className="h-2 bg-teal-500 rounded-full"
                         style={{ 
                           width: `${(customerInsights.newCustomers / Math.max(1, customerInsights.newCustomers + customerInsights.returningCustomers)) * 100}%` 
                         }}
@@ -444,10 +444,10 @@ const ShopAnalytics = () => {
             <div key={index} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
               <div className="flex items-center space-x-3">
                 <div className={`w-3 h-3 rounded-full ${
-                  index === 0 ? 'bg-blue-500' :
+                  index === 0 ? 'bg-teal-500' :
                   index === 1 ? 'bg-green-500' :
                   index === 2 ? 'bg-yellow-500' :
-                  index === 3 ? 'bg-purple-500' : 'bg-gray-500'
+                  index === 3 ? 'bg-teal-500' : 'bg-gray-500'
                 }`}></div>
                 <div>
                   <span className="text-sm font-medium text-gray-900">{source.source}</span>
@@ -464,10 +464,10 @@ const ShopAnalytics = () => {
                 <div className="w-20 bg-gray-200 rounded-full h-1.5 mt-1">
                   <div 
                     className={`h-1.5 rounded-full ${
-                      index === 0 ? 'bg-blue-500' :
+                      index === 0 ? 'bg-teal-500' :
                       index === 1 ? 'bg-green-500' :
                       index === 2 ? 'bg-yellow-500' :
-                      index === 3 ? 'bg-purple-500' : 'bg-gray-500'
+                      index === 3 ? 'bg-teal-500' : 'bg-gray-500'
                     }`}
                     style={{ width: `${source.percentage}%` }}
                   ></div>
@@ -492,22 +492,22 @@ const ShopAnalytics = () => {
             </p>
           </div>
           
-          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="p-4 bg-teal-50 rounded-lg border border-teal-200">
             <div className="flex items-center space-x-2 mb-2">
-              <Icon name="Users" size={20} className="text-blue-600" />
-              <h4 className="font-medium text-blue-800">Customer Growth</h4>
+              <Icon name="Users" size={20} className="text-teal-600" />
+              <h4 className="font-medium text-teal-800">Customer Growth</h4>
             </div>
-            <p className="text-sm text-blue-700">
+            <p className="text-sm text-teal-700">
               You have {analyticsData.customers.current} customers, {formatPercentage(analyticsData.customers.change)} from last period.
             </p>
           </div>
           
-          <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+          <div className="p-4 bg-teal-50 rounded-lg border border-teal-200">
             <div className="flex items-center space-x-2 mb-2">
-              <Icon name="ShoppingCart" size={20} className="text-purple-600" />
-              <h4 className="font-medium text-purple-800">Order Performance</h4>
+              <Icon name="ShoppingCart" size={20} className="text-teal-600" />
+              <h4 className="font-medium text-teal-800">Order Performance</h4>
             </div>
-            <p className="text-sm text-purple-700">
+            <p className="text-sm text-teal-700">
               You received {analyticsData.orders.current} orders with an average value of {formatCurrency(analyticsData.orders.average_value)}.
             </p>
           </div>

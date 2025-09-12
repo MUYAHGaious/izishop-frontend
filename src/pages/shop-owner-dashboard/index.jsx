@@ -1,8 +1,8 @@
 import React from 'react';
-import ShopOwnerDashboard from '../../components/ShopOwnerDashboard';
+import ShopOwnerDashboardMain from './ShopOwnerDashboardMain';
 
 const ShopOwnerDashboardPage = () => {
-  return <ShopOwnerDashboard />;
+  return <ShopOwnerDashboardMain />;
 };
 
 export default ShopOwnerDashboardPage;

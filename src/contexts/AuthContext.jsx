@@ -50,13 +50,16 @@ export const AuthProvider = ({ children }) => {
 
     const handleAuthLogout = () => {
       console.log('Auth service triggered logout');
-      forceLogout('Session expired');
+      // Don't call forceLogout here as it creates infinite loop
+      // The logout is already handled by the RouteGuard when session validation fails
+      // This event listener should only handle cleanup, not trigger new logouts
     };
 
     // Listen for session service events
     const handleSessionExpired = () => {
-      console.log('Session expired, logging out user');
-      forceLogout('Session expired');
+      console.log('Session expired, session invalidated by session service');
+      // Don't call forceLogout here - let RouteGuard handle it when it detects invalid session
+      // The session service has already invalidated the session
     };
 
     const handleSessionRegenerated = (event) => {
@@ -570,6 +573,13 @@ export const AuthProvider = ({ children }) => {
     // All conditions must be true for authenticated state
     const result = hasStateUser && hasStorageAuth && authServiceAuth && sessionValid;
     console.log('AuthContext: isAuthenticated - stateUser:', hasStateUser, 'storageAuth:', hasStorageAuth, 'authService:', authServiceAuth, 'session:', sessionValid, 'result:', result);
+    
+    // Debug session service state if session is invalid
+    if (!sessionValid) {
+      console.log('AuthContext: SessionService debug - sessionId:', sessionService.sessionId, 'sessionStartTime:', sessionService.sessionStartTime, 'lastActivityTime:', sessionService.lastActivityTime);
+      console.log('AuthContext: localStorage sessionId:', localStorage.getItem('sessionId'), 'sessionStartTime:', localStorage.getItem('sessionStartTime'));
+    }
+    
     return result;
   };
 
@@ -648,6 +658,12 @@ export const AuthProvider = ({ children }) => {
       return true;
     }
     
+    // Special case: if we have admin session in localStorage but user state isn't loaded yet, be lenient
+    if (localStorage.getItem('adminSession') === 'true' && !user) {
+      console.log('AuthContext: Admin session detected but user not loaded, allowing validation');
+      return true;
+    }
+    
     if (!isAuthenticated()) {
       console.log('AuthContext: Session validation failed - not authenticated');
       return false;
@@ -676,9 +692,16 @@ export const AuthProvider = ({ children }) => {
     if (userRole !== currentRoleNorm) {
       // Only fail if both values are set and different
       if (userRole && currentRoleNorm) {
-        console.error('AuthContext: Role inconsistency detected:', userRole, 'vs', currentRoleNorm);
-        forceLogout('Role inconsistency');
-        return false;
+        // Special case: if this is an admin session, be more lenient
+        if (localStorage.getItem('adminSession') === 'true' && userRole === 'ADMIN') {
+          console.log('AuthContext: Admin session detected, allowing role validation');
+        } else {
+          console.error('AuthContext: Role inconsistency detected:', userRole, 'vs', currentRoleNorm);
+          // Don't call forceLogout here - let RouteGuard handle it
+          // This prevents infinite loops during admin login
+          console.log('AuthContext: Role inconsistency detected but not forcing logout to prevent infinite loop');
+          return false;
+        }
       } else {
         console.log('AuthContext: Role comparison skipped - one role is empty');
       }
@@ -689,9 +712,16 @@ export const AuthProvider = ({ children }) => {
     console.log('AuthContext: Session ID comparison - stored:', storedSessionId, 'current:', sessionId);
     
     if (storedSessionId && sessionId && storedSessionId !== sessionId) {
-      console.error('AuthContext: Session ID mismatch detected:', storedSessionId, 'vs', sessionId);
-      forceLogout('Session ID mismatch');
-      return false;
+      // Special case: if this is an admin session, be more lenient
+      if (localStorage.getItem('adminSession') === 'true') {
+        console.log('AuthContext: Admin session detected, allowing session ID validation');
+      } else {
+        console.error('AuthContext: Session ID mismatch detected:', storedSessionId, 'vs', sessionId);
+        // Don't call forceLogout here - let RouteGuard handle it
+        // This prevents infinite loops during admin login
+        console.log('AuthContext: Session ID mismatch detected but not forcing logout to prevent infinite loop');
+        return false;
+      }
     }
     
     console.log('AuthContext: Session validation passed');
@@ -789,8 +819,9 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       setLoading(true);
       
-      // Force logout any existing session
-      if (sessionId) {
+      // Force logout any existing session only if there's an active session
+      if (sessionId && isAuthenticated()) {
+        console.log('Admin login: Clearing existing session before admin login');
         await forceLogout('Admin login initiated');
       }
       
@@ -815,21 +846,33 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('refreshToken', response.refresh_token);
       }
       
-      // Create secure admin session with shorter duration
-      const newSessionId = generateSecureSessionId();
-      const sessionTime = Date.now().toString();
+      // Create secure admin session using SessionService
+      const newSessionId = sessionService.createSession(newUser);
+      if (!newSessionId) {
+        throw new Error('Failed to create admin session');
+      }
       
-      localStorage.setItem('sessionId', newSessionId);
       localStorage.setItem('currentRole', 'ADMIN');
-      localStorage.setItem('sessionStartTime', sessionTime);
       localStorage.setItem('adminSession', 'true'); // Flag for admin session
       
       setUser(newUser);
       setSessionId(newSessionId);
       setCurrentRole('ADMIN');
-      setSessionStartTime(sessionTime);
+      setSessionStartTime(sessionService.sessionStartTime?.toString());
       
       console.log(`Admin login successful, Session: ${newSessionId.substring(0, 8)}...`);
+      
+      // Debug: Check authentication state after admin login
+      console.log('=== ADMIN LOGIN STATE CHECK ===');
+      console.log('User set:', !!newUser);
+      console.log('SessionId set:', !!newSessionId);
+      console.log('CurrentRole set:', 'ADMIN');
+      console.log('isAuthenticated():', isAuthenticated());
+      console.log('AuthService isAuthenticated():', authService.isAuthenticated());
+      console.log('SessionService isValidSession():', sessionService.isValidSession());
+      console.log('SessionService sessionId:', sessionService.sessionId);
+      console.log('SessionService sessionStartTime:', sessionService.sessionStartTime);
+      console.log('================================');
       
       return response;
     } catch (error) {

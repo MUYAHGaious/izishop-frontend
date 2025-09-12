@@ -50,7 +50,7 @@ const ShopOverview = ({ shopData, onTabChange }) => {
       title: 'Add Product', 
       description: 'Add new product to inventory', 
       icon: 'Plus', 
-      color: 'bg-blue-500', 
+      color: 'bg-teal-500', 
       action: () => navigate('/add-product')
     },
     { 
@@ -66,7 +66,7 @@ const ShopOverview = ({ shopData, onTabChange }) => {
       title: 'Update Inventory', 
       description: lowStockProducts.length > 0 ? `${lowStockProducts.length} products low in stock` : 'Inventory levels good', 
       icon: 'BarChart3', 
-      color: lowStockProducts.length > 0 ? 'bg-purple-500' : 'bg-gray-400', 
+      color: lowStockProducts.length > 0 ? 'bg-teal-500' : 'bg-gray-400', 
       action: () => navigate('/my-products')
     },
     { 
@@ -94,8 +94,8 @@ const ShopOverview = ({ shopData, onTabChange }) => {
   const getOrderStatusColor = (status) => {
     switch (status) {
       case 'pending': return 'text-yellow-600 bg-yellow-50';
-      case 'processing': return 'text-blue-600 bg-blue-50';
-      case 'shipped': return 'text-purple-600 bg-purple-50';
+      case 'processing': return 'text-teal-600 bg-teal-50';
+      case 'shipped': return 'text-teal-600 bg-teal-50';
       case 'delivered': return 'text-green-600 bg-green-50';
       default: return 'text-gray-600 bg-gray-50';
     }
@@ -445,27 +445,59 @@ const ShopOverview = ({ shopData, onTabChange }) => {
   ]);
 
   return (
-    <div className="p-4 lg:p-6 space-y-6">
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
-        <h2 className="text-2xl font-bold mb-2">Welcome back, {shopData.owner}!</h2>
-        <p className="text-blue-100">Here's how your shop is performing today.</p>
-        <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="text-center">
-            <p className="text-2xl font-bold">{formatNumber(shopData.totalProducts)}</p>
-            <p className="text-sm text-blue-100">Products</p>
+    <div className="p-4 lg:p-6 space-y-8 bg-gradient-to-br from-gray-50 via-white to-gray-100 relative overflow-hidden">
+      {/* Background blur effects inspired by landing page */}
+      <div className="absolute top-0 right-0 w-80 h-80 bg-teal-400/8 rounded-full -translate-y-40 translate-x-40 pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gray-400/5 rounded-full translate-y-48 -translate-x-48 pointer-events-none"></div>
+      
+      {/* Modern Welcome Section */}
+      <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden">
+        {/* Blur circle effects like landing page */}
+        <div className="absolute top-0 left-0 w-48 h-48 bg-white/15 rounded-full -translate-y-24 -translate-x-24 pointer-events-none"></div>
+        <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 translate-x-16 pointer-events-none"></div>
+        
+        <div className="relative z-10">
+          <div className="flex items-center space-x-4 mb-6">
+            <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+              <Icon name="Store" className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h2 className="text-3xl font-bold mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
+                Welcome back, {shopData.owner}!
+              </h2>
+              <p className="text-teal-100 text-lg">Here's how your shop is performing today.</p>
+            </div>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold">{formatNumber(shopData.totalOrders)}</p>
-            <p className="text-sm text-blue-100">Total Orders</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold">{shopData.rating}</p>
-            <p className="text-sm text-blue-100">Rating ({shopData.totalReviews || 0} reviews)</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold">{formatCurrency(shopData.monthlyRevenue)}</p>
-            <p className="text-sm text-blue-100">Monthly Revenue</p>
+          
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <Icon name="Package" className="w-6 h-6 text-white" />
+              </div>
+              <p className="text-2xl font-bold">{formatNumber(shopData.totalProducts)}</p>
+              <p className="text-sm text-teal-100">Products</p>
+            </div>
+            <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <Icon name="ShoppingCart" className="w-6 h-6 text-white" />
+              </div>
+              <p className="text-2xl font-bold">{formatNumber(shopData.totalOrders)}</p>
+              <p className="text-sm text-teal-100">Total Orders</p>
+            </div>
+            <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <Icon name="Star" className="w-6 h-6 text-white" />
+              </div>
+              <p className="text-2xl font-bold">{shopData.rating}</p>
+              <p className="text-sm text-teal-100">Rating ({shopData.totalReviews || 0} reviews)</p>
+            </div>
+            <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <Icon name="DollarSign" className="w-6 h-6 text-white" />
+              </div>
+              <p className="text-2xl font-bold">{formatCurrency(shopData.monthlyRevenue)}</p>
+              <p className="text-sm text-teal-100">Monthly Revenue</p>
+            </div>
           </div>
         </div>
       </div>
@@ -507,13 +539,13 @@ const ShopOverview = ({ shopData, onTabChange }) => {
               <div
                 key={result.id}
                 onClick={() => handleSearchResultSelect(result)}
-                className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer group"
+                className="p-4 border border-gray-200 rounded-lg hover:border-teal-300 hover:shadow-sm transition-all cursor-pointer group"
               >
                 <div className="flex items-start space-x-3">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    result.type === 'product' ? 'bg-blue-100' :
+                    result.type === 'product' ? 'bg-teal-100' :
                     result.type === 'order' ? 'bg-green-100' :
-                    result.type === 'review' ? 'bg-purple-100' :
+                    result.type === 'review' ? 'bg-teal-100' :
                     'bg-orange-100'
                   }`}>
                     <Icon 
@@ -525,15 +557,15 @@ const ShopOverview = ({ shopData, onTabChange }) => {
                       } 
                       size={20} 
                       className={
-                        result.type === 'product' ? 'text-blue-600' :
+                        result.type === 'product' ? 'text-teal-600' :
                         result.type === 'order' ? 'text-green-600' :
-                        result.type === 'review' ? 'text-purple-600' :
+                        result.type === 'review' ? 'text-teal-600' :
                         'text-orange-600'
                       }
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+                    <h4 className="font-medium text-gray-900 truncate group-hover:text-teal-600 transition-colors">
                       {result.title}
                     </h4>
                     <p className="text-sm text-gray-500 line-clamp-2">
@@ -541,9 +573,9 @@ const ShopOverview = ({ shopData, onTabChange }) => {
                     </p>
                     <div className="mt-2 flex items-center space-x-2">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        result.type === 'product' ? 'bg-blue-100 text-blue-800' :
+                        result.type === 'product' ? 'bg-teal-100 text-teal-800' :
                         result.type === 'order' ? 'bg-green-100 text-green-800' :
-                        result.type === 'review' ? 'bg-purple-100 text-purple-800' :
+                        result.type === 'review' ? 'bg-teal-100 text-teal-800' :
                         'bg-orange-100 text-orange-800'
                       }`}>
                         {result.category}
@@ -562,8 +594,8 @@ const ShopOverview = ({ shopData, onTabChange }) => {
         )}
 
         {selectedSearchResult && (
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center space-x-2 text-sm text-blue-700">
+          <div className="mt-4 p-4 bg-teal-50 border border-teal-200 rounded-lg">
+            <div className="flex items-center space-x-2 text-sm text-teal-700">
               <Icon name="Info" size={16} />
               <span>Last selected: {selectedSearchResult.title}</span>
             </div>
@@ -571,106 +603,126 @@ const ShopOverview = ({ shopData, onTabChange }) => {
         )}
       </div>
 
-      {/* Today's Performance */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Today's Orders</p>
-              {loadingStats ? (
-                <div className="w-16 h-8 bg-gray-200 rounded animate-pulse"></div>
-              ) : (
-                <p className="text-2xl font-bold text-gray-900">{formatNumber(todayStats.orders)}</p>
-              )}
+      {/* Today's Performance - Modern Stats Grid */}
+      <div className="relative z-10">
+        <h3 className="text-2xl font-bold text-gray-900 mb-6">
+          Today's Performance
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Icon name="ShoppingBag" className="w-7 h-7 text-white" />
+              </div>
+              <div className="text-right">
+                {loadingStats ? (
+                  <div className="w-16 h-8 bg-gray-200 rounded animate-pulse"></div>
+                ) : (
+                  <p className="text-3xl font-bold text-gray-900">{formatNumber(todayStats.orders)}</p>
+                )}
+                <p className="text-sm font-medium text-gray-600">Orders</p>
+              </div>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Icon name="ShoppingBag" size={24} className="text-blue-600" />
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-gradient-to-r from-teal-500 to-teal-600 h-2 rounded-full" style={{ width: '70%' }}></div>
             </div>
+            <p className="text-xs text-gray-500 mt-2">Daily target</p>
           </div>
-          {renderTrendIndicator(todayStats.orders_change_type, todayStats.orders_change, 'vs yesterday')}
-        </div>
 
-        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Today's Revenue</p>
-              {loadingStats ? (
-                <div className="w-20 h-8 bg-gray-200 rounded animate-pulse"></div>
-              ) : (
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(todayStats.revenue)}</p>
-              )}
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Icon name="Banknote" className="w-7 h-7 text-white" />
+              </div>
+              <div className="text-right">
+                {loadingStats ? (
+                  <div className="w-20 h-8 bg-gray-200 rounded animate-pulse"></div>
+                ) : (
+                  <p className="text-3xl font-bold text-gray-900">{formatCurrency(todayStats.revenue)}</p>
+                )}
+                <p className="text-sm font-medium text-gray-600">Revenue</p>
+              </div>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <Icon name="Banknote" size={24} className="text-green-600" />
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full" style={{ width: '85%' }}></div>
             </div>
+            <p className="text-xs text-gray-500 mt-2">Daily target</p>
           </div>
-          {renderTrendIndicator(todayStats.sales_change_type, todayStats.sales_change, 'vs yesterday')}
-        </div>
 
-        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Shop Visitors</p>
-              {loadingStats ? (
-                <div className="w-16 h-8 bg-gray-200 rounded animate-pulse"></div>
-              ) : (
-                <p className="text-2xl font-bold text-gray-900">{formatNumber(todayStats.visitors)}</p>
-              )}
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Icon name="Eye" className="w-7 h-7 text-white" />
+              </div>
+              <div className="text-right">
+                {loadingStats ? (
+                  <div className="w-16 h-8 bg-gray-200 rounded animate-pulse"></div>
+                ) : (
+                  <p className="text-3xl font-bold text-gray-900">{formatNumber(todayStats.visitors)}</p>
+                )}
+                <p className="text-sm font-medium text-gray-600">Visitors</p>
+              </div>
             </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Icon name="Eye" size={24} className="text-purple-600" />
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-gradient-to-r from-teal-500 to-teal-600 h-2 rounded-full" style={{ width: '60%' }}></div>
             </div>
+            <p className="text-xs text-gray-500 mt-2">Analytics needed</p>
           </div>
-          <div className="mt-4 flex items-center text-sm">
-            <Icon name="TrendingUp" size={16} className="text-gray-400 mr-1" />
-            <span className="text-gray-400 font-medium">--</span>
-            <span className="text-gray-500 ml-1">analytics needed</span>
-          </div>
-        </div>
 
-        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Conversion Rate</p>
-              {loadingStats ? (
-                <div className="w-14 h-8 bg-gray-200 rounded animate-pulse"></div>
-              ) : (
-                <p className="text-2xl font-bold text-gray-900">{todayStats.conversionRate}%</p>
-              )}
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Icon name="Target" className="w-7 h-7 text-white" />
+              </div>
+              <div className="text-right">
+                {loadingStats ? (
+                  <div className="w-14 h-8 bg-gray-200 rounded animate-pulse"></div>
+                ) : (
+                  <p className="text-3xl font-bold text-gray-900">{todayStats.conversionRate}%</p>
+                )}
+                <p className="text-sm font-medium text-gray-600">Conversion</p>
+              </div>
             </div>
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <Icon name="Target" size={24} className="text-orange-600" />
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full" style={{ width: '45%' }}></div>
             </div>
-          </div>
-          <div className="mt-4 flex items-center text-sm">
-            <Icon name="TrendingUp" size={16} className="text-gray-400 mr-1" />
-            <span className="text-gray-400 font-medium">--</span>
-            <span className="text-gray-500 ml-1">analytics needed</span>
+            <p className="text-xs text-gray-500 mt-2">Analytics needed</p>
           </div>
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white rounded-xl p-6 border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {getQuickActions().map((action) => (
-            <button
-              key={action.id}
-              onClick={action.action}
-              className="p-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all text-left group cursor-pointer"
-            >
-              <div className="flex items-center space-x-3">
-                <div className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                  <Icon name={action.icon} size={20} className="text-white" />
+      {/* Modern Quick Actions */}
+      <div className="relative z-10">
+        <h3 className="text-2xl font-bold text-gray-900 mb-6">
+          Quick Actions
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {getQuickActions().map((action, index) => {
+            const gradients = [
+              'bg-gradient-to-br from-teal-400 to-teal-600',
+              'bg-gradient-to-br from-teal-500 to-teal-700',
+              'bg-gradient-to-br from-teal-500 to-teal-700',
+              'bg-gradient-to-br from-orange-500 to-orange-700'
+            ];
+            return (
+              <button
+                key={action.id}
+                onClick={action.action}
+                className={`${gradients[index]} text-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 border-none relative overflow-hidden group`}
+              >
+                {/* Blur effects */}
+                <div className="absolute top-0 left-0 w-24 h-24 bg-white/15 rounded-full -translate-y-12 -translate-x-12 pointer-events-none group-hover:scale-110 transition-transform duration-300"></div>
+                
+                <div className="relative z-10 text-left">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-4">
+                    <Icon name={action.icon} size={24} className="text-white" />
+                  </div>
+                  <h4 className="text-lg font-bold mb-2">{action.title}</h4>
+                  <p className="text-sm text-white/80 leading-relaxed">{action.description}</p>
                 </div>
-                <div>
-                  <p className="font-medium text-gray-900">{action.title}</p>
-                  <p className="text-sm text-gray-500">{action.description}</p>
-                </div>
-              </div>
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -680,7 +732,7 @@ const ShopOverview = ({ shopData, onTabChange }) => {
         <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Recent Orders</h3>
-            <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            <button className="text-sm text-teal-600 hover:text-teal-700 font-medium">
               View All
             </button>
           </div>
@@ -705,8 +757,8 @@ const ShopOverview = ({ shopData, onTabChange }) => {
               recentOrders.map((order) => (
                 <div key={order.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Icon name="ShoppingBag" size={16} className="text-blue-600" />
+                    <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+                      <Icon name="ShoppingBag" size={16} className="text-teal-600" />
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">{order.id || order.order_number}</p>
@@ -737,14 +789,14 @@ const ShopOverview = ({ shopData, onTabChange }) => {
         <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Customer Reviews</h3>
-            <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            <button className="text-sm text-teal-600 hover:text-teal-700 font-medium">
               View All
             </button>
           </div>
           
           {loadingRatings ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
             </div>
           ) : ratingStats.total_reviews > 0 ? (
             <div className="space-y-4">
@@ -932,7 +984,7 @@ const ShopOverview = ({ shopData, onTabChange }) => {
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-gray-900">Sales Performance (Last 7 Days)</h3>
           <div className="flex items-center space-x-2 text-sm text-gray-500">
-            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+            <div className="w-3 h-3 bg-teal-500 rounded-full"></div>
             <span>Daily Sales</span>
           </div>
         </div>

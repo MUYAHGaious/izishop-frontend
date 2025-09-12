@@ -11,6 +11,19 @@ class ApiService {
     // Remove old interceptor setup and use auth service instead
   }
 
+  // Helper method to get the appropriate login page based on user role
+  getLoginPageForUser() {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (user.role === 'ADMIN') {
+        return '/admin-login';
+      }
+    } catch (error) {
+      // If we can't parse user data, default to regular login
+    }
+    return '/authentication-login-register';
+  }
+
   // Token management - delegate to auth service
   getAccessToken() {
     return this.authService.getAccessToken();
@@ -449,38 +462,38 @@ class ApiService {
 
   // Admin methods
   async createDefaultAdmin() {
-    return this.request('/admin/create-default-admin', {
+    return this.request('/api/admin/create-default-admin', {
       method: 'POST'
     });
   }
 
   async checkAdminStatus() {
-    return this.request('/admin/admin-status');
+    return this.request('/api/admin/admin-status');
   }
 
   // Admin dashboard methods
   async getDashboardOverview() {
-    return this.request('/admin/dashboard/overview');
+    return this.request('/api/admin/dashboard/overview');
   }
 
   async getDashboardUsers() {
-    return this.request('/admin/dashboard/users');
+    return this.request('/api/admin/dashboard/users');
   }
 
   async getDashboardActivity() {
-    return this.request('/admin/dashboard/activity');
+    return this.request('/api/admin/dashboard/activity');
   }
 
   async getSystemStats() {
-    return this.request('/admin/dashboard/system-stats');
+    return this.request('/api/admin/dashboard/system-stats');
   }
 
   async getDashboardShops() {
-    return this.request('/admin/dashboard/shops');
+    return this.request('/api/admin/dashboard/shops');
   }
 
   async getDashboardAnalytics(timeRange = '30d') {
-    return this.request(`/admin/dashboard/analytics?time_range=${timeRange}`);
+    return this.request(`/api/admin/dashboard/analytics?time_range=${timeRange}`);
   }
 
   async suspendShop(shopId, reason, notifyOwner = true) {
@@ -500,7 +513,7 @@ class ApiService {
   }
 
   async generateSystemReport() {
-    return this.request('/admin/dashboard/system-report');
+    return this.request('/api/admin/dashboard/system-report');
   }
 
   // Shop methods
@@ -535,7 +548,7 @@ class ApiService {
   }
 
   async getShop(shopId) {
-    return this.request(`/shops/${shopId}`);
+    return this.request(`/api/shops/${shopId}`, {}, false);
   }
 
   async getAllShops(page = 1, limit = 100, search = '', category = '', sort = 'relevance', filters = {}) {
@@ -567,7 +580,7 @@ class ApiService {
       
       return await this.request(url, {
         method: 'GET'
-      });
+      }, false);
     } catch (error) {
       console.warn('API not available for shops:', error.message);
       
@@ -604,18 +617,18 @@ class ApiService {
     const params = new URLSearchParams();
     params.append('page', page.toString());
     params.append('limit', limit.toString());
-    return this.request(`/shops/${shopId}/products?${params}`);
+    return this.request(`/api/shops/${shopId}/products?${params}`, {}, false);
   }
 
   async getShopReviews(shopId, page = 1, limit = 20) {
     const params = new URLSearchParams();
     params.append('page', page.toString());
     params.append('limit', limit.toString());
-    return this.request(`/shops/${shopId}/reviews?${params}`);
+    return this.request(`/api/shops/${shopId}/reviews?${params}`, {}, false);
   }
 
   async addShopReview(shopId, reviewData) {
-    return this.request(`/shops/${shopId}/reviews`, {
+    return this.request(`/api/shops/${shopId}/reviews`, {
       method: 'POST',
       body: JSON.stringify(reviewData)
     });
@@ -924,49 +937,49 @@ class ApiService {
     if (params.unread_only) queryParams.append('unread_only', params.unread_only);
     if (params.type_filter) queryParams.append('type_filter', params.type_filter);
     
-    return await this.request(`/notifications/?${queryParams.toString()}`, {
+    return await this.request(`/api/notifications/?${queryParams.toString()}`, {
       method: 'GET'
     });
   }
 
   async getNotificationStats() {
-    return await this.request('/notifications/stats', {
+    return await this.request('/api/notifications/stats', {
       method: 'GET'
     });
   }
 
   async getUnreadNotificationCount() {
-    return await this.request('/notifications/unread-count', {
+    return await this.request('/api/notifications/unread-count', {
       method: 'GET'
     });
   }
 
   async markNotificationRead(notificationId) {
-    return await this.request(`/notifications/${notificationId}/read`, {
+    return await this.request(`/api/notifications/${notificationId}/read`, {
       method: 'PATCH'
     });
   }
 
   async markAllNotificationsRead() {
-    return await this.request('/notifications/mark-all-read', {
+    return await this.request('/api/notifications/mark-all-read', {
       method: 'PATCH'
     });
   }
 
   async deleteNotification(notificationId) {
-    return await this.request(`/notifications/${notificationId}`, {
+    return await this.request(`/api/notifications/${notificationId}`, {
       method: 'DELETE'
     });
   }
 
   async getNotificationPreferences() {
-    return await this.request('/notifications/preferences', {
+    return await this.request('/api/notifications/preferences', {
       method: 'GET'
     });
   }
 
   async updateNotificationPreferences(preferences) {
-    return await this.request('/notifications/preferences', {
+    return await this.request('/api/notifications/preferences', {
       method: 'PATCH',
       body: JSON.stringify(preferences)
     });
@@ -1155,7 +1168,7 @@ class ApiService {
   // Notification methods (unified endpoint)
   async createNotification(notification) {
     try {
-      return await this.request('/notifications/create', {
+      return await this.request('/api/notifications/create', {
         method: 'POST',
         body: JSON.stringify(notification)
       });
@@ -1168,7 +1181,7 @@ class ApiService {
   async getNotifications(filters = {}) {
     try {
       const queryParams = new URLSearchParams(filters).toString();
-      return await this.request(`/notifications/${queryParams ? `?${queryParams}` : ''}`, {
+      return await this.request(`/api/notifications/${queryParams ? `?${queryParams}` : ''}`, {
         method: 'GET'
       });
     } catch (error) {
@@ -1179,7 +1192,7 @@ class ApiService {
 
   async markNotificationRead(notificationId) {
     try {
-      return await this.request(`/notifications/${notificationId}/read`, {
+      return await this.request(`/api/notifications/${notificationId}/read`, {
         method: 'PATCH'
       });
     } catch (error) {
@@ -1190,7 +1203,7 @@ class ApiService {
 
   async clearAllNotifications() {
     try {
-      return await this.request('/notifications/clear-all', {
+      return await this.request('/api/notifications/clear-all', {
         method: 'DELETE'
       });
     } catch (error) {
@@ -1811,28 +1824,114 @@ class ApiService {
       ...(options.role && { role: options.role })
     });
 
-    return this.request(`/notifications/admin/users?${params}`, {
+    return this.request(`/api/notifications/admin/users?${params}`, {
       method: 'GET'
     });
   }
 
   async sendNotificationToUser(notificationData) {
-    return this.request('/notifications/admin/send', {
+    return this.request('/api/notifications/admin/send', {
       method: 'POST',
       body: JSON.stringify(notificationData)
     });
   }
 
   async sendBulkNotifications(bulkData) {
-    return this.request('/notifications/admin/send-bulk', {
+    return this.request('/api/notifications/admin/send-bulk', {
       method: 'POST',
       body: JSON.stringify(bulkData)
     });
   }
 
   async getNotificationTypes() {
-    return this.request('/notifications/admin/types', {
+    return this.request('/api/notifications/admin/types', {
       method: 'GET'
+    });
+  }
+
+  // Notification Management (Regular Users)
+  async getNotifications(options = {}) {
+    const params = new URLSearchParams({
+      limit: options.limit || 20,
+      offset: options.offset || 0,
+      ...(options.unread_only && { unread_only: options.unread_only }),
+      ...(options.type_filter && { type_filter: options.type_filter })
+    });
+
+    return this.request(`/api/notifications/?${params}`, {
+      method: 'GET'
+    });
+  }
+
+  async getNotificationStats() {
+    return this.request('/api/notifications/stats', {
+      method: 'GET'
+    });
+  }
+
+  async getUnreadNotificationCount() {
+    return this.request('/api/notifications/unread-count', {
+      method: 'GET'
+    });
+  }
+
+  async markNotificationRead(notificationId) {
+    return this.request(`/api/notifications/${notificationId}/read`, {
+      method: 'PATCH'
+    });
+  }
+
+  async markAllNotificationsRead() {
+    return this.request('/api/notifications/mark-all-read', {
+      method: 'PATCH'
+    });
+  }
+
+  async deleteNotification(notificationId) {
+    return this.request(`/api/notifications/${notificationId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async clearAllNotifications() {
+    return this.request('/api/notifications/clear-all', {
+      method: 'DELETE'
+    });
+  }
+
+  // Trash Management
+  async getTrashNotifications(options = {}) {
+    const params = new URLSearchParams({
+      limit: options.limit || 20,
+      offset: options.offset || 0
+    });
+
+    return this.request(`/api/notifications/trash?${params}`, {
+      method: 'GET'
+    });
+  }
+
+  async getTrashCount() {
+    return this.request('/api/notifications/trash/count', {
+      method: 'GET'
+    });
+  }
+
+  async restoreNotificationFromTrash(notificationId) {
+    return this.request(`/api/notifications/trash/${notificationId}/restore`, {
+      method: 'PATCH'
+    });
+  }
+
+  async permanentlyDeleteNotification(notificationId) {
+    return this.request(`/api/notifications/trash/${notificationId}/permanent`, {
+      method: 'DELETE'
+    });
+  }
+
+  async emptyTrash() {
+    return this.request('/api/notifications/trash/empty', {
+      method: 'DELETE'
     });
   }
 
@@ -1845,37 +1944,37 @@ class ApiService {
       ...(options.type_filter && { type_filter: options.type_filter })
     });
 
-    return this.request(`/notifications/${params ? `?${params}` : ''}`, {
+    return this.request(`/api/notifications/${params ? `?${params}` : ''}`, {
       method: 'GET'
     });
   }
 
   async markNotificationAsRead(notificationId) {
-    return this.request(`/notifications/${notificationId}/read`, {
+    return this.request(`/api/notifications/${notificationId}/read`, {
       method: 'PATCH'
     });
   }
 
   async markAllNotificationsAsRead() {
-    return this.request('/notifications/mark-all-read', {
+    return this.request('/api/notifications/mark-all-read', {
       method: 'PATCH'
     });
   }
 
   async deleteNotification(notificationId) {
-    return this.request(`/notifications/${notificationId}`, {
+    return this.request(`/api/notifications/${notificationId}`, {
       method: 'DELETE'
     });
   }
 
   async getNotificationStats() {
-    return this.request('/notifications/stats', {
+    return this.request('/api/notifications/stats', {
       method: 'GET'
     });
   }
 
   async getUnreadNotificationCount() {
-    return this.request('/notifications/unread-count', {
+    return this.request('/api/notifications/unread-count', {
       method: 'GET'
     });
   }

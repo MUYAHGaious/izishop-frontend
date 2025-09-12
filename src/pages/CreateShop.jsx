@@ -172,14 +172,18 @@ const CreateShop = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await api.post('/api/shops', {
+      const response = await api.post('/api/shops/create', {
         ...formData,
         owner_id: user.id
       });
 
       showToast('Shop created successfully! Welcome to your new shop!', 'success');
       await refreshUserData();
-      navigate('/shop-owner-dashboard');
+      
+      // Navigate to the full-featured shop owner dashboard
+      setTimeout(() => {
+        navigate('/shop-owner-dashboard');
+      }, 1000);
     } catch (error) {
       console.error('Error creating shop:', error);
       showToast(error.message || 'Failed to create shop. Please try again.', 'error');

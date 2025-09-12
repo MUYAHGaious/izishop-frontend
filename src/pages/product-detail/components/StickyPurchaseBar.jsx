@@ -35,17 +35,6 @@ const StickyPurchaseBar = ({ product, selectedVariant, quantity, onQuantityChang
   const handleAddToCart = async () => {
     if (!product || !product.inStock) return;
 
-    // Check if user is authenticated
-    if (!isAuthenticated()) {
-      showToast({
-        type: 'info',
-        message: 'Please log in to add items to your cart',
-        duration: 3000
-      });
-      navigate('/authentication-login-register');
-      return;
-    }
-
     setIsAddingToCart(true);
     
     try {
@@ -65,21 +54,10 @@ const StickyPurchaseBar = ({ product, selectedVariant, quantity, onQuantityChang
   const handleBuyNow = () => {
     if (!product || !product.inStock) return;
 
-    // Check if user is authenticated
-    if (!isAuthenticated()) {
-      showToast({
-        type: 'info',
-        message: 'Please log in to place an order',
-        duration: 3000
-      });
-      navigate('/authentication-login-register');
-      return;
-    }
-
     // Add to cart first
     handleAddToCart();
     
-    // Navigate to checkout
+    // Navigate to checkout (guest users can proceed to checkout)
     setTimeout(() => {
       navigate('/shopping-cart');
     }, 500);

@@ -172,7 +172,7 @@ const OrderManagement = () => {
     switch (status) {
       case 'paid': return 'bg-green-100 text-green-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'refunded': return 'bg-blue-100 text-blue-800';
+      case 'refunded': return 'bg-purple-100 text-purple-800';
       case 'failed': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -181,14 +181,14 @@ const OrderManagement = () => {
   const getPriorityColor = (priority) => {
     switch (priority) {
       case 'high': return 'text-red-600';
-      case 'normal': return 'text-blue-600';
+      case 'normal': return 'text-teal-600';
       case 'low': return 'text-gray-600';
       default: return 'text-gray-600';
     }
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('fr-CM', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'XAF',
       minimumFractionDigits: 0
@@ -239,7 +239,7 @@ const OrderManagement = () => {
           <h2 className="text-2xl font-bold text-gray-900">Order Management</h2>
           <p className="text-gray-600">Monitor and manage all orders across the platform</p>
         </div>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+        <button className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors flex items-center space-x-2">
           <Icon name="Download" size={16} />
           <span>Export Orders</span>
         </button>
@@ -249,7 +249,7 @@ const OrderManagement = () => {
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <div className="flex items-center space-x-2">
-            <Icon name="ShoppingBag" size={20} className="text-blue-600" />
+            <Icon name="ShoppingBag" size={20} className="text-teal-600" />
             <span className="text-sm text-gray-600">Total</span>
           </div>
           <p className="text-2xl font-bold text-gray-900 mt-1">{orders.length}</p>
@@ -265,7 +265,7 @@ const OrderManagement = () => {
         </div>
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <div className="flex items-center space-x-2">
-            <Icon name="Truck" size={20} className="text-purple-600" />
+            <Icon name="Truck" size={20} className="text-teal-600" />
             <span className="text-sm text-gray-600">Shipped</span>
           </div>
           <p className="text-2xl font-bold text-gray-900 mt-1">
@@ -313,7 +313,7 @@ const OrderManagement = () => {
                 placeholder="Search orders by ID, customer, or shop..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -322,7 +322,7 @@ const OrderManagement = () => {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           >
             {statuses.map(status => (
               <option key={status.value} value={status.value}>{status.label}</option>
@@ -333,7 +333,7 @@ const OrderManagement = () => {
           <select
             value={selectedTimeRange}
             onChange={(e) => setSelectedTimeRange(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           >
             {timeRanges.map(range => (
               <option key={range.value} value={range.value}>{range.label}</option>
@@ -347,13 +347,13 @@ const OrderManagement = () => {
             <span className="text-sm text-gray-600">{selectedOrders.length} selected</span>
             <button
               onClick={() => handleBulkAction('process')}
-              className="px-3 py-1 bg-blue-100 text-blue-800 rounded text-sm hover:bg-blue-200 transition-colors"
+              className="px-3 py-1 bg-teal-100 text-teal-800 rounded text-sm hover:bg-teal-200 transition-colors"
             >
               Process
             </button>
             <button
               onClick={() => handleBulkAction('ship')}
-              className="px-3 py-1 bg-purple-100 text-purple-800 rounded text-sm hover:bg-purple-200 transition-colors"
+              className="px-3 py-1 bg-teal-100 text-teal-800 rounded text-sm hover:bg-teal-200 transition-colors"
             >
               Ship
             </button>
@@ -386,7 +386,7 @@ const OrderManagement = () => {
                           : currentPageOrderIds
                       );
                     }}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                   />
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
@@ -407,7 +407,7 @@ const OrderManagement = () => {
                       type="checkbox"
                       checked={selectedOrders.includes(order.id)}
                       onChange={() => toggleOrderSelection(order.id)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                     />
                   </td>
                   <td className="px-6 py-4">
@@ -448,7 +448,7 @@ const OrderManagement = () => {
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleOrderAction('view', order.id)}
-                        className="text-blue-600 hover:text-blue-700"
+                        className="text-teal-600 hover:text-teal-700"
                       >
                         <Icon name="Eye" size={16} />
                       </button>

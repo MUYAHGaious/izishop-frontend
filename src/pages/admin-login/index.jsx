@@ -21,36 +21,8 @@ const AdminLogin = () => {
   const { adminLogin, isAuthenticated, forceLogout, user } = useAuth();
   const navigate = useNavigate();
 
-  // Check for existing session and terminate it
-  useEffect(() => {
-    const terminateExistingSession = async () => {
-      if (isAuthenticated() && user) {
-        console.log('Existing session detected, terminating for admin login...');
-        setSessionTerminated(true);
-        
-        try {
-          await forceLogout('Admin login requested - terminating existing session');
-          
-          showToast({
-            type: 'warning',
-            message: `Previous ${user.role} session terminated for admin access`,
-            duration: 4000
-          });
-          
-          // Small delay to ensure cleanup is complete
-          setTimeout(() => {
-            setSessionTerminated(false);
-          }, 1000);
-          
-        } catch (error) {
-          console.error('Error terminating existing session:', error);
-          setSessionTerminated(false);
-        }
-      }
-    };
-
-    terminateExistingSession();
-  }, []);
+  // Note: Session termination is handled by the adminLogin function itself
+  // No need to terminate session here as it creates race conditions
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -112,20 +84,27 @@ const AdminLogin = () => {
         duration: 3000
       });
       
-      // Redirect to admin dashboard with longer delay to ensure auth state is set
-      setTimeout(() => {
-        // Double-check authentication before navigating
-        const token = localStorage.getItem('accessToken');
-        const user = localStorage.getItem('user');
-        console.log('Pre-navigation check - token:', !!token, 'user:', !!user);
+      // Wait for AuthContext state to update before redirecting
+      console.log('Admin login successful, waiting for state update...');
+      
+      // Check if session is properly established before redirecting
+      const checkSessionAndRedirect = () => {
+        const hasSession = localStorage.getItem('sessionId');
+        const hasAdminRole = localStorage.getItem('currentRole') === 'ADMIN';
+        const hasAdminSession = localStorage.getItem('adminSession') === 'true';
         
-        if (token && user) {
+        console.log('Session check:', { hasSession, hasAdminRole, hasAdminSession });
+        
+        if (hasSession && hasAdminRole && hasAdminSession) {
+          console.log('Session established, redirecting to admin dashboard...');
           navigate('/admin-dashboard');
         } else {
-          console.error('Authentication state not properly set, retrying...');
-          setTimeout(() => navigate('/admin-dashboard'), 1000);
+          console.log('Session not ready, retrying in 50ms...');
+          setTimeout(checkSessionAndRedirect, 50);
         }
-      }, 2000);
+      };
+      
+      setTimeout(checkSessionAndRedirect, 200);
       
     } catch (error) {
       console.error('Admin login error:', error);
@@ -174,9 +153,14 @@ const AdminLogin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Modern blur effects similar to landing page */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-blue-400/10 rounded-full -translate-y-48 translate-x-48 pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-400/8 rounded-full translate-y-40 -translate-x-40 pointer-events-none"></div>
+      <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-white/5 rounded-full -translate-x-32 -translate-y-32 pointer-events-none"></div>
+      
       {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
+      <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
         }} />
@@ -184,13 +168,15 @@ const AdminLogin = () => {
 
       <div className="relative z-10 bg-white/95 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl w-full max-w-md">
         {/* Header */}
-        <div className="text-center pt-8 pb-6 px-8 border-b border-gray-200">
-          <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+        <div className="text-center pt-8 pb-6 px-8 border-b border-gray-200/50">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg border border-white/20">
             <Icon name="Shield" size={24} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Admin Access</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>
+            IziShopin Admin
+          </h1>
           <p className="text-sm text-gray-600">
-            Secure administrative login
+            Secure administrative access
           </p>
         </div>
 
@@ -281,7 +267,7 @@ const AdminLogin = () => {
             variant="default"
             loading={isLoading}
             disabled={isLoading}
-            className="w-full py-3 bg-red-600 hover:bg-red-700 focus:ring-red-500"
+            className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:ring-blue-500 shadow-lg border border-blue-600/20"
           >
             {isLoading ? (
               <>

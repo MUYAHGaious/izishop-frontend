@@ -140,8 +140,8 @@ const ShopsListing = () => {
         console.log('shopsParams:', shopsParams);
 
         const [shopsData, featuredData] = await Promise.all([
-          fetchWithCache ? fetchWithCache('shops', fetchShops, shopsParams) : fetchShops(shopsParams),
-          fetchWithCache ? fetchWithCache('featured-shops', fetchFeaturedShops, {}) : fetchFeaturedShops()
+          fetchShops(shopsParams),
+          fetchFeaturedShops()
         ]);
 
 
@@ -283,8 +283,8 @@ const ShopsListing = () => {
         ...filters
       };
 
-      // Force refresh for new search
-      const shopsData = await fetchWithCache('shops', () => fetchShops(shopsParams), shopsParams, true);
+      // Direct API call for search
+      const shopsData = await fetchShops(shopsParams);
       
       if (shopsData) {
         const shops = Array.isArray(shopsData) ? shopsData : (shopsData.shops || []);
@@ -465,7 +465,7 @@ const ShopsListing = () => {
 
   const handleVisitShop = useCallback((shopId) => {
     console.log('Visiting shop:', shopId);
-    navigate(`/my-shop-profile/${shopId}`);
+    navigate(`/shops/${shopId}`);
   }, [navigate]);
 
   const handleQuickPreview = useCallback((shopId) => {
@@ -544,43 +544,9 @@ const ShopsListing = () => {
       return;
     }
     
-    // Check if user already has a shop
-    try {
-      const userShops = await api.getMyShops();
-      if (userShops && userShops.length > 0) {
-        console.log('User already has shops:', userShops);
-        
-        if (userShops.length === 1) {
-          // User has one shop - ask if they want to view it or create another
-          const shouldViewCurrent = window.confirm(
-            `You already have a shop called "${userShops[0].name}". Would you like to view your current shop instead? Click "Cancel" to create another shop.`
-          );
-          
-          if (shouldViewCurrent) {
-            navigate(`/shop-profile/${userShops[0].id}`);
-            return;
-          }
-        } else {
-          // User has multiple shops - show selection
-          const shopNames = userShops.map(shop => shop.name).join(', ');
-          const shouldChoose = window.confirm(
-            `You already have ${userShops.length} shops: ${shopNames}. Would you like to choose which shop to view? Click "Cancel" to create another shop.`
-          );
-          
-          if (shouldChoose) {
-            showToast('Feature coming soon: Shop selection menu', 'info');
-            return;
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error checking user shops:', error);
-      // Continue with shop creation if check fails
-    }
-    
-    console.log('Opening create shop modal');
-    // Open create shop modal
-    setIsCreateShopOpen(true);
+    // Navigate to create shop page
+    console.log('Navigating to create shop page');
+    navigate('/create-shop');
   }, [isAuthenticated, user, navigate]);
 
   // Simple, working filter system

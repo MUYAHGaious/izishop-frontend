@@ -3,7 +3,7 @@ import Button from '../../../components/ui/Button';
 
 const OrderSummary = ({ items, onProceedToCheckout, isCheckout = false }) => {
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const shipping = subtotal > 50000 ? 0 : 2500; // Free shipping over 50,000 FCFA
+  const shipping = subtotal > 50000 ? 0 : 2500; // Free shipping over 50,000 XAF
   const tax = subtotal * 0.1925; // 19.25% VAT
   const total = subtotal + shipping + tax;
 
@@ -13,7 +13,7 @@ const OrderSummary = ({ items, onProceedToCheckout, isCheckout = false }) => {
       currency: 'XAF',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
-    }).format(price).replace('XAF', 'FCFA');
+    }).format(price);
   };
 
   return (

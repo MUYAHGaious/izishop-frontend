@@ -89,99 +89,130 @@ const QuickActionsPanel = () => {
   };
 
   return (
-    <div className="bg-surface rounded-lg border border-border elevation-1">
-      <div className="p-6 border-b border-border">
-        <div className="flex items-center space-x-2">
-          <Icon name="Zap" size={20} className="text-accent" />
-          <h3 className="text-lg font-semibold text-foreground">Quick Actions</h3>
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 relative overflow-hidden">
+      {/* Subtle blur effect */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-teal-400/5 rounded-full -translate-y-16 translate-x-16 pointer-events-none"></div>
+      
+      <div className="p-6 border-b border-gray-200/50">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+            <Icon name="Zap" size={20} className="text-white" />
+          </div>
+          <h3 className="text-xl font-bold text-gray-900">
+            Quick Actions
+          </h3>
         </div>
       </div>
 
       <div className="p-6">
         {/* Desktop Grid Layout */}
-        <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-4">
-          {quickActions.map((action) => (
-            <div
-              key={action.id}
-              className={`group p-4 rounded-lg border transition-micro cursor-pointer hover-scale ${getColorClasses(action.color)}`}
-              onClick={action.action}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getColorClasses(action.color)}`}>
-                  <Icon name={action.icon} size={20} />
+        <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-6">
+          {quickActions.map((action, index) => {
+            const gradients = [
+              'bg-gradient-to-br from-teal-400 to-teal-600',
+              'bg-gradient-to-br from-blue-500 to-blue-700',
+              'bg-gradient-to-br from-purple-500 to-purple-700',
+              'bg-gradient-to-br from-orange-500 to-orange-700',
+              'bg-gradient-to-br from-green-500 to-green-700',
+              'bg-gradient-to-br from-gray-600 to-gray-800'
+            ];
+            
+            return (
+              <div
+                key={action.id}
+                className={`${gradients[index]} text-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer relative overflow-hidden group`}
+                onClick={action.action}
+              >
+                {/* Blur effects */}
+                <div className="absolute top-0 left-0 w-20 h-20 bg-white/15 rounded-full -translate-y-10 -translate-x-10 pointer-events-none group-hover:scale-110 transition-transform duration-300"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                      <Icon name={action.icon} size={24} className="text-white" />
+                    </div>
+                    {action.badge && (
+                      <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold shadow-lg">
+                        {action.badge}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-bold text-lg text-white mb-2">{action.title}</h4>
+                    <p className="text-sm text-white/80 leading-relaxed">{action.description}</p>
+                  </div>
                 </div>
-                {action.badge && (
-                  <span className="bg-error text-error-foreground text-xs px-2 py-1 rounded-full font-medium">
-                    {action.badge}
-                  </span>
-                )}
               </div>
-              
-              <div>
-                <h4 className="font-medium text-foreground mb-1">{action.title}</h4>
-                <p className="text-sm text-muted-foreground">{action.description}</p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Mobile List Layout */}
-        <div className="md:hidden space-y-3">
-          {quickActions.slice(0, 4).map((action) => (
-            <div
-              key={action.id}
-              className="flex items-center space-x-4 p-4 rounded-lg border border-border hover:bg-muted/30 transition-micro cursor-pointer"
-              onClick={action.action}
-            >
-              <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${getColorClasses(action.color)}`}>
-                <Icon name={action.icon} size={20} />
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2">
-                  <h4 className="font-medium text-foreground">{action.title}</h4>
-                  {action.badge && (
-                    <span className="bg-error text-error-foreground text-xs px-2 py-1 rounded-full font-medium">
-                      {action.badge}
-                    </span>
-                  )}
+        <div className="md:hidden space-y-4">
+          {quickActions.slice(0, 4).map((action, index) => {
+            const gradients = [
+              'bg-gradient-to-r from-teal-400 to-teal-600',
+              'bg-gradient-to-r from-blue-500 to-blue-700',
+              'bg-gradient-to-r from-purple-500 to-purple-700',
+              'bg-gradient-to-r from-orange-500 to-orange-700'
+            ];
+            
+            return (
+              <div
+                key={action.id}
+                className={`${gradients[index]} text-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer relative overflow-hidden group`}
+                onClick={action.action}
+              >
+                {/* Blur effect */}
+                <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -translate-y-8 translate-x-8 pointer-events-none group-hover:scale-110 transition-transform duration-300"></div>
+                
+                <div className="flex items-center space-x-4 relative z-10">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                    <Icon name={action.icon} size={20} className="text-white" />
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2">
+                      <h4 className="font-bold text-white">{action.title}</h4>
+                      {action.badge && (
+                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold shadow-lg">
+                          {action.badge}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-white/80 truncate">{action.description}</p>
+                  </div>
+                  
+                  <Icon name="ChevronRight" size={16} className="text-white/60" />
                 </div>
-                <p className="text-sm text-muted-foreground truncate">{action.description}</p>
               </div>
-              
-              <Icon name="ChevronRight" size={16} className="text-muted-foreground" />
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Priority Actions for Mobile */}
-        <div className="md:hidden mt-6 pt-4 border-t border-border">
+        <div className="md:hidden mt-6 pt-4 border-t border-gray-200/50">
           <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant="default"
-              fullWidth
+            <button
               onClick={quickActions[0].action}
-              iconName={quickActions[0].icon}
-              iconPosition="left"
-              iconSize={16}
+              className="bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl px-4 py-3 font-semibold hover:from-teal-600 hover:to-teal-700 transition-all duration-300 hover:scale-105 shadow-lg flex items-center justify-center space-x-2"
             >
-              {quickActions[0].title}
-            </Button>
-            <Button
-              variant="outline"
-              fullWidth
+              <Icon name={quickActions[0].icon} size={16} />
+              <span>Add Product</span>
+            </button>
+            <button
               onClick={quickActions[1].action}
-              iconName={quickActions[1].icon}
-              iconPosition="left"
-              iconSize={16}
+              className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl px-4 py-3 font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 hover:scale-105 shadow-lg flex items-center justify-center space-x-2 relative"
             >
-              Process Orders
+              <Icon name={quickActions[1].icon} size={16} />
+              <span>Orders</span>
               {quickActions[1].badge && (
-                <span className="ml-2 bg-warning text-warning-foreground text-xs px-2 py-0.5 rounded-full">
+                <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold ml-1">
                   {quickActions[1].badge}
                 </span>
               )}
-            </Button>
+            </button>
           </div>
         </div>
       </div>

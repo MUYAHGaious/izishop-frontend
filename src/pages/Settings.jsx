@@ -7,6 +7,7 @@ import Input from '../components/ui/Input';
 import BlurText from '../components/ui/BlurText';
 import ShinyText from '../components/ui/ShinyText';
 import Header from '../components/ui/Header';
+import SubscriptionManagement from '../components/SubscriptionManagement';
 
 const Settings = () => {
   const { user, loading, refreshUserData } = useAuth();
@@ -27,6 +28,11 @@ const Settings = () => {
     city: '',
     postalCode: ''
   });
+
+  // Role change state
+  const [showRoleChangeModal, setShowRoleChangeModal] = useState(false);
+  const [selectedNewRole, setSelectedNewRole] = useState('');
+  const [roleChangeReason, setRoleChangeReason] = useState('');
 
   // Settings state
   const [settings, setSettings] = useState({
@@ -246,6 +252,67 @@ const Settings = () => {
     }
   };
 
+  const handleRoleUpgrade = async (newRole) => {
+    if (newRole === 'SHOP_OWNER') {
+      // For shop owner, show payment flow
+      setPaymentStep(2);
+    } else {
+      // For other roles, show role change modal
+      setSelectedNewRole(newRole);
+      setShowRoleChangeModal(true);
+    }
+  };
+
+  const handleRoleChange = async () => {
+    if (!selectedNewRole) return;
+    
+    setIsLoading(true);
+    try {
+      console.log('Attempting role change:', { new_role: selectedNewRole, reason: roleChangeReason });
+      
+      const response = await api.request('/api/auth/change-role', {
+        method: 'POST',
+        body: JSON.stringify({
+          new_role: selectedNewRole,
+          reason: roleChangeReason
+        })
+      });
+      
+      console.log('Role change response:', response);
+      
+      if (response.success) {
+        showNotification(`Role changed to ${selectedNewRole} successfully!`, 'success');
+        
+        // Force refresh user data and wait for it to complete
+        console.log('Refreshing user data after role change...');
+        const refreshedUser = await refreshUserData();
+        console.log('Refreshed user data:', refreshedUser);
+        
+        // Force a page reload as a fallback to ensure UI updates
+        setTimeout(() => {
+          console.log('Forcing page reload to ensure UI updates...');
+          window.location.reload();
+        }, 1000);
+        
+        setShowRoleChangeModal(false);
+        setSelectedNewRole('');
+        setRoleChangeReason('');
+      } else {
+        showNotification(response.message || 'Failed to change role', 'error');
+      }
+    } catch (error) {
+      console.error('Role change error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        status: error.status,
+        response: error.response
+      });
+      showNotification(error.message || 'Failed to change role', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const renderAccountTab = () => (
     <div className="space-y-8">
       {/* Profile Header */}
@@ -284,15 +351,15 @@ const Settings = () => {
       <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-8">
         <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">Personal Information</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <div>
+      <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
             <Input
               value={profileData.firstName}
               onChange={(e) => handleProfileChange('firstName', e.target.value)}
               placeholder="Enter your first name"
             />
-          </div>
-          <div>
+              </div>
+              <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
             <Input
               value={profileData.lastName}
@@ -361,26 +428,70 @@ const Settings = () => {
           <div className="flex-1 min-w-0">
             <h3 className="text-xl sm:text-2xl font-bold mb-2">{currentRole.name}</h3>
             <p className="text-teal-100 mb-4 text-sm sm:text-base">{currentRole.description}</p>
-            {user?.role?.toLowerCase() === 'shop_owner' && (
+            {user?.subscription?.status === 'active' && (
               <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm">
                   <Icon name="CheckCircle" size={16} className="mr-2" />
-                  Active Subscription
-                </span>
-                <span className="text-xl sm:text-2xl font-bold">$29.99/month</span>
+                      Active Subscription
+                    </span>
+                <span className="text-xl sm:text-2xl font-bold">${user?.subscription?.monthly_fee || '29.99'}/month</span>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
           <div className="flex-shrink-0">
             <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
               <Icon name="Crown" size={24} className="sm:w-8 sm:h-8 text-white" />
             </div>
-          </div>
+              </div>
         </div>
       </div>
 
-      {/* Subscription Options */}
-      {user?.role?.toLowerCase() === 'customer' && (
+      {/* Subscription Management - Only show for subscribed users */}
+      {user?.subscription?.status === 'active' && (
+        <SubscriptionManagement onSwitchToSubscriptionTab={() => setActiveTab('subscription')} />
+      )}
+
+      {/* Role Change Options - Show for all users */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Change Your Role</h3>
+        <p className="text-gray-600 mb-6">Switch to a different role level based on your needs</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { value: 'CUSTOMER', label: 'Customer', description: 'Basic shopping access only', color: 'gray' },
+            { value: 'DELIVERY_AGENT', label: 'Delivery Agent', description: 'Can deliver orders for other sellers', color: 'blue' },
+            { value: 'CASUAL_SELLER', label: 'Casual Seller', description: 'Can sell up to 10 products', color: 'purple' },
+            { value: 'SHOP_OWNER', label: 'Shop Owner', description: 'Professional selling platform', color: 'teal' }
+          ].map((role) => (
+            <div key={role.value} className={`border rounded-xl p-4 hover:border-${role.color}-300 transition-colors ${
+              user?.role === role.value ? `border-${role.color}-500 bg-${role.color}-50` : 'border-gray-200'
+            }`}>
+              <div className="text-center">
+                <div className={`w-12 h-12 bg-${role.color}-100 rounded-full flex items-center justify-center mx-auto mb-3`}>
+                  <Icon name={role.value === 'CUSTOMER' ? 'User' : role.value === 'DELIVERY_AGENT' ? 'Truck' : role.value === 'CASUAL_SELLER' ? 'Package' : 'Store'} size={24} className={`text-${role.color}-600`} />
+          </div>
+                <h4 className="font-semibold text-gray-900 mb-2">{role.label}</h4>
+                <p className="text-sm text-gray-600 mb-4">{role.description}</p>
+                {user?.role === role.value ? (
+                  <div className="w-full bg-green-100 text-green-700 py-2 px-4 rounded-lg font-medium">
+                    Current Role
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleRoleUpgrade(role.value)}
+                    className={`w-full bg-${role.color}-100 text-${role.color}-700 py-2 px-4 rounded-lg font-medium hover:bg-${role.color}-200 transition-colors`}
+                  >
+                    Switch to {role.label}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Subscription Options - Show for users without active subscription */}
+      {user?.subscription?.status !== 'active' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
           {/* Shop Owner Plan */}
           <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-8 relative overflow-hidden">
@@ -395,8 +506,8 @@ const Settings = () => {
         <div>
                   <h4 className="text-xl font-bold text-gray-900">Shop Owner</h4>
                   <p className="text-gray-600">Professional selling platform</p>
+                  </div>
                 </div>
-              </div>
               <div className="text-3xl font-bold text-gray-900 mb-2">$29.99<span className="text-lg text-gray-500">/month</span></div>
               <p className="text-sm text-gray-600">7-day free trial included</p>
               </div>
@@ -433,15 +544,15 @@ const Settings = () => {
                 <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
                   <Icon name="Package" size={24} className="text-teal-600" />
                 </div>
-                <div>
+                      <div>
                   <h4 className="text-xl font-bold text-gray-900">Casual Seller</h4>
                   <p className="text-gray-600">Sell without monthly fees</p>
-                </div>
-              </div>
+                      </div>
+                    </div>
               <div className="text-3xl font-bold text-gray-900 mb-2">Free</div>
               <p className="text-sm text-gray-600">No monthly subscription</p>
-            </div>
-            
+                </div>
+
             <ul className="space-y-3 mb-8">
               {[
                 'Up to 10 product listings',
@@ -549,7 +660,7 @@ const Settings = () => {
                       onChange={(e) => setPaymentData(prev => ({ ...prev, cvv: e.target.value }))}
                         placeholder="123"
                       />
-                  </div>
+                    </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Cardholder Name</label>
                     <Input
@@ -582,7 +693,7 @@ const Settings = () => {
         <h3 className="text-xl font-semibold text-gray-900 mb-6">Notification Preferences</h3>
         
         <div className="space-y-6">
-      <div>
+        <div>
             <h4 className="text-lg font-medium text-gray-900 mb-4">Email Notifications</h4>
             <div className="space-y-4">
               {[
@@ -592,10 +703,10 @@ const Settings = () => {
                 { key: 'marketing', label: 'Marketing emails', description: 'Receive promotional content and offers' }
               ].map((item) => (
                 <div key={item.key} className="flex items-center justify-between">
-                  <div>
+                <div>
                     <h5 className="font-medium text-gray-900">{item.label}</h5>
                     <p className="text-sm text-gray-600">{item.description}</p>
-                  </div>
+                </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
                       type="checkbox"
@@ -605,12 +716,12 @@ const Settings = () => {
                     />
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
                   </label>
-                </div>
+              </div>
               ))}
             </div>
-          </div>
+                </div>
 
-          <div>
+      <div>
             <h4 className="text-lg font-medium text-gray-900 mb-4">Push Notifications</h4>
             <div className="space-y-4">
               {[
@@ -631,8 +742,8 @@ const Settings = () => {
                     />
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
                   </label>
-              </div>
-              ))}
+            </div>
+          ))}
             </div>
           </div>
         </div>
@@ -652,7 +763,7 @@ const Settings = () => {
         <h3 className="text-xl font-semibold text-gray-900 mb-6">Privacy & Security</h3>
         
         <div className="space-y-6">
-          <div>
+      <div>
             <h4 className="text-lg font-medium text-gray-900 mb-4">Profile Visibility</h4>
             <div className="space-y-4">
               {[
@@ -666,7 +777,7 @@ const Settings = () => {
                     name="profileVisibility"
                     value={option.value}
                     checked={settings.privacy.profileVisibility === option.value}
-                    onChange={(e) => handleSettingChange('privacy', 'profileVisibility', e.target.value)}
+              onChange={(e) => handleSettingChange('privacy', 'profileVisibility', e.target.value)}
                     className="w-4 h-4 text-teal-600"
                   />
       <div>
@@ -700,8 +811,8 @@ const Settings = () => {
                     />
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
                   </label>
-                </div>
-              ))}
+            </div>
+          ))}
             </div>
           </div>
         </div>
@@ -767,7 +878,7 @@ const Settings = () => {
             </div>
             </div>
           </div>
-        </div>
+            </div>
 
         <div className="mt-8 flex justify-end">
           <Button onClick={handleSaveSettings} disabled={isLoading}>
@@ -795,11 +906,11 @@ const Settings = () => {
                 <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
                   <Icon name={integration.icon} size={24} className="text-gray-600" />
                 </div>
-                <div>
+            <div>
                   <h4 className="font-medium text-gray-900">{integration.name}</h4>
                   <p className="text-sm text-gray-600">{integration.description}</p>
-                </div>
-              </div>
+            </div>
+          </div>
               <Button variant="outline" className="w-full">
                 {integration.connected ? 'Disconnect' : 'Connect'}
               </Button>
@@ -870,6 +981,60 @@ const Settings = () => {
           </div>
         </div>
       </div>
+
+      {/* Role Change Modal */}
+      {showRoleChangeModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Change Role</h3>
+              <button
+                onClick={() => setShowRoleChangeModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <Icon name="X" size={20} />
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <p className="text-gray-600 mb-4">
+                You are about to change your role to <strong>{selectedNewRole}</strong>. 
+                This action may affect your access to certain features.
+              </p>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Reason for role change (optional)
+                </label>
+                <textarea
+                  value={roleChangeReason}
+                  onChange={(e) => setRoleChangeReason(e.target.value)}
+                  placeholder="Tell us why you want to change your role..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  rows={3}
+                />
+              </div>
+            </div>
+            
+            <div className="flex space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowRoleChangeModal(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleRoleChange}
+                disabled={isLoading}
+                className="flex-1 bg-teal-600 hover:bg-teal-700"
+              >
+                {isLoading ? 'Changing...' : 'Confirm Change'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Notification Toast */}
       {notification.show && (

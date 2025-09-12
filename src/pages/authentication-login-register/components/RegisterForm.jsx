@@ -43,8 +43,29 @@ const RegisterForm = ({ onRegister, isLoading }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
 
-  // Removed roleOptions, businessTypeOptions, vehicleTypeOptions - no longer needed
-  // All users register as customers and can upgrade roles in settings
+  // Business and vehicle type options
+  const businessTypeOptions = [
+    { value: 'retail', label: 'Retail Store' },
+    { value: 'restaurant', label: 'Restaurant/Food' },
+    { value: 'electronics', label: 'Electronics' },
+    { value: 'fashion', label: 'Fashion/Clothing' },
+    { value: 'health', label: 'Health & Beauty' },
+    { value: 'sports', label: 'Sports & Recreation' },
+    { value: 'books', label: 'Books & Education' },
+    { value: 'home', label: 'Home & Garden' },
+    { value: 'automotive', label: 'Automotive' },
+    { value: 'services', label: 'Professional Services' },
+    { value: 'other', label: 'Other' }
+  ];
+
+  const vehicleTypeOptions = [
+    { value: 'motorcycle', label: 'Motorcycle' },
+    { value: 'scooter', label: 'Scooter' },
+    { value: 'bicycle', label: 'Bicycle' },
+    { value: 'car', label: 'Car' },
+    { value: 'van', label: 'Van' },
+    { value: 'truck', label: 'Truck' }
+  ];
 
   const calculatePasswordStrength = (password) => {
     let strength = 0;

@@ -1960,6 +1960,30 @@ class ApiService {
       method: 'GET'
     });
   }
+
+  // Subscription Management Methods
+  async cancelSubscription(data) {
+    const response = await this.request('/api/subscription/cancel', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    return response;
+  }
+
+  async downgradeRole(data) {
+    const response = await this.request('/api/subscription/downgrade', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    return response;
+  }
+
+  async getSubscriptionStatus(userId) {
+    const response = await this.request(`/api/subscription/status/${userId}`, {
+      method: 'GET'
+    });
+    return response;
+  }
 }
 
 export default new ApiService();

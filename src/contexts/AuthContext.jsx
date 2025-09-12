@@ -163,7 +163,7 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      // Parse user data first
+        // Parse user data first
       let currentUser;
       try {
         currentUser = JSON.parse(storedUser);
@@ -180,55 +180,44 @@ export const AuthProvider = ({ children }) => {
         setAuthCheckComplete(true);
         return;
       }
-      
-      // Set user immediately for faster UI response
-      setUser(currentUser);
-      
-      // Create backup authentication state for reload persistence - ONLY if authService confirms
-      const isAuthServiceValid = authService.isAuthenticated();
-      if (isAuthServiceValid) {
-        localStorage.setItem('authBackup', JSON.stringify({
-          user: currentUser,
-          timestamp: Date.now(),
-          accessToken: !!accessToken
-        }));
-      } else {
-        console.warn('AuthContext: AuthService does not confirm authentication, skipping backup creation');
-      }
-      
-      // Restore or create secure session using sessionService
-      const sessionRestored = sessionService.initializeSession();
-      
-      if (sessionRestored) {
-        // Use existing valid session
-        setSessionId(sessionService.sessionId);
-        setSessionStartTime(sessionService.sessionStartTime?.toString());
-        console.log('AuthContext: Restored existing secure session:', sessionService.getSessionInfo());
-      } else {
-        // Create new secure session
-        const newSessionId = sessionService.createSession(currentUser);
-        if (newSessionId) {
-          setSessionId(newSessionId);
-          setSessionStartTime(sessionService.sessionStartTime?.toString());
-          console.log('AuthContext: Created new secure session:', sessionService.getSessionInfo());
+        
+        // Set user immediately for faster UI response
+        setUser(currentUser);
+        
+        // Create backup authentication state for reload persistence - ONLY if authService confirms
+        const isAuthServiceValid = authService.isAuthenticated();
+        if (isAuthServiceValid) {
+          localStorage.setItem('authBackup', JSON.stringify({
+            user: currentUser,
+            timestamp: Date.now(),
+            accessToken: !!accessToken
+          }));
         } else {
-          console.error('Failed to create secure session');
-          await authService.logout();
-          setLoading(false);
-          setIsInitializing(false);
-          return;
+          console.warn('AuthContext: AuthService does not confirm authentication, skipping backup creation');
         }
-      }
-      
-      // Session validation handled above
-        // We have valid tokens and user data, but session is invalid
-        // Create a new session to fix this
-        console.log('AuthContext: Valid tokens but invalid session, creating new session...');
-        const newSessionId = sessionService.createSession(currentUser);
-        if (newSessionId) {
-          setSessionId(newSessionId);
+        
+        // Restore or create secure session using sessionService
+        const sessionRestored = sessionService.initializeSession();
+        
+        if (sessionRestored) {
+          // Use existing valid session
+          setSessionId(sessionService.sessionId);
           setSessionStartTime(sessionService.sessionStartTime?.toString());
-          console.log('AuthContext: Created new session for existing user:', sessionService.getSessionInfo());
+          console.log('AuthContext: Restored existing secure session:', sessionService.getSessionInfo());
+        } else {
+          // Create new secure session
+          const newSessionId = sessionService.createSession(currentUser);
+          if (newSessionId) {
+            setSessionId(newSessionId);
+            setSessionStartTime(sessionService.sessionStartTime?.toString());
+            console.log('AuthContext: Created new secure session:', sessionService.getSessionInfo());
+          } else {
+            console.error('Failed to create secure session');
+            await authService.logout();
+            setLoading(false);
+            setIsInitializing(false);
+            return;
+          }
         }
         
         // Use stored role if available, otherwise use user role
@@ -304,7 +293,7 @@ export const AuthProvider = ({ children }) => {
             setSessionId(null);
             setCurrentRole(null);
           }
-        }
+      }
       
     } catch (error) {
       console.error('AuthContext: Initialization error:', error);

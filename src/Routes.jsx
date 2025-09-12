@@ -46,6 +46,7 @@ import DeliveryAgentDashboard from "./pages/delivery-agent-dashboard";
 import UserSettings from "./pages/user-settings";
 import Settings from "./pages/Settings";
 import CasualMarketplace from "./pages/casual-marketplace";
+import CreateShop from "./pages/CreateShop";
 
 // Protected Route Component
 const ProtectedRoute = ({ children, requiredRole = null }) => {
@@ -134,6 +135,7 @@ const AppRoutes = () => {
       <Route path="/shops-listing" element={<ShopsListing />} />
       <Route path="/shop/:slug" element={<ShopProfile />} />
       <Route path="/shops/:id" element={<ShopProfile />} />
+      <Route path="/create-shop" element={<CreateShop />} />
       <Route path="/product-detail" element={<ProductDetail />} />
       <Route path="/profile/:userId" element={<PublicProfile />} />
       

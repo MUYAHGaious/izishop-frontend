@@ -97,17 +97,6 @@ const Header = () => {
 
   const isActive = (path) => location.pathname === path;
 
-  // Simplified navigation items
-  const getNavigationItems = () => {
-    return [
-      { label: 'Products', path: '/product-catalog', icon: 'Package' },
-      { label: 'Shops', path: '/shops-listing', icon: 'Store' },
-      { label: 'Marketplace', path: '/casual-marketplace', icon: 'ShoppingBag' },
-    ];
-  };
-
-  const navigationItems = getNavigationItems();
-
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -365,20 +354,39 @@ const Header = () => {
           <div className="px-3 py-4 space-y-3">
             {/* Mobile Navigation */}
             <nav className="space-y-2">
-              {navigationItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`flex items-center space-x-3 px-3 py-3 rounded-md text-sm font-medium transition-colors ${
-                    isActive(item.path)
-                      ? 'text-primary bg-primary/10' :'text-text-secondary hover:text-text-primary hover:bg-muted'
-                  }`}
-                >
-                  <Icon name={item.icon} size={18} />
-                  <span>{item.label}</span>
-                </Link>
-              ))}
+              <Link
+                to="/product-catalog"
+                onClick={() => setIsMenuOpen(false)}
+                className={`flex items-center space-x-3 px-3 py-3 rounded-md text-sm font-medium transition-colors ${
+                  isActive('/product-catalog')
+                    ? 'text-primary bg-primary/10' :'text-text-secondary hover:text-text-primary hover:bg-muted'
+                }`}
+              >
+                <Icon name="Package" size={18} />
+                <span>Products</span>
+              </Link>
+              <Link
+                to="/shops-listing"
+                onClick={() => setIsMenuOpen(false)}
+                className={`flex items-center space-x-3 px-3 py-3 rounded-md text-sm font-medium transition-colors ${
+                  isActive('/shops-listing')
+                    ? 'text-primary bg-primary/10' :'text-text-secondary hover:text-text-primary hover:bg-muted'
+                }`}
+              >
+                <Icon name="Store" size={18} />
+                <span>Shops</span>
+              </Link>
+              <Link
+                to="/casual-marketplace"
+                onClick={() => setIsMenuOpen(false)}
+                className={`flex items-center space-x-3 px-3 py-3 rounded-md text-sm font-medium transition-colors ${
+                  isActive('/casual-marketplace')
+                    ? 'text-primary bg-primary/10' :'text-text-secondary hover:text-text-primary hover:bg-muted'
+                }`}
+              >
+                <Icon name="ShoppingBag" size={18} />
+                <span>Marketplace</span>
+              </Link>
             </nav>
 
             {/* Mobile Actions */}

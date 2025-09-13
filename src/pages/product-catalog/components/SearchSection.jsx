@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import SimpleCategoryDropdown from './SimpleCategoryDropdown';
 
-const SearchSection = ({ searchParams, setSearchParams }) => {
+const SearchSection = ({ searchParams, setSearchParams, categories = [], selectedCategory = 'all', onCategorySelect }) => {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
@@ -43,6 +44,10 @@ const SearchSection = ({ searchParams, setSearchParams }) => {
     if (searchQuery.trim()) {
       const newParams = new URLSearchParams(searchParams);
       newParams.set('q', searchQuery.trim());
+      // Only set category if it's not 'all'
+      if (selectedCategory !== 'all') {
+        newParams.set('category', selectedCategory);
+      }
       setSearchParams(newParams);
       setShowSuggestions(false);
     }
@@ -53,8 +58,19 @@ const SearchSection = ({ searchParams, setSearchParams }) => {
     setSearchQuery(suggestion.text);
     const newParams = new URLSearchParams(searchParams);
     newParams.set('q', suggestion.text);
+    // Only set category if it's not 'all'
+    if (selectedCategory !== 'all') {
+      newParams.set('category', selectedCategory);
+    }
     setSearchParams(newParams);
     setShowSuggestions(false);
+  };
+
+  // Handle category selection
+  const handleCategorySelect = (category) => {
+    if (onCategorySelect) {
+      onCategorySelect(category);
+    }
   };
 
   // Handle click outside to close suggestions
@@ -72,35 +88,46 @@ const SearchSection = ({ searchParams, setSearchParams }) => {
   }, []);
 
   return (
-    <div className="bg-gradient-to-r from-teal-500 via-teal-600 to-emerald-500 pt-16">
+    <div className="bg-gradient-to-r from-teal-500 via-teal-600 to-emerald-500 pt-32">
       <div className="container mx-auto px-4 py-8">
         {/* Search Bar */}
         <div className="max-w-4xl mx-auto relative" ref={searchRef}>
           <form onSubmit={handleSearchSubmit} className="relative">
-            <div className="relative flex items-center">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                onFocus={() => setShowSuggestions(true)}
-                placeholder="Search for products, brands, categories..."
-                className="w-full h-14 pl-6 pr-32 text-lg border-0 rounded-2xl shadow-lg focus:ring-4 focus:ring-white/30 focus:outline-none"
+            <div className="relative flex items-center bg-white rounded-2xl shadow-lg overflow-hidden">
+              {/* Category Dropdown */}
+              <SimpleCategoryDropdown
+                categories={categories}
+                selectedCategory={selectedCategory}
+                onCategorySelect={handleCategorySelect}
+                className="flex-shrink-0"
               />
               
-              {/* Search Button */}
-              <Button
-                type="submit"
-                className="absolute right-2 h-10 px-6 bg-teal-500 hover:bg-teal-600 text-white rounded-xl"
-              >
-                <Icon name="Search" size={20} />
-                <span className="hidden sm:inline ml-2">Search</span>
-              </Button>
+              {/* Search Input */}
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  onFocus={() => setShowSuggestions(true)}
+                  placeholder="Search for products, brands, categories..."
+                  className="w-full h-14 pl-6 pr-32 text-lg border-0 focus:ring-4 focus:ring-white/30 focus:outline-none"
+                />
+                
+                {/* Search Button */}
+                <Button
+                  type="submit"
+                  className="absolute right-2 top-2 h-10 px-6 bg-teal-500 hover:bg-teal-600 text-white rounded-xl"
+                >
+                  <Icon name="Search" size={20} />
+                  <span className="hidden sm:inline ml-2">Search</span>
+                </Button>
+              </div>
             </div>
           </form>
 
           {/* Search Suggestions Dropdown */}
           {showSuggestions && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 max-h-96 overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-40 max-h-96 overflow-y-auto">
               {suggestions.length > 0 ? (
                 <div className="p-4">
                   {/* Recent Searches */}

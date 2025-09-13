@@ -227,7 +227,6 @@ const LandingPage = () => {
               </div>
             </section>
           </ErrorBoundary>
-
           {/* Shop by Category */}
           <ErrorBoundary>
             <section className="px-6 mb-4">

@@ -455,6 +455,18 @@ const ProductCatalog = () => {
       <SearchSection 
         searchParams={searchParams}
         setSearchParams={setSearchParams}
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onCategorySelect={(category) => {
+          setSelectedCategory(category.id);
+          const newParams = new URLSearchParams(searchParams);
+          if (category.id === 'all') {
+            newParams.delete('category');
+          } else {
+            newParams.set('category', category.id);
+          }
+          setSearchParams(newParams);
+        }}
       />
       
       <div className="flex h-screen">

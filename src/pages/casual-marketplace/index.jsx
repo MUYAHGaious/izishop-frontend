@@ -16,7 +16,7 @@ import SearchSection from './components/SearchSection';
 import CategoryNavigation from './components/CategoryNavigation';
 
 const CasualMarketplace = () => {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('browse'); // browse, my-listings, create
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -204,7 +204,12 @@ const CasualMarketplace = () => {
   const handleCreateListing = async (e) => {
     e.preventDefault();
     
-    if (user.role === 'CUSTOMER') {
+    if (!isAuthenticated()) {
+      showToast('Please log in to create listings', 'error');
+      return;
+    }
+    
+    if (user?.role === 'CUSTOMER') {
       showToast('Please upgrade to Casual Seller to create listings', 'error');
       return;
     }
@@ -266,6 +271,14 @@ const CasualMarketplace = () => {
     setSearchParams(newParams);
   }, [searchParams, setSearchParams]);
 
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category.id);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('category', category.id);
+    newParams.set('page', '1');
+    setSearchParams(newParams);
+  };
+
   // Handle filter changes
   const handleFilterChange = useCallback((filterType, value) => {
     setFilters(prev => ({
@@ -323,7 +336,29 @@ const CasualMarketplace = () => {
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto">
-            {user.role === 'CUSTOMER' ? (
+            {!isAuthenticated() ? (
+              <div className="text-center py-12 bg-white rounded-xl shadow-sm">
+                <span className="text-6xl mb-4 block">🛒</span>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Welcome to the Marketplace</h2>
+                <p className="text-gray-600 mb-6">
+                  Browse and discover amazing products from local sellers. Sign in to create your own listings.
+                </p>
+                <div className="flex gap-4 justify-center">
+                  <Button 
+                    onClick={() => window.location.href = '/authentication-login-register'}
+                    className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg"
+                  >
+                    Sign In
+                  </Button>
+                  <Button 
+                    onClick={() => setActiveTab('browse')}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg"
+                  >
+                    Browse Listings
+                  </Button>
+                </div>
+              </div>
+            ) : user?.role === 'CUSTOMER' ? (
               <div className="text-center py-12 bg-white rounded-xl shadow-sm">
                 <span className="text-6xl mb-4 block">🔒</span>
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Upgrade Required</h2>
@@ -511,25 +546,32 @@ const CasualMarketplace = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 animate-fadeIn">
+    <div className="min-h-screen bg-gradient-to-r from-gray-400 via-gray-500 to-gray-600 animate-fadeIn">
       <Header />
       
       {/* Enhanced Search Section */}
-      <SearchSection 
-        searchParams={searchParams}
-        setSearchParams={setSearchParams}
-        placeholder="Search marketplace items..."
-      />
+      <div className="bg-white">
+        <SearchSection 
+          searchParams={searchParams}
+          setSearchParams={setSearchParams}
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onCategorySelect={handleCategorySelect}
+          placeholder="Search marketplace items..."
+        />
+      </div>
       
       {/* Category Navigation */}
-      <CategoryNavigation 
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onCategoryChange={handleCategoryChange}
-      />
+      <div className="bg-white">
+        <CategoryNavigation 
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onCategoryChange={handleCategoryChange}
+        />
+      </div>
 
       {/* Tab Navigation - Only for My Listings */}
-      {activeTab === 'my-listings' && user.role !== 'CUSTOMER' && (
+      {activeTab === 'my-listings' && isAuthenticated() && user?.role !== 'CUSTOMER' && (
         <div className="bg-white border-b border-gray-200">
           <div className="container mx-auto px-4 py-4">
             <div className="flex justify-between items-center">
@@ -556,7 +598,7 @@ const CasualMarketplace = () => {
         </div>
       )}
       
-      <div className="flex h-screen">
+      <div className="flex h-screen bg-white rounded-t-3xl -mt-4 relative z-10">
         {/* Desktop Filter Sidebar */}
         <div className="hidden lg:block w-80 bg-white border-r border-gray-200 h-full">
           <FilterPanel
@@ -758,7 +800,21 @@ const CasualMarketplace = () => {
 
             {activeTab === 'my-listings' && (
               <>
-                {user.role === 'CUSTOMER' ? (
+                {!isAuthenticated() ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center py-12">
+                      <Icon name="Lock" size={64} className="mx-auto mb-4 text-gray-400" />
+                      <h3 className="text-xl font-bold text-gray-900 mb-4">Sign In Required</h3>
+                      <p className="text-gray-600 mb-6">Please sign in to view your listings.</p>
+                      <Button 
+                        onClick={() => window.location.href = '/authentication-login-register'}
+                        className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg"
+                      >
+                        Sign In
+                      </Button>
+                    </div>
+                  </div>
+                ) : user?.role === 'CUSTOMER' ? (
                   <div className="flex-1 flex items-center justify-center">
                     <div className="text-center py-12">
                       <span className="text-6xl mb-4 block">🔒</span>

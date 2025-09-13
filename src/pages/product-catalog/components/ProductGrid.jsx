@@ -1,11 +1,12 @@
 import React, { useState, useCallback } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import { useWishlist } from '../../../contexts/WishlistContext';
 
 const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isWishlistLoading, setIsWishlistLoading] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const { isInWishlist, toggleWishlist, isLoading: wishlistLoading } = useWishlist();
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('fr-FR').format(price);
@@ -21,11 +22,17 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
   };
 
   const handleToggleWishlist = async () => {
-    setIsWishlistLoading(true);
     try {
-      await onToggleWishlist(product.id, !product.isWishlisted);
-    } finally {
-      setIsWishlistLoading(false);
+      // Use the WishlistContext which has batch system integration
+      const result = await toggleWishlist(product);
+      console.log('🔄 Wishlist toggle result:', result);
+
+      // Also call the parent callback if provided (for backward compatibility)
+      if (onToggleWishlist) {
+        await onToggleWishlist(product.id, !isInWishlist(product.id));
+      }
+    } catch (error) {
+      console.error('Failed to toggle wishlist:', error);
     }
   };
 
@@ -62,15 +69,15 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
             {/* Wishlist Button */}
             <button
               onClick={handleToggleWishlist}
-              disabled={isWishlistLoading}
+              disabled={wishlistLoading}
               className="absolute top-2 right-2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-all duration-200 shadow-sm"
             >
-              <Icon 
-                name="Heart" 
-                size={16} 
+              <Icon
+                name="Heart"
+                size={16}
                 className={`transition-colors duration-200 ${
-                  product.isWishlisted ? 'text-red-500 fill-current' : 'text-gray-400'
-                } ${isWishlistLoading ? 'animate-pulse' : ''}`}
+                  isInWishlist(product.id) ? 'text-red-500 fill-current' : 'text-gray-400'
+                } ${wishlistLoading ? 'animate-pulse' : ''}`}
               />
             </button>
           </div>
@@ -198,15 +205,15 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
         {/* Wishlist Button */}
         <button
           onClick={handleToggleWishlist}
-          disabled={isWishlistLoading}
+          disabled={wishlistLoading}
           className="absolute top-3 right-3 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-all duration-200 shadow-sm transform hover:scale-110"
         >
-          <Icon 
-            name="Heart" 
-            size={18} 
+          <Icon
+            name="Heart"
+            size={18}
             className={`transition-all duration-200 ${
-              product.isWishlisted ? 'text-red-500 fill-current scale-110' : 'text-gray-400'
-            } ${isWishlistLoading ? 'animate-pulse' : ''}`}
+              isInWishlist(product.id) ? 'text-red-500 fill-current scale-110' : 'text-gray-400'
+            } ${wishlistLoading ? 'animate-pulse' : ''}`}
           />
         </button>
 

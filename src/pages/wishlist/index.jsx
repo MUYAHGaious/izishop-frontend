@@ -260,7 +260,7 @@ const Wishlist = () => {
                       onChange={(e) => setSortBy(e.target.value)}
                       className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     >
-                      <option value="addedAt">Recently Added</option>
+                  <option value="addedAt">Recently Added</option>
                       <option value="name">Name (A-Z)</option>
                       <option value="price">Price (Low to High)</option>
                     </select>
@@ -277,7 +277,7 @@ const Wishlist = () => {
                       <option value="inStock">In Stock</option>
                       <option value="outOfStock">Out of Stock</option>
                       <option value="onSale">On Sale</option>
-                    </select>
+                </select>
                   </div>
                 </div>
                 
@@ -346,7 +346,7 @@ const Wishlist = () => {
                       </Button>
                     </div>
                   </div>
-                </div>
+              </div>
               )}
             </div>
 
@@ -387,27 +387,27 @@ const Wishlist = () => {
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <div className="text-center">
                   <p className="text-gray-700 font-medium mb-2">
-                    Love something in your wishlist? Add it to your cart to purchase!
-                  </p>
+                Love something in your wishlist? Add it to your cart to purchase!
+              </p>
                   <p className="text-sm text-gray-600">
                     Total estimated value: {filteredItems.reduce((sum, item) => sum + (item.price || 0), 0).toLocaleString()} XAF
                   </p>
                 </div>
-                <div className="flex gap-3">
-                  <a 
-                    href="/product-catalog"
+              <div className="flex gap-3">
+                <a 
+                  href="/product-catalog"
                     className="inline-flex items-center px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
-                  >
+                >
                     <Icon name="ShoppingBag" size={16} className="mr-2" />
-                    Continue Shopping
-                  </a>
-                  <a 
-                    href="/shopping-cart"
+                  Continue Shopping
+                </a>
+                <a 
+                  href="/shopping-cart"
                     className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-                  >
+                >
                     <Icon name="ShoppingCart" size={16} className="mr-2" />
-                    View Cart
-                  </a>
+                  View Cart
+                </a>
                 </div>
               </div>
             </div>

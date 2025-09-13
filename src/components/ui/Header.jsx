@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../AppIcon';
 import Button from './Button';
 import Input from './Input';
 import NotificationBell from './NotificationBell';
+import NavigationSection from './NavigationSection';
 import { useAuth } from '../../contexts/AuthContext';
 import { useWishlist } from '../../contexts/WishlistContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [cartCount, setCartCount] = useState(0);
-  const [notificationCount, setNotificationCount] = useState(0);
   const [cartAnimating, setCartAnimating] = useState(false);
   const [notificationAnimating, setNotificationAnimating] = useState(false);
   const [userProfileImage, setUserProfileImage] = useState(null);
@@ -19,6 +20,10 @@ const Header = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const { getWishlistCount } = useWishlist();
+  const { unreadCount } = useNotifications();
+
+  // Move useRef to top level of component
+  const prevUnreadCount = useRef(unreadCount);
   
   // Safety check for wishlist count
   const wishlistCount = getWishlistCount ? getWishlistCount() : 0;
@@ -51,18 +56,12 @@ const Header = () => {
       setCartCount(newCount);
     };
 
-    const updateNotificationCount = () => {
-      const count = localStorage.getItem('notificationCount');
-      const newCount = count ? parseInt(count) : 0;
-      const prevCount = notificationCount;
-      
-      if (newCount > prevCount && prevCount >= 0) {
-        setNotificationAnimating(true);
-        setTimeout(() => setNotificationAnimating(false), 1000);
-      }
-      
-      setNotificationCount(newCount);
-    };
+    // Animation for notification count changes
+    if (unreadCount > prevUnreadCount.current && prevUnreadCount.current >= 0) {
+      setNotificationAnimating(true);
+      setTimeout(() => setNotificationAnimating(false), 1000);
+    }
+    prevUnreadCount.current = unreadCount;
 
     const updateProfileImage = () => {
       if (user?.id) {
@@ -72,28 +71,23 @@ const Header = () => {
     };
 
     updateCartCount();
-    updateNotificationCount();
     updateProfileImage();
     
     // Listen for storage changes
     window.addEventListener('storage', updateCartCount);
-    window.addEventListener('storage', updateNotificationCount);
     window.addEventListener('storage', updateProfileImage);
     
     // Custom events
     window.addEventListener('cartUpdated', updateCartCount);
-    window.addEventListener('notificationUpdated', updateNotificationCount);
     window.addEventListener('profileImageUpdated', updateProfileImage);
     
     return () => {
       window.removeEventListener('storage', updateCartCount);
-      window.removeEventListener('storage', updateNotificationCount);
       window.removeEventListener('storage', updateProfileImage);
       window.removeEventListener('cartUpdated', updateCartCount);
-      window.removeEventListener('notificationUpdated', updateNotificationCount);
       window.removeEventListener('profileImageUpdated', updateProfileImage);
     };
-  }, [user, cartCount, notificationCount]);
+  }, [user, cartCount, unreadCount]);
 
   const isActive = (path) => location.pathname === path;
 
@@ -111,41 +105,15 @@ const Header = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-b border-white/20 z-50 shadow-sm">
-      <div className="flex items-center justify-between h-18 px-6 lg:px-8">
+    <>
+    <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-b border-white/20 z-50">
+      <div className="flex items-center justify-between h-16 px-6 lg:px-8">
         {/* Company Logo */}
         <Link to="/" className="flex items-center space-x-3 flex-shrink-0">
           <Icon name="Package" size={28} className="text-teal-600" />
           <span className="text-2xl font-bold text-gray-900 hidden sm:block">IziShopin</span>
         </Link>
 
-        {/* Simplified Desktop Navigation */}
-        <nav className="hidden lg:flex items-center space-x-6">
-          <Link
-            to="/product-catalog"
-            className={`text-sm font-medium transition-colors hover:text-teal-600 ${
-              isActive('/product-catalog') ? 'text-teal-600' : 'text-gray-700'
-            }`}
-          >
-            Products
-          </Link>
-          <Link
-            to="/shops-listing"
-            className={`text-sm font-medium transition-colors hover:text-teal-600 ${
-              isActive('/shops-listing') ? 'text-teal-600' : 'text-gray-700'
-            }`}
-          >
-            Shops
-          </Link>
-          <Link
-            to="/casual-marketplace"
-            className={`text-sm font-medium transition-colors hover:text-teal-600 ${
-              isActive('/casual-marketplace') ? 'text-teal-600' : 'text-gray-700'
-            }`}
-          >
-            Marketplace
-          </Link>
-        </nav>
 
         {/* Search Bar */}
         <div className="flex-1 max-w-lg mx-8">
@@ -183,9 +151,9 @@ const Header = () => {
           {/* Bell Icon */}
           <Link to="/notifications" className="p-2 hover:bg-gray-100/50 rounded-xl transition-colors relative">
             <Icon name="Bell" size={20} className="text-amber-600" />
-            {notificationCount > 0 && (
+            {unreadCount > 0 && (
               <span className={`absolute -top-1 -right-1 bg-amber-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center ${notificationAnimating ? 'animate-bounce' : ''}`}>
-                {notificationCount > 99 ? '99+' : notificationCount}
+                {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
           </Link>
@@ -222,8 +190,8 @@ const Header = () => {
                 <div className="py-2">
                   {/* User Info */}
                   <div className="px-4 py-3 border-b border-gray-100">
-                    <p className="text-sm font-medium text-gray-900">{user?.first_name} {user?.last_name}</p>
-                    <p className="text-xs text-gray-500">{user?.email}</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">{user?.first_name} {user?.last_name}</p>
+                    <p className="text-xs text-gray-500 truncate" title={user?.email}>{user?.email}</p>
                     <p className="text-xs text-blue-600 mt-1">{user?.role === 'SHOP_OWNER' ? 'Shop Owner' : user?.role === 'ADMIN' ? 'Administrator' : 'Customer'}</p>
                   </div>
                   
@@ -545,6 +513,10 @@ const Header = () => {
         </div>
       )}
     </header>
+    
+    {/* Navigation Section */}
+    <NavigationSection />
+    </>
   );
 };
 

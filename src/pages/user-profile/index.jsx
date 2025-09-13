@@ -361,11 +361,11 @@ const UserProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 relative overflow-hidden">
-      {/* Modern blur effects similar to other pages */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-blue-400/8 rounded-full -translate-y-48 translate-x-48 pointer-events-none"></div>
-      <div className="absolute bottom-0 left-0 w-80 h-80 bg-teal-400/5 rounded-full translate-y-40 -translate-x-40 pointer-events-none"></div>
-      <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-purple-400/4 rounded-full -translate-x-32 -translate-y-32 pointer-events-none"></div>
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-blue-50 relative overflow-hidden">
+      {/* Modern blur effects with teal theme */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-teal-400/8 rounded-full -translate-y-48 translate-x-48 pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-80 h-80 bg-emerald-400/5 rounded-full translate-y-40 -translate-x-40 pointer-events-none"></div>
+      <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-teal-400/4 rounded-full -translate-x-32 -translate-y-32 pointer-events-none"></div>
       
       <Header />
       
@@ -373,7 +373,7 @@ const UserProfile = () => {
         {/* Cover/Header Section - Facebook Style */}
         <div className="relative">
           <div 
-            className="h-48 sm:h-56 lg:h-72 bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 bg-cover bg-center relative cursor-pointer group overflow-hidden"
+            className="h-48 sm:h-56 lg:h-72 bg-gradient-to-r from-teal-500 via-teal-600 to-emerald-600 bg-cover bg-center relative cursor-pointer group overflow-hidden"
             style={{
               backgroundImage: profileData.coverImage ? `url(${profileData.coverImage})` : 'none'
             }}
@@ -387,7 +387,7 @@ const UserProfile = () => {
             <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-transparent to-black/30 group-hover:from-black/40 group-hover:to-black/50 transition-all duration-300"></div>
             
             {/* Edit Cover Button with glass morphism */}
-            <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 rounded-2xl px-4 py-2 opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg">
+            <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 rounded-xl px-4 py-2 opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg">
               <div className="flex items-center space-x-2">
                 <Icon name="Camera" size={16} className="text-white" />
                 <span className="text-sm font-semibold text-white">Edit Cover</span>
@@ -397,7 +397,7 @@ const UserProfile = () => {
             {isUploadingImage && (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                 <div className="bg-white rounded-lg p-4 flex items-center space-x-3">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-600"></div>
                   <span className="text-sm font-medium text-gray-700">Uploading...</span>
                 </div>
               </div>
@@ -405,13 +405,13 @@ const UserProfile = () => {
           </div>
           
           {/* Profile Picture Overlay */}
-          <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 sm:left-6 sm:transform-none">
+          <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 sm:left-6 sm:transform-none z-20">
             <div className="relative group">
               <div 
                 className="w-28 h-28 sm:w-36 sm:h-36 bg-white rounded-full p-1 shadow-lg cursor-pointer"
                 onClick={handleProfilePictureClick}
               >
-                <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden relative">
+                <div className="w-full h-full bg-gradient-to-br from-teal-500 to-emerald-600 rounded-full flex items-center justify-center overflow-hidden relative">
                   {profileData.profileImage ? (
                     <img 
                       src={profileData.profileImage} 
@@ -435,7 +435,7 @@ const UserProfile = () => {
               
               {/* Mobile-friendly camera button */}
               <button 
-                className="absolute -bottom-1 -right-1 w-10 h-10 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center text-white transition-colors shadow-lg sm:hidden"
+                className="absolute -bottom-1 -right-1 w-10 h-10 bg-teal-600 hover:bg-teal-700 rounded-full flex items-center justify-center text-white transition-colors shadow-lg sm:hidden"
                 onClick={handleProfilePictureClick}
               >
                 <Icon name="Camera" size={18} />
@@ -447,7 +447,7 @@ const UserProfile = () => {
         {/* Profile Info Section */}
         <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 relative overflow-hidden">
           {/* Subtle background effects */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-400/5 rounded-full -translate-y-16 translate-x-16 pointer-events-none"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-teal-400/5 rounded-full -translate-y-16 translate-x-16 pointer-events-none"></div>
           
           <div className="max-w-4xl mx-auto px-4 pt-20 pb-6 relative z-10">
             <div className="text-center lg:text-left lg:flex lg:items-end lg:justify-between">
@@ -508,10 +508,10 @@ const UserProfile = () => {
               {/* About Section */}
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 relative overflow-hidden">
                 {/* Subtle blur effect */}
-                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-400/5 rounded-full -translate-y-12 translate-x-12 pointer-events-none"></div>
+                <div className="absolute top-0 right-0 w-24 h-24 bg-teal-400/5 rounded-full -translate-y-12 translate-x-12 pointer-events-none"></div>
                 
-                <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center relative z-10" style={{ fontFamily: "'Playfair Display', serif" }}>
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center relative z-10">
+                  <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
                     <Icon name="User" size={18} className="text-white" />
                   </div>
                   About
@@ -604,10 +604,10 @@ const UserProfile = () => {
               {(user?.role === 'SHOP_OWNER' || user?.role === 'shop_owner') && (
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 relative overflow-hidden">
                   {/* Subtle blur effect */}
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-green-400/5 rounded-full -translate-y-16 translate-x-16 pointer-events-none"></div>
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-teal-400/5 rounded-full -translate-y-16 translate-x-16 pointer-events-none"></div>
                   
-                  <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center relative z-10" style={{ fontFamily: "'Playfair Display', serif" }}>
-                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                  <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center relative z-10">
+                    <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
                       <Icon name="Store" size={18} className="text-white" />
                     </div>
                     My Shops ({userShops.length})
@@ -616,15 +616,15 @@ const UserProfile = () => {
                   <div className="space-y-4">
                     {userShops.length > 0 ? (
                       userShops.map((shop) => (
-                        <div key={shop.id} className="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg hover:border-green-300 transition-colors">
-                          <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                            <Icon name="Store" size={20} className="text-green-600" />
+                        <div key={shop.id} className="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg hover:border-teal-300 transition-colors">
+                          <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+                            <Icon name="Store" size={20} className="text-teal-600" />
                           </div>
                           <div className="flex-1">
                             <h3 className="font-medium text-gray-900 mb-1">{shop.name}</h3>
                             <p className="text-sm text-gray-600 mb-2">{shop.description}</p>
                             <div className="flex items-center space-x-4 text-xs text-gray-500">
-                              <span className={`px-2 py-1 rounded-full ${shop.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                              <span className={`px-2 py-1 rounded-full ${shop.is_active ? 'bg-teal-100 text-teal-800' : 'bg-red-100 text-red-800'}`}>
                                 {shop.is_active ? 'Active' : 'Inactive'}
                               </span>
                               <span>Created {formatDate(shop.created_at)}</span>
@@ -633,13 +633,13 @@ const UserProfile = () => {
                           <div className="flex flex-col space-y-2">
                             <button
                               onClick={() => navigate(`/shop-profile/${shop.id}`)}
-                              className="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200 transition-colors"
+                              className="px-3 py-1 text-xs bg-teal-100 text-teal-800 rounded-md hover:bg-teal-200 transition-colors"
                             >
                               View Shop
                             </button>
                             <button
                               onClick={() => navigate('/shop-owner-dashboard')}
-                              className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-md hover:bg-green-200 transition-colors"
+                              className="px-3 py-1 text-xs bg-emerald-100 text-emerald-800 rounded-md hover:bg-emerald-200 transition-colors"
                             >
                               Manage
                             </button>
@@ -707,15 +707,15 @@ const UserProfile = () => {
                 {/* Subtle blur effect */}
                 <div className="absolute top-0 right-0 w-24 h-24 bg-teal-400/5 rounded-full -translate-y-12 translate-x-12 pointer-events-none"></div>
                 
-                <h3 className="text-xl font-bold text-gray-900 mb-6 relative z-10" style={{ fontFamily: "'Playfair Display', serif" }}>
+                <h3 className="text-xl font-bold text-gray-900 mb-6 relative z-10">
                   Quick Actions
                 </h3>
                 <div className="space-y-3 relative z-10">
                   <button
                     onClick={navigateToDashboard}
-                    className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50/50 to-blue-100/30 hover:from-blue-100/70 hover:to-blue-200/50 rounded-xl transition-all duration-300 text-left active:scale-95 border border-blue-200/30 hover:border-blue-300/50 shadow-sm hover:shadow-md"
+                    className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-teal-50/50 to-teal-100/30 hover:from-teal-100/70 hover:to-teal-200/50 rounded-xl transition-all duration-300 text-left active:scale-95 border border-teal-200/30 hover:border-teal-300/50 shadow-sm hover:shadow-md"
                   >
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg">
                       <Icon name="LayoutDashboard" size={18} className="text-white" />
                     </div>
                     <span className="text-sm font-semibold text-gray-700">Dashboard</span>
@@ -723,9 +723,9 @@ const UserProfile = () => {
                   
                   <button
                     onClick={() => navigate('/shopping-cart')}
-                    className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-green-50/50 to-green-100/30 hover:from-green-100/70 hover:to-green-200/50 rounded-xl transition-all duration-300 text-left active:scale-95 border border-green-200/30 hover:border-green-300/50 shadow-sm hover:shadow-md"
+                    className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-emerald-50/50 to-emerald-100/30 hover:from-emerald-100/70 hover:to-emerald-200/50 rounded-xl transition-all duration-300 text-left active:scale-95 border border-emerald-200/30 hover:border-emerald-300/50 shadow-sm hover:shadow-md"
                   >
-                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-lg">
                       <Icon name="ShoppingCart" size={18} className="text-white" />
                     </div>
                     <span className="text-sm font-semibold text-gray-700">My Cart</span>
@@ -733,9 +733,9 @@ const UserProfile = () => {
                   
                   <button
                     onClick={() => navigate('/order-management')}
-                    className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-orange-50/50 to-orange-100/30 hover:from-orange-100/70 hover:to-orange-200/50 rounded-xl transition-all duration-300 text-left active:scale-95 border border-orange-200/30 hover:border-orange-300/50 shadow-sm hover:shadow-md"
+                    className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50/50 to-blue-100/30 hover:from-blue-100/70 hover:to-blue-200/50 rounded-xl transition-all duration-300 text-left active:scale-95 border border-blue-200/30 hover:border-blue-300/50 shadow-sm hover:shadow-md"
                   >
-                    <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
                       <Icon name="Package" size={18} className="text-white" />
                     </div>
                     <span className="text-sm font-semibold text-gray-700">Orders</span>
@@ -744,9 +744,9 @@ const UserProfile = () => {
                   {(user?.role === 'SHOP_OWNER' || user?.role === 'shop_owner') && (
                     <button
                       onClick={() => navigate('/my-shop-profile')}
-                      className="w-full flex items-center space-x-3 p-4 hover:bg-purple-50 rounded-lg transition-colors text-left active:scale-95"
+                      className="w-full flex items-center space-x-3 p-4 hover:bg-teal-50 rounded-lg transition-colors text-left active:scale-95"
                     >
-                      <Icon name="Store" size={20} className="text-purple-600" />
+                      <Icon name="Store" size={20} className="text-teal-600" />
                       <span className="text-sm font-medium text-gray-700">My Shop</span>
                     </button>
                   )}
@@ -758,7 +758,7 @@ const UserProfile = () => {
                 {/* Subtle blur effect */}
                 <div className="absolute top-0 right-0 w-24 h-24 bg-gray-400/5 rounded-full -translate-y-12 translate-x-12 pointer-events-none"></div>
                 
-                <h3 className="text-xl font-bold text-gray-900 mb-6 relative z-10" style={{ fontFamily: "'Playfair Display', serif" }}>
+                <h3 className="text-xl font-bold text-gray-900 mb-6 relative z-10">
                   Settings
                 </h3>
                 <div className="space-y-3 relative z-10">

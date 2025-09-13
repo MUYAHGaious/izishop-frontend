@@ -3,18 +3,27 @@ import { Link } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Image from '../../../components/AppImage';
 import Button from '../../../components/ui/Button';
+import { useWishlist } from '../../../contexts/WishlistContext';
 
 const ProductCard = ({ product, onAddToCart, onToggleWishlist }) => {
-  const [isWishlisted, setIsWishlisted] = useState(product.isWishlisted || false);
   const [isLoading, setIsLoading] = useState(false);
+  const { isInWishlist, toggleWishlist, isLoading: wishlistLoading } = useWishlist();
 
   const handleWishlistToggle = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    setIsWishlisted(!isWishlisted);
-    if (onToggleWishlist) {
-      await onToggleWishlist(product.id, !isWishlisted);
+
+    try {
+      // Use the WishlistContext which has batch system integration
+      const result = await toggleWishlist(product);
+      console.log('🔄 Wishlist toggle result:', result);
+
+      // Also call the parent callback if provided (for backward compatibility)
+      if (onToggleWishlist) {
+        await onToggleWishlist(product.id, !isInWishlist(product.id));
+      }
+    } catch (error) {
+      console.error('Failed to toggle wishlist:', error);
     }
   };
 
@@ -83,16 +92,17 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist }) => {
         {/* Wishlist Button */}
         <button
           onClick={handleWishlistToggle}
+          disabled={wishlistLoading}
           className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-200 ${
-            isWishlisted 
-              ? 'bg-red-500 text-white shadow-moderate' 
+            isInWishlist(product.id)
+              ? 'bg-red-500 text-white shadow-moderate'
               : 'bg-white/80 text-text-secondary hover:bg-white hover:text-red-500'
-          }`}
+          } ${wishlistLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <Icon 
-            name="Heart" 
-            size={16} 
-            className={isWishlisted ? 'fill-current' : ''} 
+          <Icon
+            name="Heart"
+            size={16}
+            className={`${isInWishlist(product.id) ? 'fill-current' : ''} ${wishlistLoading ? 'animate-pulse' : ''}`}
           />
         </button>
 

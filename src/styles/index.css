@@ -8,6 +8,11 @@ body {
   font-family: Inter;
 }
 
+/* Navigation spacing utility */
+.pt-navigation {
+  padding-top: 8rem; /* 128px - accounts for both top nav (72px) and navigation section (56px) */
+}
+
 * {
   box-sizing: border-box;
   line-height: normal;

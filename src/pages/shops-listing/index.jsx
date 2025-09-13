@@ -10,6 +10,7 @@ import ShopCard from './components/ShopCard';
 import FilterPanel from './components/FilterPanel';
 import FeaturedShops from './components/FeaturedShops';
 import CreateShopModal from '../../components/ui/CreateShopModal';
+import ShopCategoryDropdown from './components/ShopCategoryDropdown';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDataCache } from '../../contexts/DataCacheContext';
 import { useWebSocket } from '../../contexts/WebSocketContext';
@@ -32,6 +33,7 @@ const ShopsListing = () => {
   const [sortBy, setSortBy] = useState('newest');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [resultsCount, setResultsCount] = useState(0);
   const [isCreateShopOpen, setIsCreateShopOpen] = useState(false);
   const [error, setError] = useState(null);
@@ -121,6 +123,7 @@ const ShopsListing = () => {
         const sort = searchParams.get('sort') || 'newest';
         
         setSearchQuery(query);
+        setSelectedCategory(category || 'all');
         if (category) {
           setFilters(prev => ({ ...prev, categories: [category] }));
         }
@@ -271,6 +274,7 @@ const ShopsListing = () => {
       } else {
         newParams.delete('q');
       }
+      newParams.set('category', selectedCategory);
       setSearchParams(newParams);
 
       // Fetch new search results
@@ -305,6 +309,14 @@ const ShopsListing = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category.id);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('category', category.id);
+    newParams.set('page', '1');
+    setSearchParams(newParams);
   };
 
   const handleFilterChange = useCallback(async (filterType, value) => {
@@ -622,7 +634,7 @@ const ShopsListing = () => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-blue-50 pt-navigation">
       <ErrorBoundary>
         <Header />
       </ErrorBoundary>
@@ -667,41 +679,49 @@ const ShopsListing = () => {
               </div>
               
               {/* Enhanced Search Section */}
-              <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-white/20 max-w-2xl mx-auto mb-6">
-                <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
-                  <div className="relative flex-1">
-                    <Icon name="Search" size={20} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="search"
-                      placeholder="Search for shops, brands, or categories..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-150"
+              <div className="max-w-4xl mx-auto mb-6">
+                <form onSubmit={handleSearch} className="relative">
+                  <div className="relative flex items-center bg-white rounded-2xl shadow-lg overflow-hidden">
+                    {/* Category Dropdown */}
+                    <ShopCategoryDropdown
+                      categories={categories}
+                      selectedCategory={selectedCategory}
+                      onCategorySelect={handleCategorySelect}
+                      className="flex-shrink-0"
                     />
+                    
+                    {/* Search Input */}
+                    <div className="flex-1 relative">
+                      <input
+                        type="search"
+                        placeholder="Search for shops, brands, or categories..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full h-14 pl-6 pr-24 text-lg border-0 focus:ring-4 focus:ring-white/30 focus:outline-none"
+                      />
+                      
+                      {/* Search Button */}
+                      <button
+                        type="submit"
+                        className="absolute right-2 top-2 h-10 px-4 bg-teal-500 hover:bg-teal-600 text-white rounded-xl transition-all duration-150 shadow-md hover:shadow-lg flex items-center"
+                      >
+                        <Icon name="Search" size={18} />
+                        <span className="hidden sm:inline ml-2 text-sm">Search</span>
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    type="submit"
-                                          className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl transition-all duration-150 shadow-md hover:shadow-lg"
-                  >
-                    Search
-                  </button>
                 </form>
               </div>
               
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
                 <button
                   onClick={handleCreateShop}
-                                     className="flex items-center gap-3 px-5 py-2.5 bg-white/90 backdrop-blur-sm border border-white/20 rounded-xl text-gray-700 font-medium hover:bg-white hover:shadow-md transition-all duration-150"
+                  className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 border border-teal-400/20"
                 >
-                  <Icon name="Plus" size={18} />
-                  Create Your Shop
+                  <Icon name="Store" size={20} />
+                  <span>Rent a Shop</span>
+                  <Icon name="ArrowRight" size={16} className="ml-1" />
                 </button>
-                
-                {/* Connection Status */}
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                  <span>{isConnected ? 'Live updates enabled' : 'Offline mode'}</span>
-                </div>
               </div>
             </div>
           </div>

@@ -133,6 +133,7 @@ const AppRoutes = () => {
       <Route path="/" element={<LandingPage />} />
       <Route path="/product-catalog" element={<ProductCatalog />} />
       <Route path="/shops-listing" element={<ShopsListing />} />
+      <Route path="/casual-marketplace" element={<CasualMarketplace />} />
       <Route path="/shop/:slug" element={<ShopProfile />} />
       <Route path="/shops/:id" element={<ShopProfile />} />
       <Route path="/create-shop" element={<CreateShop />} />
@@ -188,14 +189,6 @@ const AppRoutes = () => {
         element={
           <AuthenticatedRouteGuard>
             <UserSettings />
-          </AuthenticatedRouteGuard>
-        } 
-      />
-      <Route 
-        path="/casual-marketplace" 
-        element={
-          <AuthenticatedRouteGuard>
-            <CasualMarketplace />
           </AuthenticatedRouteGuard>
         } 
       />

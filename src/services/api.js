@@ -135,7 +135,7 @@ class ApiService {
       const publicEndpoints = [
         '/api/auth/check-email',
         '/api/auth/check-phone', 
-        '/shops/check-name',
+        '/api/shops/check-name',
         '/auth/login',
         '/api/auth/register',
         '/auth/admin-login',
@@ -497,7 +497,7 @@ class ApiService {
   }
 
   async suspendShop(shopId, reason, notifyOwner = true) {
-    return this.request(`/admin/shops/${shopId}/suspend`, {
+    return this.request(`/api/admin/shops/${shopId}/suspend`, {
       method: 'POST',
       body: JSON.stringify({
         reason: reason,
@@ -507,7 +507,7 @@ class ApiService {
   }
 
   async unsuspendShop(shopId) {
-    return this.request(`/admin/shops/${shopId}/unsuspend`, {
+    return this.request(`/api/admin/shops/${shopId}/unsuspend`, {
       method: 'POST'
     });
   }
@@ -518,7 +518,7 @@ class ApiService {
 
   // Shop methods
   async createShop(shopData) {
-    return this.request('/shops/create', {
+    return this.request('/api/shops/create', {
       method: 'POST',
       body: JSON.stringify(shopData)
     });
@@ -526,8 +526,8 @@ class ApiService {
 
   async getMyShop() {
     try {
-      console.log('🏪 Fetching shop data via /shops/my-shop...');
-      const result = await this.request('/shops/my-shop');
+      console.log('🏪 Fetching shop data via /api/shops/my-shop...');
+      const result = await this.request('/api/shops/my-shop');
       console.log('🏪 Shop data found:', result);
       return result;
     } catch (error) {
@@ -539,7 +539,7 @@ class ApiService {
 
   async getMyShops() {
     try {
-      const response = await this.request('/shops/my-shops');
+      const response = await this.request('/api/shops/my-shops');
       return Array.isArray(response) ? response : [];
     } catch (error) {
       console.warn('Failed to fetch user shops:', error);
@@ -601,13 +601,13 @@ class ApiService {
   }
 
   async followShop(shopId) {
-    return this.request(`/shops/${shopId}/follow`, {
+    return this.request(`/api/shops/${shopId}/follow`, {
       method: 'POST'
     });
   }
 
   async unfollowShop(shopId) {
-    return this.request(`/shops/${shopId}/unfollow`, {
+    return this.request(`/api/shops/${shopId}/unfollow`, {
       method: 'DELETE'
     });
   }
@@ -647,21 +647,21 @@ class ApiService {
   }
 
   async updateMyShop(shopData) {
-    return this.request('/shops/my-shop', {
+    return this.request('/api/shops/my-shop', {
       method: 'PUT',
       body: JSON.stringify(shopData)
     });
   }
 
   async deleteMyShop() {
-    return this.request('/shops/my-shop', {
+    return this.request('/api/shops/my-shop', {
       method: 'DELETE'
     });
   }
 
   async getShopFollowersCount(shopId) {
     try {
-      const response = await this.request(`/shops/${shopId}/followers/count`, {
+      const response = await this.request(`/api/shops/${shopId}/followers/count`, {
         method: 'GET'
       });
       return response.count || 0;
@@ -883,7 +883,7 @@ class ApiService {
   async checkShopNameAvailability(shopName, options = {}) {
     try {
       const encodedName = encodeURIComponent(shopName);
-      return await this.request(`/shops/check-name/${encodedName}`, {
+      return await this.request(`/api/shops/check-name/${encodedName}`, {
         method: 'GET',
         signal: options.signal
       }, false); // false = no authentication required
@@ -1001,7 +1001,7 @@ class ApiService {
 
   async checkShopPhoneAvailability(phone, options = {}) {
     const encodedPhone = encodeURIComponent(phone);
-    return this.request(`/shops/check-phone/${encodedPhone}`, {
+    return this.request(`/api/shops/check-phone/${encodedPhone}`, {
       method: 'GET',
       signal: options.signal
     });
@@ -1009,7 +1009,7 @@ class ApiService {
 
   async checkBusinessLicenseAvailability(license, options = {}) {
     const encodedLicense = encodeURIComponent(license);
-    return this.request(`/shops/check-license/${encodedLicense}`, {
+    return this.request(`/api/shops/check-license/${encodedLicense}`, {
       method: 'GET',
       signal: options.signal
     });
@@ -1227,7 +1227,7 @@ class ApiService {
   // Rating methods
   async getShopRatingStats(shopId) {
     try {
-      return await this.request(`/shops/${shopId}/rating-stats`, {
+      return await this.request(`/api/shops/${shopId}/rating-stats`, {
         method: 'GET'
       }, false); // Public endpoint
     } catch (error) {
@@ -1295,7 +1295,7 @@ class ApiService {
   }
 
   async createRating(shopId, ratingData) {
-    return this.request(`/shops/${shopId}/ratings`, {
+    return this.request(`/api/shops/${shopId}/ratings`, {
       method: 'POST',
       body: JSON.stringify(ratingData)
     });
@@ -2030,8 +2030,8 @@ class ApiService {
 
   async getMyShop() {
     try {
-      console.log('🏪 Fetching shop data via /shops/my-shop...');
-      const result = await this.request('/shops/my-shop', {
+      console.log('🏪 Fetching shop data via /api/shops/my-shop...');
+      const result = await this.request('/api/shops/my-shop', {
         method: 'GET'
       });
       console.log('🏪 Shop data found:', result);
@@ -2082,6 +2082,152 @@ class ApiService {
       method: 'GET'
     });
     return response;
+  }
+
+  // Wishlist Batch Operations
+  async batchWishlistOperation(operationType, items, config = null) {
+    try {
+      const response = await this.request('/api/batch/wishlist/batch', {
+        method: 'POST',
+        body: JSON.stringify({
+          operation_type: operationType,
+          items: items,
+          config: config
+        })
+      });
+      return response;
+    } catch (error) {
+      console.error(`Wishlist batch ${operationType} operation failed:`, error);
+      throw error;
+    }
+  }
+
+  // Convenience methods for specific wishlist batch operations
+  async batchAddToWishlist(productIds) {
+    const items = productIds.map(id => ({ product_id: id }));
+    return await this.batchWishlistOperation('add', items);
+  }
+
+  async batchRemoveFromWishlist(productIds) {
+    const items = productIds.map(id => ({ product_id: id }));
+    return await this.batchWishlistOperation('remove', items);
+  }
+
+  async batchToggleWishlist(productIds) {
+    const items = productIds.map(id => ({ product_id: id }));
+    return await this.batchWishlistOperation('toggle', items);
+  }
+
+  async batchClearWishlist() {
+    return await this.batchWishlistOperation('clear', [{}]);
+  }
+
+  async batchSyncWishlist(wishlistItems) {
+    const items = [{ wishlist_items: wishlistItems }];
+    return await this.batchWishlistOperation('sync', items);
+  }
+
+  // Standard Wishlist API endpoints (non-batch)
+  async getWishlistItems(limit = 50, offset = 0) {
+    try {
+      const response = await this.request(`/api/wishlist/?limit=${limit}&offset=${offset}`, {
+        method: 'GET'
+      });
+      return response;
+    } catch (error) {
+      console.error('Failed to get wishlist items:', error);
+      throw error;
+    }
+  }
+
+  async addToWishlistSingle(productId, priority = 'normal', notes = null) {
+    try {
+      const response = await this.request('/api/wishlist/add', {
+        method: 'POST',
+        body: JSON.stringify({
+          product_id: productId,
+          priority: priority,
+          notes: notes
+        })
+      });
+      return response;
+    } catch (error) {
+      console.error('Failed to add to wishlist:', error);
+      throw error;
+    }
+  }
+
+  async removeFromWishlistSingle(productId) {
+    try {
+      const response = await this.request(`/api/wishlist/${productId}`, {
+        method: 'DELETE'
+      });
+      return response;
+    } catch (error) {
+      console.error('Failed to remove from wishlist:', error);
+      throw error;
+    }
+  }
+
+  async toggleWishlistSingle(productId) {
+    try {
+      const response = await this.request(`/api/wishlist/toggle/${productId}`, {
+        method: 'POST'
+      });
+      return response;
+    } catch (error) {
+      console.error('Failed to toggle wishlist:', error);
+      throw error;
+    }
+  }
+
+  async getWishlistCount() {
+    try {
+      const response = await this.request('/api/wishlist/count', {
+        method: 'GET'
+      });
+      return response;
+    } catch (error) {
+      console.error('Failed to get wishlist count:', error);
+      throw error;
+    }
+  }
+
+  async clearWishlistSingle() {
+    try {
+      const response = await this.request('/api/wishlist/clear', {
+        method: 'DELETE'
+      });
+      return response;
+    } catch (error) {
+      console.error('Failed to clear wishlist:', error);
+      throw error;
+    }
+  }
+
+  async getWishlistPreferences() {
+    try {
+      const response = await this.request('/api/wishlist/preferences', {
+        method: 'GET'
+      });
+      return response;
+    } catch (error) {
+      console.error('Failed to get wishlist preferences:', error);
+      throw error;
+    }
+  }
+
+  async updateWishlistPreferences(preferences) {
+    try {
+      const response = await this.request('/api/wishlist/preferences', {
+        method: 'PUT',
+        body: JSON.stringify(preferences)
+      });
+      return response;
+    } catch (error) {
+      console.error('Failed to update wishlist preferences:', error);
+      throw error;
+    }
   }
 }
 

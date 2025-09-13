@@ -8,6 +8,7 @@ import { ShopProvider } from './contexts/ShopContext';
 import { DataCacheProvider } from './contexts/DataCacheContext';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import { ToastManager } from './components/ui/Toast';
 import SessionExpiryWarning from './components/ui/SessionExpiryWarning';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -15,8 +16,6 @@ import { useNavigationHandler } from './hooks/useNavigationListener';
 import './styles/index.css';
 
 function App() {
-  // Remove conflicting error handling - let ErrorBoundary handle all errors
-
   // Handle extension communication errors
   React.useEffect(() => {
     const handleError = (event) => {
@@ -29,16 +28,12 @@ function App() {
         event.preventDefault();
         return false;
       }
-      if (event.message && event.message.includes('polyfill.js')) {
-        event.preventDefault();
-        return false;
-      }
     };
 
     const handleUnhandledRejection = (event) => {
-      // Suppress extension-related promise rejections
-      if (event.reason && event.reason.message && 
-          (event.reason.message.includes('extension') || 
+      // Suppress promise rejection errors from extensions
+      if (event.reason && event.reason.message &&
+          (event.reason.message.includes('extension') ||
            event.reason.message.includes('Receiving end does not exist') ||
            event.reason.message.includes('polyfill.js'))) {
         event.preventDefault();
@@ -50,7 +45,7 @@ function App() {
     const originalConsoleError = console.error;
     console.error = function(...args) {
       const message = args.join(' ');
-      if (message.includes('Receiving end does not exist') || 
+      if (message.includes('Receiving end does not exist') ||
           message.includes('extension') ||
           message.includes('polyfill.js')) {
         return; // Don't log extension errors
@@ -89,46 +84,45 @@ function App() {
     }
   });
 
-  // Remove conflicting error UI - let ErrorBoundary handle all error display
-
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <CartProvider>
-          <WishlistProvider>
-            <ShopProvider>
-              <DataCacheProvider>
-                <WebSocketProvider>
-                  <NotificationProvider>
-                    <div className="App">
-                      <Helmet>
-                        <title>IziShopin - Cameroon's Premier B2B Marketplace</title>
-                        <meta name="description" content="Connect with trusted suppliers and buyers across Cameroon. IziShopin is your gateway to seamless B2B commerce with secure payments and nationwide delivery." />
-                        <meta name="keywords" content="B2B marketplace, Cameroon, suppliers, buyers, wholesale, trade, commerce, IziShopin" />
-                        <meta name="author" content="IziShopin Team" />
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                        <meta property="og:title" content="IziShopin - Cameroon's Premier B2B Marketplace" />
-                        <meta property="og:description" content="Connect with trusted suppliers and buyers across Cameroon. Secure payments and nationwide delivery." />
-                        <meta property="og:type" content="website" />
-                        <meta property="og:url" content="https://izishopin.com" />
-                        <meta name="twitter:card" content="summary_large_image" />
-                        <meta name="twitter:title" content="IziShopin - Cameroon's Premier B2B Marketplace" />
-                        <meta name="twitter:description" content="Connect with trusted suppliers and buyers across Cameroon." />
-                      </Helmet>
-                      <Routes />
-                      <ToastManager />
-                      <SessionExpiryWarning />
-                    </div>
-                  </NotificationProvider>
-              </WebSocketProvider>
-            </DataCacheProvider>
-          </ShopProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <ShopProvider>
+                <DataCacheProvider>
+                  <WebSocketProvider>
+                    <NotificationProvider>
+                      <div className="App">
+                        <Helmet>
+                          <title>IziShopin - Cameroon's Premier B2B Marketplace</title>
+                          <meta name="description" content="Connect with trusted suppliers and buyers across Cameroon. IziShopin is your gateway to seamless B2B commerce with secure payments and nationwide delivery." />
+                          <meta name="keywords" content="B2B marketplace, Cameroon, suppliers, buyers, wholesale, trade, commerce, IziShopin" />
+                          <meta name="author" content="IziShopin Team" />
+                          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                          <meta property="og:title" content="IziShopin - Cameroon's Premier B2B Marketplace" />
+                          <meta property="og:description" content="Connect with trusted suppliers and buyers across Cameroon. Secure payments and nationwide delivery." />
+                          <meta property="og:type" content="website" />
+                          <meta property="og:url" content="https://izishopin.com" />
+                          <meta name="twitter:card" content="summary_large_image" />
+                          <meta name="twitter:title" content="IziShopin - Cameroon's Premier B2B Marketplace" />
+                          <meta name="twitter:description" content="Connect with trusted suppliers and buyers across Cameroon." />
+                        </Helmet>
+                        <Routes />
+                        <ToastManager />
+                        <SessionExpiryWarning />
+                      </div>
+                    </NotificationProvider>
+                  </WebSocketProvider>
+                </DataCacheProvider>
+              </ShopProvider>
             </WishlistProvider>
-        </CartProvider>
-      </AuthProvider>
+          </CartProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </ErrorBoundary>
   );
 }
 
 export default App;
-

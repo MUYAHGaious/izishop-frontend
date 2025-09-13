@@ -8,6 +8,7 @@ import NavigationSection from './NavigationSection';
 import { useAuth } from '../../contexts/AuthContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -21,6 +22,7 @@ const Header = () => {
   const { isAuthenticated, user } = useAuth();
   const { getWishlistCount } = useWishlist();
   const { unreadCount } = useNotifications();
+  const { t } = useLanguage();
 
   // Move useRef to top level of component
   const prevUnreadCount = useRef(unreadCount);
@@ -123,7 +125,7 @@ const Header = () => {
             </div>
             <input
               type="search"
-              placeholder="Search products..."
+              placeholder={t('search.placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-12 pr-4 py-3 bg-gray-100/80 backdrop-blur-sm border-0 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
@@ -167,7 +169,8 @@ const Header = () => {
               </span>
             )}
           </Link>
-            
+
+
             {/* User Avatar */}
             {isAuthenticated() ? (
               <div className="relative group">
@@ -283,14 +286,14 @@ const Header = () => {
               </div>
               </div>
           ) : (
-            <Button 
-              variant="default" 
-              iconName="Plus" 
+            <Button
+              variant="default"
+              iconName="Plus"
               size="sm"
               onClick={() => navigate('/authentication-login-register')}
               className="bg-teal-500 hover:bg-teal-600 text-white border-0 shadow-sm"
             >
-              Get Started
+              {t('nav.getStarted')}
             </Button>
           )}
         </div>

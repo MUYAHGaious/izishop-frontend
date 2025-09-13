@@ -1,22 +1,23 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Icon from '../AppIcon';
+import LanguageSwitcher from './LanguageSwitcher';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const NavigationSection = () => {
   const location = useLocation();
-  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
-  const languageRef = useRef(null);
   const { user, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
 
   const isActive = (path) => location.pathname === path;
 
   // Get greeting message based on time of day
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
+    if (hour < 12) return t('greeting.morning');
+    if (hour < 17) return t('greeting.afternoon');
+    return t('greeting.evening');
   };
 
   // Get user's first name or default greeting
@@ -32,42 +33,6 @@ const NavigationSection = () => {
     return getGreeting();
   };
 
-  const languages = [
-    { code: 'en', name: 'English', flag: '🇺🇸' },
-    { code: 'fr', name: 'Français', flag: '🇫🇷' },
-    { code: 'es', name: 'Español', flag: '🇪🇸' },
-    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-    { code: 'it', name: 'Italiano', flag: '🇮🇹' },
-    { code: 'pt', name: 'Português', flag: '🇵🇹' },
-    { code: 'zh', name: '中文', flag: '🇨🇳' },
-    { code: 'ja', name: '日本語', flag: '🇯🇵' },
-    { code: 'ko', name: '한국어', flag: '🇰🇷' },
-    { code: 'ar', name: 'العربية', flag: '🇸🇦' }
-  ];
-
-  const [selectedLanguage, setSelectedLanguage] = useState(languages[0]);
-
-  // Handle click outside to close language dropdown
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (languageRef.current && !languageRef.current.contains(event.target)) {
-        setIsLanguageOpen(false);
-      }
-    };
-
-    if (isLanguageOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isLanguageOpen]);
-
-  const handleLanguageSelect = (language) => {
-    setSelectedLanguage(language);
-    setIsLanguageOpen(false);
-  };
 
   return (
     <div className="fixed top-16 left-0 right-0 bg-white/80 backdrop-blur-xl border-b border-white/20 z-40 shadow-sm">
@@ -97,7 +62,7 @@ const NavigationSection = () => {
               }`}
             >
               <Icon name="Package" size={14} />
-              <span>Products</span>
+              <span>{t('nav.products')}</span>
             </Link>
             <Link
               to="/shops-listing"
@@ -108,7 +73,7 @@ const NavigationSection = () => {
               }`}
             >
               <Icon name="Store" size={14} />
-              <span>Shops</span>
+              <span>{t('nav.shops')}</span>
             </Link>
             <Link
               to="/casual-marketplace"
@@ -119,7 +84,7 @@ const NavigationSection = () => {
               }`}
             >
               <Icon name="ShoppingBag" size={14} />
-              <span>Marketplace</span>
+              <span>{t('nav.marketplace')}</span>
             </Link>
             
             {/* Divider */}
@@ -135,7 +100,7 @@ const NavigationSection = () => {
               }`}
             >
               <Icon name="Package" size={14} />
-              <span>My Orders</span>
+              <span>{t('nav.myOrders')}</span>
             </Link>
             <Link
               to="/customer-support"
@@ -146,7 +111,7 @@ const NavigationSection = () => {
               }`}
             >
               <Icon name="Headphones" size={14} />
-              <span>Support</span>
+              <span>{t('nav.support')}</span>
             </Link>
             <Link
               to="/settings"
@@ -157,7 +122,7 @@ const NavigationSection = () => {
               }`}
             >
               <Icon name="Settings" size={14} />
-              <span>Settings</span>
+              <span>{t('nav.settings')}</span>
             </Link>
             <Link
               to="/create-shop"
@@ -168,51 +133,13 @@ const NavigationSection = () => {
               }`}
             >
               <Icon name="Store" size={14} />
-              <span>Sell</span>
+              <span>{t('nav.sell')}</span>
             </Link>
             </nav>
           </div>
 
-          {/* Language Dropdown */}
-          <div className="relative" ref={languageRef}>
-            <button
-              onClick={() => setIsLanguageOpen(!isLanguageOpen)}
-              className="flex items-center space-x-1 px-2 py-1 rounded-lg text-sm font-medium text-gray-700 hover:text-teal-600 hover:bg-teal-50 transition-all duration-200"
-            >
-              <span className="text-lg">{selectedLanguage.flag}</span>
-              <span>{selectedLanguage.name}</span>
-              <Icon 
-                name={isLanguageOpen ? "ChevronUp" : "ChevronDown"} 
-                size={16} 
-                className="text-gray-500" 
-              />
-            </button>
-
-            {/* Language Dropdown Menu */}
-            {isLanguageOpen && (
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 max-h-80 overflow-y-auto">
-                <div className="p-2">
-                  {languages.map((language) => (
-                    <button
-                      key={language.code}
-                      onClick={() => handleLanguageSelect(language)}
-                      className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors duration-150 ${
-                        selectedLanguage.code === language.code
-                          ? 'bg-teal-50 text-teal-700'
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      <span className="text-lg">{language.flag}</span>
-                      <span className="font-medium">{language.name}</span>
-                      {selectedLanguage.code === language.code && (
-                        <Icon name="Check" size={16} className="text-teal-600 ml-auto" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Language Switcher */}
+          <LanguageSwitcher />
         </div>
       </div>
     </div>

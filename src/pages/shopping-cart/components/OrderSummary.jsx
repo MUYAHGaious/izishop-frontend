@@ -157,18 +157,56 @@ const OrderSummary = ({
 
         {/* Payment Methods */}
         <div className="mt-4 pt-4 border-t border-border">
-          <p className="text-xs text-text-secondary mb-2 text-center">
+          <p className="text-xs text-text-secondary mb-3 text-center font-medium">
             We accept
           </p>
-          <div className="flex items-center justify-center space-x-3">
-            <div className="w-8 h-5 bg-muted rounded flex items-center justify-center">
-              <span className="text-xs font-bold text-text-secondary">MTN</span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-lg mx-auto">
+            {/* MTN Mobile Money */}
+            <div className="bg-white rounded-xl p-3 shadow-lg border border-gray-200 flex items-center justify-center min-h-[60px] group relative">
+              <img 
+                src="/assets/brands/69-691715_mtn-mm-logo-generic-mtn-mobile-money-logo.svg" 
+                alt="MTN Mobile Money" 
+                className="max-h-12 w-auto object-contain"
+              />
+              <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                MTN Mobile Money
+              </div>
             </div>
-            <div className="w-8 h-5 bg-muted rounded flex items-center justify-center">
-              <span className="text-xs font-bold text-text-secondary">OM</span>
+            
+            {/* Orange Money */}
+            <div className="bg-white rounded-xl p-3 shadow-lg border border-gray-200 flex items-center justify-center min-h-[60px] group relative">
+              <img 
+                src="/assets/brands/Orange_Money-Logo.wine.svg" 
+                alt="Orange Money" 
+                className="max-h-12 w-auto object-contain"
+              />
+              <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                Orange Money
+              </div>
             </div>
-            <div className="w-8 h-5 bg-muted rounded flex items-center justify-center">
-              <Icon name="CreditCard" size={12} className="text-text-secondary" />
+            
+            {/* VISA */}
+            <div className="bg-white rounded-xl p-3 shadow-lg border border-gray-200 flex items-center justify-center min-h-[60px] group relative">
+              <svg width="50" height="30" viewBox="0 0 50 30" fill="none">
+                <rect width="50" height="30" rx="6" fill="#1A1F71"/>
+                <text x="25" y="20" textAnchor="middle" fill="#FFF" fontSize="12" fontWeight="bold">VISA</text>
+              </svg>
+              <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                VISA
+              </div>
+            </div>
+            
+            {/* Mastercard */}
+            <div className="bg-white rounded-xl p-3 shadow-lg border border-gray-200 flex items-center justify-center min-h-[60px] group relative">
+              <svg width="50" height="30" viewBox="0 0 50 30" fill="none">
+                <rect width="50" height="30" rx="6" fill="#EB001B"/>
+                <circle cx="18" cy="15" r="9" fill="#EB001B"/>
+                <circle cx="32" cy="15" r="9" fill="#F79E1B"/>
+                <path d="M25 6c-5 0-9 4-9 9s4 9 9 9 9-4 9-9-4-9-9-9z" fill="#FF5F00"/>
+              </svg>
+              <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                Mastercard
+              </div>
             </div>
           </div>
         </div>

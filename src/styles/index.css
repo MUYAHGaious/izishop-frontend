@@ -10,7 +10,7 @@ body {
 
 /* Navigation spacing utility */
 .pt-navigation {
-  padding-top: 8rem; /* 128px - accounts for both top nav (72px) and navigation section (56px) */
+  padding-top: 7rem; /* 112px - accounts for both top nav (64px) and navigation section (40px) + extra spacing */
 }
 
 * {

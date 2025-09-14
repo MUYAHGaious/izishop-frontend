@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 import Icon from '../components/AppIcon';
 import api from '../services/api';
 import Button from '../components/ui/Button';
@@ -11,6 +12,7 @@ import SubscriptionManagement from '../components/SubscriptionManagement';
 
 const Settings = () => {
   const { user, loading, refreshUserData } = useAuth();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('account');
   const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
@@ -80,6 +82,14 @@ const Settings = () => {
     website: user?.website || '',
     location: user?.location || ''
   });
+
+  // Handle URL parameter for tab selection
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['account', 'subscription', 'notifications', 'privacy', 'preferences'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   const tabs = [
     { id: 'account', label: 'Account & Profile', icon: 'User', description: 'Manage your personal information' },

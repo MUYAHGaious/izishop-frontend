@@ -7,6 +7,7 @@ import Icon from '../../components/AppIcon';
 import BlurText from '../../components/ui/BlurText';
 import ShinyText from '../../components/ui/ShinyText';
 import LogoLoop from '../../components/ui/LogoLoop';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 import CardSwap, { Card } from '../../components/ui/CardSwap';
 import GlassIcons from '../../components/ui/GlassIcons';
@@ -16,6 +17,7 @@ import Footer from './components/Footer';
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
@@ -25,26 +27,26 @@ const LandingPage = () => {
 
   // Category mapping for landing page
   const categoryMapping = {
-    'electronics': { name: 'Electronics', icon: 'Smartphone', color: 'teal' },
-    'fashion': { name: 'Fashion', icon: 'Shirt', color: 'teal' },
-    'sports': { name: 'Sports', icon: 'Dumbbell', color: 'teal' },
-    'home': { name: 'Home & Living', icon: 'Home', color: 'teal' },
-    'beauty': { name: 'Health & Beauty', icon: 'Heart', color: 'teal' },
-    'food': { name: 'Food & Agriculture', icon: 'Apple', color: 'teal' },
-    'automotive': { name: 'Automotive', icon: 'Car', color: 'teal' },
-    'books': { name: 'Books', icon: 'Book', color: 'teal' }
+    'electronics': { name: t('category.electronics'), icon: 'Smartphone', color: 'teal' },
+    'fashion': { name: t('category.fashion'), icon: 'Shirt', color: 'teal' },
+    'sports': { name: t('category.sports'), icon: 'Dumbbell', color: 'teal' },
+    'home': { name: t('category.home'), icon: 'Home', color: 'teal' },
+    'beauty': { name: t('category.beauty'), icon: 'Heart', color: 'teal' },
+    'food': { name: t('category.food'), icon: 'Apple', color: 'teal' },
+    'automotive': { name: t('category.automotive'), icon: 'Car', color: 'teal' },
+    'books': { name: t('category.books'), icon: 'Book', color: 'teal' }
   };
 
   // Default categories for landing page
   const categories = [
-    { id: 'electronics', name: 'Electronics', icon: 'Smartphone', color: 'teal', iconColor: 'text-gray-600' },
-    { id: 'fashion', name: 'Fashion', icon: 'Shirt', color: 'teal', iconColor: 'text-gray-600' },
-    { id: 'sports', name: 'Sports', icon: 'Dumbbell', color: 'teal', iconColor: 'text-gray-600' },
-    { id: 'home', name: 'Home & Living', icon: 'Home', color: 'teal', iconColor: 'text-gray-600' },
-    { id: 'beauty', name: 'Health & Beauty', icon: 'Heart', color: 'teal', iconColor: 'text-gray-600' },
-    { id: 'food', name: 'Food & Agriculture', icon: 'Apple', color: 'teal', iconColor: 'text-gray-600' },
-    { id: 'automotive', name: 'Automotive', icon: 'Car', color: 'teal', iconColor: 'text-gray-600' },
-    { id: 'books', name: 'Books', icon: 'Book', color: 'teal', iconColor: 'text-gray-600' }
+    { id: 'electronics', name: t('category.electronics'), icon: 'Smartphone', color: 'teal', iconColor: 'text-gray-600' },
+    { id: 'fashion', name: t('category.fashion'), icon: 'Shirt', color: 'teal', iconColor: 'text-gray-600' },
+    { id: 'sports', name: t('category.sports'), icon: 'Dumbbell', color: 'teal', iconColor: 'text-gray-600' },
+    { id: 'home', name: t('category.home'), icon: 'Home', color: 'teal', iconColor: 'text-gray-600' },
+    { id: 'beauty', name: t('category.beauty'), icon: 'Heart', color: 'teal', iconColor: 'text-gray-600' },
+    { id: 'food', name: t('category.food'), icon: 'Apple', color: 'teal', iconColor: 'text-gray-600' },
+    { id: 'automotive', name: t('category.automotive'), icon: 'Car', color: 'teal', iconColor: 'text-gray-600' },
+    { id: 'books', name: t('category.books'), icon: 'Book', color: 'teal', iconColor: 'text-gray-600' }
   ];
 
   // Handle category click
@@ -202,22 +204,22 @@ const LandingPage = () => {
                           {/* Card 1: Free Delivery - EXACT ScrollStack teal */}
                           <Card customClass="bg-gradient-to-br from-teal-400 to-teal-600 text-white flex flex-col justify-center items-center text-center p-4">
                             <Icon name="Truck" size={32} className="text-white mb-3" />
-                            <h3 className="text-xl font-bold mb-1">Free Delivery</h3>
-                            <p className="text-sm text-teal-100">Orders 50K+ XAF</p>
+                            <h3 className="text-xl font-bold mb-1">{t('landing.freeDelivery')}</h3>
+                            <p className="text-sm text-teal-100">{t('landing.ordersOver')}</p>
                           </Card>
 
                           {/* Card 2: Secure Payments - EXACT ScrollStack gray-900 */}
                           <Card customClass="bg-gray-900 text-white flex flex-col justify-center items-center text-center p-4">
                             <Icon name="Shield" size={32} className="text-white mb-3" />
-                            <h3 className="text-xl font-bold mb-1">Secure Payments</h3>
-                            <p className="text-sm text-gray-300">MTN MoMo & Visa</p>
+                            <h3 className="text-xl font-bold mb-1">{t('landing.securePayments')}</h3>
+                            <p className="text-sm text-gray-300">{t('landing.paymentMethods')}</p>
                           </Card>
 
                           {/* Card 3: Local Sellers - EXACT ScrollStack gray gradient */}
                           <Card customClass="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900 flex flex-col justify-center items-center text-center p-4">
                             <Icon name="Store" size={32} className="text-teal-600 mb-3" />
-                            <h3 className="text-xl font-bold mb-1">Local Sellers</h3>
-                            <p className="text-sm text-gray-600">Across Cameroon</p>
+                            <h3 className="text-xl font-bold mb-1">{t('landing.localSellers')}</h3>
+                            <p className="text-sm text-gray-600">{t('landing.acrossCameroon')}</p>
                             </Card>
                         </CardSwap>
                       </div>
@@ -232,7 +234,7 @@ const LandingPage = () => {
             <section className="px-6 mb-4">
               <div className="container mx-auto">
                                   <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Shop by Category</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">{t('landing.shopByCategory')}</h2>
                   <button className="text-teal-600 hover:text-teal-700 font-medium">
                     See all
                   </button>
@@ -259,7 +261,7 @@ const LandingPage = () => {
             <section className="px-6 mb-2">
               <div className="container mx-auto">
                 <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-2xl font-bold text-gray-900">New Arrivals</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">{t('landing.newArrivals')}</h2>
                   <button className="text-teal-600 hover:text-teal-700 font-medium">
                     See all
                   </button>
@@ -327,11 +329,11 @@ const LandingPage = () => {
                       <span className="text-xl font-medium">Siriia</span>
                     </div>
                     <h3 className="text-3xl font-bold mb-4 leading-tight">
-                      Your Style, Delivered.<br />
-                      Exclusively Online.
+                      {t('landing.yourStyleDelivered')}<br />
+                      {t('landing.exclusivelyOnline')}
                     </h3>
                     <button className="bg-white text-teal-600 px-8 py-4 rounded-full font-semibold hover:bg-gray-50 transition-colors text-lg shadow-lg">
-                      Shop now
+                      {t('landing.shopNow')}
                     </button>
                   </div>
                   
@@ -353,13 +355,13 @@ const LandingPage = () => {
                 <div className="flex flex-col justify-between h-full relative z-10">
                   
                   <div className="relative z-10">
-                    <span className="text-teal-400 mb-4 block text-lg">Explore Collection</span>
+                    <span className="text-teal-400 mb-4 block text-lg">{t('landing.exploreCollection')}</span>
                     <h3 className="text-4xl font-bold mb-6 leading-tight">
-                      Discover our<br />
-                      accessories collection
+                      {t('landing.discoverOur')}<br />
+                      {t('landing.accessoriesCollection')}
                     </h3>
                     <button className="bg-teal-500 text-white px-8 py-4 rounded-full font-semibold hover:bg-teal-600 transition-colors text-lg">
-                      Shop Now
+                      {t('landing.shopNow')}
                           </button>
                         </div>
                   <div className="absolute right-8 top-1/2 transform -translate-y-1/2 w-32 h-32 bg-white/10 rounded-2xl overflow-hidden">
@@ -380,13 +382,13 @@ const LandingPage = () => {
                 <div className="flex flex-col justify-between h-full relative z-10">
                   
                   <div className="relative z-10">
-                    <span className="text-gray-600 mb-4 block text-lg">Find your perfect pair</span>
+                    <span className="text-gray-600 mb-4 block text-lg">{t('landing.findPerfectPair')}</span>
                     <h3 className="text-4xl font-bold mb-6 leading-tight">
-                      Explore our shoes<br />
-                      collection
+                      {t('landing.exploreOurShoes')}<br />
+                      {t('landing.shoesCollection')}
                     </h3>
                     <button className="bg-teal-500 text-white px-8 py-4 rounded-full font-semibold hover:bg-teal-600 transition-colors text-lg">
-                      Shop Now
+                      {t('landing.shopNow')}
                         </button>
                       </div>
                   <div className="absolute right-8 top-1/2 transform -translate-y-1/2 w-32 h-32 bg-white/50 rounded-2xl overflow-hidden">
@@ -420,16 +422,14 @@ const LandingPage = () => {
                         <span className="font-medium">Siriia</span>
                       </div>
                       <h3 className="text-2xl font-bold mb-4">
-                        Indulge in<br />
-                        exclusive deals
+                        {t('landing.indulgeIn')}<br />
+                        {t('landing.exclusiveDeals')}
                       </h3>
                       <p className="text-blue-100 mb-6">
-                        Shop now and enjoy<br />
-                        fantastic discounts on<br />
-                        premium items.
+                        {t('landing.shopNowAndEnjoyDesc')}
                       </p>
                       <button className="bg-white text-blue-600 px-6 py-2 rounded-full font-semibold hover:bg-gray-50 transition-colors">
-                        Shop Now
+                        {t('landing.shopNow')}
                       </button>
                 </div>
                     {/* Fashion person image */}
@@ -579,19 +579,19 @@ const LandingPage = () => {
                       <div className="w-16 h-16 bg-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <Icon name="Headphones" size={24} className="text-white" />
                       </div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Real-time support</h3>
+                      <h3 className="font-semibold text-gray-900 mb-2">{t('landing.realtimeSupport')}</h3>
                           </div>
                     <div className="text-center">
                       <div className="w-16 h-16 bg-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <Icon name="Users" size={24} className="text-white" />
                         </div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Buying concierge</h3>
+                      <h3 className="font-semibold text-gray-900 mb-2">{t('landing.buyingConcierge')}</h3>
                         </div>
                     <div className="text-center">
                       <div className="w-16 h-16 bg-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <Icon name="Shield" size={24} className="text-white" />
                       </div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Selling protection</h3>
+                      <h3 className="font-semibold text-gray-900 mb-2">{t('landing.sellingProtection')}</h3>
                     </div>
                   </div>
                 </div>
@@ -609,13 +609,12 @@ const LandingPage = () => {
               <div className="container mx-auto">
                 <div className="text-center mb-8">
                   <ShinyText
-                    text="Why Choose IziShopin?"
+                    text={t('landing.whyChoose')}
                     className="text-3xl font-bold text-gray-900 mb-3"
                     shimmerWidth={100}
                   />
                   <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                    Experience the best online marketplace in Cameroon with unmatched convenience, 
-                    security, and local expertise.
+                    {t('landing.whyChooseSubtext')}
                   </p>
                 </div>
 
@@ -624,7 +623,7 @@ const LandingPage = () => {
                     <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                       <Icon name="Truck" size={28} className="text-white" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">Fast Delivery</h3>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">{t('landing.fastDelivery')}</h3>
                     <p className="text-gray-600 leading-relaxed text-sm">
                       Get your orders delivered within 24-48 hours across major cities in Cameroon.
                     </p>
@@ -654,7 +653,7 @@ const LandingPage = () => {
                     <div className="w-16 h-16 bg-gradient-to-br from-teal-600 to-teal-700 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                       <Icon name="Headphones" size={28} className="text-white" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">24/7 Support</h3>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">{t('landing.support247')}</h3>
                     <p className="text-gray-600 leading-relaxed text-sm">
                       Get help whenever you need it with our dedicated customer support team.
                     </p>
@@ -851,7 +850,7 @@ const LandingPage = () => {
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mb-3">Fast Delivery</h3>
                     <p className="text-gray-600 leading-relaxed">
-                      Receive your orders quickly with our reliable delivery network nationwide.
+                      {t('landing.quickDeliveryDesc')}
                     </p>
                   </div>
                 </div>

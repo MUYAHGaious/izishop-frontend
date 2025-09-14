@@ -1,49 +1,51 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 const Footer = () => {
+  const { t } = useLanguage();
   const currentYear = new Date().getFullYear();
 
   const footerSections = [
     {
-      title: 'Marketplace',
+      title: t('footer.marketplace'),
       links: [
-        { label: 'Browse Products', href: '/product-catalog' },
-        { label: 'Featured Shops', href: '/product-catalog?featured=true' },
-        { label: 'Categories', href: '/product-catalog' },
-        { label: 'Second-hand Market', href: '/product-catalog?condition=used' },
-        { label: 'New Arrivals', href: '/product-catalog?sort=newest' }
+        { label: t('footer.browseProducts'), href: '/product-catalog' },
+        { label: t('footer.featuredShops'), href: '/product-catalog?featured=true' },
+        { label: t('footer.categories'), href: '/product-catalog' },
+        { label: t('footer.secondHandMarket'), href: '/product-catalog?condition=used' },
+        { label: t('footer.newArrivals'), href: '/product-catalog?sort=newest' }
       ]
     },
     {
-      title: 'For Sellers',
+      title: t('footer.forSellers'),
       links: [
-        { label: 'Start Selling', href: '/authentication-login-register' },
-        { label: 'Seller Dashboard', href: '/authentication-login-register' },
-        { label: 'Seller Guidelines', href: '#' },
-        { label: 'Commission Rates', href: '#' },
-        { label: 'Seller Support', href: '#' }
+        { label: t('footer.startSelling'), href: '/authentication-login-register' },
+        { label: t('footer.sellerDashboard'), href: '/authentication-login-register' },
+        { label: t('footer.sellerGuidelines'), href: '#' },
+        { label: t('footer.commissionRates'), href: '#' },
+        { label: t('footer.sellerSupport'), href: '#' }
       ]
     },
     {
-      title: 'Customer Care',
+      title: t('footer.customerCare'),
       links: [
-        { label: 'Help Center', href: '#' },
-        { label: 'Contact Us', href: '#' },
-        { label: 'Order Tracking', href: '/authentication-login-register' },
-        { label: 'Returns & Refunds', href: '#' },
-        { label: 'Shipping Info', href: '#' }
+        { label: t('footer.helpCenter'), href: '#' },
+        { label: t('footer.contactUs'), href: '#' },
+        { label: t('footer.orderTracking'), href: '/authentication-login-register' },
+        { label: t('footer.returnsRefunds'), href: '#' },
+        { label: t('footer.shippingInfo'), href: '#' }
       ]
     },
     {
-      title: 'Company',
+      title: t('footer.company'),
       links: [
-        { label: 'About IziShopin', href: '#' },
-        { label: 'Careers', href: '#' },
-        { label: 'Press & Media', href: '#' },
-        { label: 'Investor Relations', href: '#' },
-        { label: 'Sustainability', href: '#' }
+        { label: t('footer.aboutIziShopin'), href: '#' },
+        { label: t('footer.careers'), href: '#' },
+        { label: t('footer.pressMedia'), href: '#' },
+        { label: t('footer.investorRelations'), href: '#' },
+        { label: t('footer.sustainability'), href: '#' }
       ]
     }
   ];
@@ -64,10 +66,10 @@ const Footer = () => {
   ];
 
   const legalLinks = [
-    { label: 'Privacy Policy', href: '#' },
-    { label: 'Terms of Service', href: '#' },
-    { label: 'Cookie Policy', href: '#' },
-    { label: 'Accessibility', href: '#' }
+    { label: t('footer.privacyPolicy'), href: '#' },
+    { label: t('footer.termsOfService'), href: '#' },
+    { label: t('footer.cookiePolicy'), href: '#' },
+    { label: t('footer.accessibility'), href: '#' }
   ];
 
   return (
@@ -82,7 +84,7 @@ const Footer = () => {
               <span className="text-xl font-bold text-primary">IziShopin</span>
             </div>
             <p className="text-sm text-background/80 mb-6 leading-relaxed">
-              Cameroon's leading marketplace connecting buyers and sellers across the nation. Shop with confidence, sell with ease.
+              {t('footer.companyDescription')}
             </p>
             
             {/* Contact Info */}
@@ -129,10 +131,10 @@ const Footer = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div>
               <h3 className="text-lg font-semibold text-background mb-2">
-                Stay Connected
+                {t('footer.stayConnected')}
               </h3>
               <p className="text-sm text-background/80">
-                Follow us on social media for the latest updates and exclusive deals
+                {t('footer.followUs')}
               </p>
             </div>
             <div className="flex justify-start lg:justify-end">
@@ -162,7 +164,7 @@ const Footer = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div>
               <h3 className="text-sm font-semibold text-background mb-4">
-                Accepted Payment Methods
+                {t('footer.acceptedPaymentMethods')}
               </h3>
               <div className="flex flex-wrap gap-4">
                 {paymentMethods.map((method) => (
@@ -181,11 +183,11 @@ const Footer = () => {
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <Icon name="Shield" size={16} className="text-success" />
-                  <span className="text-sm text-background/80">SSL Secured</span>
+                  <span className="text-sm text-background/80">{t('footer.sslSecured')}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Icon name="Award" size={16} className="text-accent" />
-                  <span className="text-sm text-background/80">Verified Platform</span>
+                  <span className="text-sm text-background/80">{t('footer.verifiedPlatform')}</span>
                 </div>
               </div>
             </div>
@@ -199,7 +201,7 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             {/* Copyright */}
             <div className="text-sm text-background/80">
-              © {currentYear} IziShopin. All rights reserved.
+              © {currentYear} IziShopin. {t('footer.allRightsReserved')}
             </div>
 
             {/* Legal Links */}
@@ -219,26 +221,26 @@ const Footer = () => {
           {/* Additional Info */}
           <div className="mt-4 pt-4 border-t border-background/10 text-center">
             <p className="text-xs text-background/60">
-              IziShop is a registered trademark. Platform operated under Cameroon e-commerce regulations.
+              {t('footer.platformInfo')}
               <br />
-              For business inquiries: business@izishopin.cm | For technical support: tech@izishopin.cm
+              {t('footer.contactInfo')}
             </p>
-            
+
             {/* Admin Links */}
             <div className="mt-2 pt-2 border-t border-background/10">
-              <p className="text-xs text-background/40 mb-1">Admin Access:</p>
+              <p className="text-xs text-background/40 mb-1">{t('footer.adminAccess')}:</p>
               <div className="flex justify-center space-x-4">
                 <a
                   href="/admin-setup"
                   className="text-xs text-background/60 hover:text-primary marketplace-transition"
                 >
-                  Admin Setup
+                  {t('footer.adminSetup')}
                 </a>
                 <a
                   href="/admin-login"
                   className="text-xs text-background/60 hover:text-primary marketplace-transition"
                 >
-                  Admin Login
+                  {t('footer.adminLogin')}
                 </a>
               </div>
             </div>

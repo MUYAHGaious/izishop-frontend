@@ -37,27 +37,27 @@ const LoadingScreen = ({
     switch (variant) {
       case 'auth':
         return {
-          container: 'min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800',
+          container: 'min-h-screen bg-gradient-to-br from-teal-600 via-cyan-600 to-teal-800',
           card: 'bg-white/95 backdrop-blur-xl border border-white/30 rounded-2xl p-8',
           text: 'text-gray-900',
-          spinner: 'border-blue-600',
-          accent: 'from-blue-500 to-purple-600'
+          spinner: 'border-teal-600',
+          accent: 'from-teal-500 to-cyan-600'
         };
       case 'minimal':
         return {
-          container: 'min-h-screen bg-gray-50',
-          card: 'bg-white shadow-lg rounded-xl p-6',
-          text: 'text-gray-900',
-          spinner: 'border-blue-600',
-          accent: 'from-blue-500 to-blue-600'
+          container: 'min-h-screen bg-gradient-to-br from-teal-50 to-cyan-50',
+          card: 'bg-white shadow-lg rounded-xl p-6 border border-teal-200',
+          text: 'text-teal-900',
+          spinner: 'border-teal-600',
+          accent: 'from-teal-500 to-teal-600'
         };
       default:
         return {
-          container: 'min-h-screen bg-background',
-          card: 'bg-surface shadow-xl rounded-2xl p-8 border border-border',
-          text: 'text-text-primary',
-          spinner: 'border-primary',
-          accent: 'from-primary to-accent'
+          container: 'min-h-screen bg-gradient-to-br from-teal-50 to-cyan-50',
+          card: 'bg-white shadow-xl rounded-2xl p-8 border border-teal-200',
+          text: 'text-teal-900',
+          spinner: 'border-teal-600',
+          accent: 'from-teal-500 to-cyan-600'
         };
     }
   };
@@ -186,7 +186,7 @@ export const Spinner = ({ size = 'md', className = '' }) => {
 
   return (
     <div className={`${sizeClasses[size]} ${className}`}>
-      <div className="w-full h-full border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin"></div>
+      <div className="w-full h-full border-2 border-gray-200 border-t-teal-600 rounded-full animate-spin"></div>
     </div>
   );
 };

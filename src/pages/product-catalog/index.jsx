@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useParams } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { useRouteRefresh } from '../../hooks/useNavigationListener';
@@ -14,10 +14,13 @@ import Icon from '../../components/AppIcon';
 import CustomDropdown from '../../components/ui/CustomDropdown';
 import ErrorBoundary from '../../components/ErrorBoundary';
 import api from '../../services/api';
+import FilterChips from './components/FilterChips';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const ProductCatalog = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { addToCart } = useCart();
+  const { t } = useLanguage();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,10 +33,10 @@ const ProductCatalog = () => {
 
   // Sort options for the dropdown
   const sortOptions = [
-    { value: 'relevance', label: 'Most Relevant', icon: 'Target' },
-    { value: 'price-low', label: 'Price: Low to High', icon: 'ArrowUp' },
-    { value: 'price-high', label: 'Price: High to Low', icon: 'ArrowDown' },
-    { value: 'rating', label: 'Highest Rated', icon: 'Star' },
+    { value: 'relevance', label: t('sort.mostRelevant'), icon: 'Target' },
+    { value: 'price-low', label: t('sort.priceLowHigh'), icon: 'ArrowUp' },
+    { value: 'price-high', label: t('sort.priceHighLow'), icon: 'ArrowDown' },
+    { value: 'rating', label: t('sort.highestRated'), icon: 'Star' },
     { value: 'newest', label: 'Newest First', icon: 'Clock' },
     { value: 'popular', label: 'Most Popular', icon: 'TrendingUp' }
   ];
@@ -75,8 +78,8 @@ const ProductCatalog = () => {
 
   // Load real products from API on component mount
   useEffect(() => {
-    console.log('ProductCatalog component mounted');
-    loadProducts('', selectedCategory); // Load all products initially
+    console.log('ProductCatalog component mounted - loading shop owner products only');
+    loadProducts('', selectedCategory, 'shop_owner'); // Load shop owner products initially
     loadCategories(); // Load categories from API
   }, []);
 
@@ -152,16 +155,93 @@ const ProductCatalog = () => {
     const query = searchParams.get('q') || '';
     const category = searchParams.get('category') || 'all';
     const sort = searchParams.get('sort') || 'relevance';
-    
+
+    console.log('URL params - query:', query, 'category:', category, 'sort:', sort);
+    console.log('All search params:', Object.fromEntries(searchParams.entries()));
+    // Parse filter params from URL (enhancement)
+    const parseCsv = (val) => (val ? val.split(',').map(v => v.trim()).filter(Boolean) : []);
+    const clampNumber = (n, min, max) => {
+      const x = Number(n);
+      if (Number.isNaN(x)) return null;
+      if (max !== undefined) return Math.min(Math.max(x, min), max);
+      return Math.max(x, min);
+    };
+
     if (query) {
       setFilters(prev => ({ ...prev, search: query }));
     }
     setSelectedCategory(category);
     setSortBy(sort);
-    
+    // Build filters object from URL params
+    const urlFilters = {};
+
+    // Price - only apply if values are meaningful (greater than 0)
+    const minPriceParam = searchParams.get('min_price');
+    const maxPriceParam = searchParams.get('max_price');
+    const minPrice = clampNumber(minPriceParam, 0);
+    const maxPrice = clampNumber(maxPriceParam, 0);
+
+    // Only apply price filters if they have meaningful values
+    const validMinPrice = minPrice !== null && minPrice > 0 ? minPrice : null;
+    const validMaxPrice = maxPrice !== null && maxPrice > 0 ? maxPrice : null;
+
+    if (validMinPrice !== null || validMaxPrice !== null) {
+      // ensure min <= max if both present
+      let minV = validMinPrice;
+      let maxV = validMaxPrice;
+      if (minV !== null && maxV !== null && minV > maxV) {
+        const t = minV; minV = maxV; maxV = t;
+      }
+      urlFilters.priceRange = { min: minV, max: maxV };
+    }
+
+    // Brands, Features, Categories (comma-separated)
+    const brandsParam = parseCsv(searchParams.get('brands'));
+    if (brandsParam.length) urlFilters.brands = brandsParam.slice(0, 20);
+
+    const featuresParam = parseCsv(searchParams.get('features'));
+    if (featuresParam.length) urlFilters.features = featuresParam.slice(0, 20);
+
+    const categoriesParam = parseCsv(searchParams.get('categories'));
+    if (categoriesParam.length) urlFilters.categories = categoriesParam.slice(0, 20);
+
+    // Rating (min rating) - only apply if meaningful (2+ stars)
+    const ratingParam = clampNumber(searchParams.get('rating'), 1, 5);
+    if (ratingParam !== null && ratingParam > 1) urlFilters.rating = [ratingParam];
+
+    // Check if there are invalid URL parameters that should be cleaned
+    const hasInvalidParams = searchParams.get('min_price') === '0' ||
+                           searchParams.get('max_price') === '0' ||
+                           searchParams.get('rating') === '1';
+
+    if (hasInvalidParams) {
+      console.log('Cleaning invalid URL parameters');
+      const cleanParams = new URLSearchParams();
+      if (query) cleanParams.set('q', query);
+      if (category !== 'all') cleanParams.set('category', category);
+      if (sort !== 'relevance') cleanParams.set('sort', sort);
+      setSearchParams(cleanParams);
+      setFilters(query ? { search: query } : {});
+      return;
+    }
+
+    // Only apply URL filters if we actually have valid filters to apply
+    if (Object.keys(urlFilters).length > 0) {
+      console.log('Applying URL filters:', urlFilters);
+      setFilters(prev => ({ ...prev, ...urlFilters }));
+    } else {
+      // Clear filters if no URL filters are present
+      console.log('No URL filters found, clearing filters');
+      setFilters(prev => {
+        const { search, ...otherFilters } = prev;
+        // Keep search filter if present, clear others
+        return query ? { search: query } : {};
+      });
+    }
+
     // Load products from API if we have a search query or category
     if (query || category !== 'all') {
-      loadProducts(query, category);
+      loadProducts(query, category, 'shop_owner');
     }
   }, [searchParams]);
 
@@ -175,30 +255,68 @@ const ProductCatalog = () => {
   }, [products, loading, resultsCount, selectedCategory, categories]);
 
   // Generate mock products when API is not available
-  const generateMockProducts = (searchQuery = '') => {
-    console.log('Generating mock products for query:', searchQuery);
+  const generateMockProducts = (searchQuery = '', sellerTypeFilter = 'shop_owner') => {
+    console.log('Generating mock products for query:', searchQuery, 'sellerType:', sellerTypeFilter);
     const mockProducts = [
-      { id: 1, name: 'Samsung Galaxy S24', price: 450000, stock_quantity: 10, seller_id: 1, created_at: new Date().toISOString() },
-      { id: 2, name: 'iPhone 15 Pro', price: 650000, stock_quantity: 5, seller_id: 2, created_at: new Date().toISOString() },
-      { id: 3, name: 'MacBook Air M2', price: 850000, stock_quantity: 3, seller_id: 1, created_at: new Date().toISOString() },
-      { id: 4, name: 'Sony WH-1000XM5', price: 180000, stock_quantity: 15, seller_id: 3, created_at: new Date().toISOString() },
-      { id: 5, name: 'Nike Air Max 270', price: 75000, stock_quantity: 20, seller_id: 2, created_at: new Date().toISOString() },
-      { id: 6, name: 'Dell XPS 13', price: 720000, stock_quantity: 8, seller_id: 1, created_at: new Date().toISOString() },
-      { id: 7, name: 'Apple Watch Series 9', price: 280000, stock_quantity: 12, seller_id: 3, created_at: new Date().toISOString() },
-      { id: 8, name: 'iPad Air', price: 420000, stock_quantity: 6, seller_id: 2, created_at: new Date().toISOString() }
+      {
+        id: 1, name: 'Samsung Galaxy S24', price: 450000, stock_quantity: 10, seller_id: 1,
+        created_at: new Date().toISOString(), sellerType: 'shop_owner',
+        shopName: 'Tech Haven Store', shopVerified: true, shopRating: 4.8
+      },
+      {
+        id: 2, name: 'iPhone 15 Pro', price: 650000, stock_quantity: 5, seller_id: 2,
+        created_at: new Date().toISOString(), sellerType: 'casual_seller',
+        shopName: 'John\'s Electronics', shopVerified: false, shopRating: 4.2
+      },
+      {
+        id: 3, name: 'MacBook Air M2', price: 850000, stock_quantity: 3, seller_id: 1,
+        created_at: new Date().toISOString(), sellerType: 'shop_owner',
+        shopName: 'Tech Haven Store', shopVerified: true, shopRating: 4.8
+      },
+      {
+        id: 4, name: 'Sony WH-1000XM5', price: 180000, stock_quantity: 15, seller_id: 3,
+        created_at: new Date().toISOString(), sellerType: 'shop_owner',
+        shopName: 'Audio Pro Shop', shopVerified: true, shopRating: 4.6
+      },
+      {
+        id: 5, name: 'Nike Air Max 270', price: 75000, stock_quantity: 20, seller_id: 2,
+        created_at: new Date().toISOString(), sellerType: 'casual_seller',
+        shopName: 'Sarah\'s Fashion Corner', shopVerified: false, shopRating: 4.1
+      },
+      {
+        id: 6, name: 'Dell XPS 13', price: 720000, stock_quantity: 8, seller_id: 1,
+        created_at: new Date().toISOString(), sellerType: 'shop_owner',
+        shopName: 'Tech Haven Store', shopVerified: true, shopRating: 4.8
+      },
+      {
+        id: 7, name: 'Apple Watch Series 9', price: 280000, stock_quantity: 12, seller_id: 3,
+        created_at: new Date().toISOString(), sellerType: 'casual_seller',
+        shopName: 'Mike\'s Gadgets', shopVerified: false, shopRating: 3.9
+      },
+      {
+        id: 8, name: 'iPad Air', price: 420000, stock_quantity: 6, seller_id: 2,
+        created_at: new Date().toISOString(), sellerType: 'shop_owner',
+        shopName: 'Digital World', shopVerified: true, shopRating: 4.7
+      }
     ];
+
+    // Filter by seller type first
+    let filteredProducts = mockProducts;
+    if (sellerTypeFilter && sellerTypeFilter !== 'all') {
+      filteredProducts = mockProducts.filter(product => product.sellerType === sellerTypeFilter);
+      console.log(`Filtered by seller type '${sellerTypeFilter}':`, filteredProducts.length, 'products');
+    }
 
     // Filter by search query if provided
     if (searchQuery) {
-      const filtered = mockProducts.filter(product => 
+      filteredProducts = filteredProducts.filter(product =>
         product.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
-      console.log('Filtered mock products:', filtered);
-      return filtered;
+      console.log('Filtered by search query:', filteredProducts.length, 'products');
     }
-    
-    console.log('Returning all mock products:', mockProducts);
-    return mockProducts;
+
+    console.log('Returning filtered products:', filteredProducts);
+    return filteredProducts;
   };
 
   // Transform API product data
@@ -222,12 +340,15 @@ const ProductCatalog = () => {
       rating: Math.round((Math.random() * 2 + 3) * 10) / 10,
       reviewCount: Math.floor(Math.random() * 500) + 50,
       stock: product.stock_quantity,
-      shopName: "Shop Owner",
+      shopName: product.shopName || "Shop Owner",
       shopId: product.seller_id,
+      sellerType: product.sellerType || 'shop_owner',
+      shopVerified: product.shopVerified || false,
+      shopRating: product.shopRating || Math.round((Math.random() * 2 + 3) * 10) / 10,
       isNew: isNew,
       discount: Math.random() > 0.7 ? Math.floor(Math.random() * 30) + 10 : 0,
-      category: "general",
-      brand: "generic", 
+      category: product.category || "general",
+      brand: (product.brand || product.manufacturer || "generic").toString().toLowerCase(),
       isWishlisted: false,
       isFreeShipping: Math.random() > 0.5,
       isFlashSale: Math.random() > 0.8,
@@ -237,15 +358,17 @@ const ProductCatalog = () => {
     };
   };
 
-  const loadProducts = useCallback(async (searchQuery = '', category = 'all') => {
+  const loadProducts = useCallback(async (searchQuery = '', category = 'all', sellerTypeFilter = 'shop_owner') => {
     try {
       setLoading(true);
-      console.log('Starting to load products with query:', searchQuery, 'category:', category);
-      
+      console.log('Starting to load products with query:', searchQuery, 'category:', category, 'sellerType:', sellerTypeFilter);
+
       // First try to fetch real products from API
       try {
         console.log('Fetching real products from API...');
-        const response = await api.getAllProducts(0, 100, true, searchQuery, category);
+        // Add seller type to filters for API call
+        const extendedFilters = { ...filters, sellerType: sellerTypeFilter };
+        const response = await api.getAllProducts(0, 100, true, searchQuery, category, extendedFilters);
         console.log('Real API response received:', response);
         
         if (Array.isArray(response) && response.length > 0) {
@@ -271,7 +394,7 @@ const ProductCatalog = () => {
         console.log('Falling back to mock data as demonstration...');
         
         // Only use mock data as a demonstration fallback
-        const mockResponse = generateMockProducts(searchQuery);
+        const mockResponse = generateMockProducts(searchQuery, sellerTypeFilter);
         const transformedMockProducts = mockResponse.map(transformProduct);
         setProducts(transformedMockProducts);
         setResultsCount(transformedMockProducts.length);
@@ -289,7 +412,7 @@ const ProductCatalog = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filters]);
 
   const updateCategoryCounts = (products) => {
     const totalCount = products.length;
@@ -313,7 +436,7 @@ const ProductCatalog = () => {
     
     // Reload products with new category
     const query = searchParams.get('q') || '';
-    loadProducts(query, categoryId);
+    loadProducts(query, categoryId, 'shop_owner');
   }, [searchParams, setSearchParams, loadProducts]);
 
   // Handle category click - same as landing page
@@ -329,6 +452,61 @@ const ProductCatalog = () => {
     }));
   }, []);
 
+  // Sync filters to URL (debounced) - only when user explicitly sets filters
+  useEffect(() => {
+    // Don't sync to URL on initial load if no filters are set
+    if (Object.keys(filters).length === 0) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      const newParams = new URLSearchParams(searchParams);
+
+      // Price - only set if values are meaningful (greater than 0)
+      if (filters.priceRange && (filters.priceRange.min != null || filters.priceRange.max != null)) {
+        if (filters.priceRange.min != null && filters.priceRange.min > 0) {
+          newParams.set('min_price', String(filters.priceRange.min));
+        } else {
+          newParams.delete('min_price');
+        }
+        if (filters.priceRange.max != null && filters.priceRange.max > 0) {
+          newParams.set('max_price', String(filters.priceRange.max));
+        } else {
+          newParams.delete('max_price');
+        }
+      } else {
+        newParams.delete('min_price');
+        newParams.delete('max_price');
+      }
+
+      // Arrays -> CSV
+      const setCsv = (key, arr) => {
+        if (Array.isArray(arr) && arr.length) newParams.set(key, arr.join(',')); else newParams.delete(key);
+      };
+      setCsv('brands', filters.brands);
+      setCsv('features', filters.features);
+      setCsv('categories', filters.categories);
+
+      // Rating -> min rating number (only set if greater than 1, since 1-star is meaningless filter)
+      if (Array.isArray(filters.rating) && filters.rating.length) {
+        const minRating = Math.max(...filters.rating.map(r => Number(r)).filter(n => !Number.isNaN(n)));
+        if (minRating && minRating > 1) {
+          newParams.set('rating', String(Math.min(Math.max(minRating, 2), 5)));
+        } else {
+          newParams.delete('rating');
+        }
+      } else {
+        newParams.delete('rating');
+      }
+
+      // Avoid unnecessary updates
+      const before = searchParams.toString();
+      const after = newParams.toString();
+      if (before !== after) setSearchParams(newParams);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [filters, searchParams, setSearchParams]);
+
   // Handle sort change
   const handleSortChange = useCallback((newSort) => {
     console.log('Sort changed to:', newSort);
@@ -336,9 +514,7 @@ const ProductCatalog = () => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('sort', newSort);
     setSearchParams(newParams);
-    
-    // Apply sorting to current products
-    applySorting(newSort);
+    // Sorting is applied to visible products via memoized selector
   }, [searchParams, setSearchParams]);
 
   // Apply sorting to products
@@ -364,6 +540,85 @@ const ProductCatalog = () => {
       }
     });
   }, []);
+
+  // Derive filtered and sorted products without changing original order state
+  const visibleProducts = useMemo(() => {
+    let result = products;
+    const f = filters || {};
+
+    // Price range
+    if (f.priceRange && (f.priceRange.min != null || f.priceRange.max != null)) {
+      const min = f.priceRange.min != null ? Number(f.priceRange.min) : null;
+      const max = f.priceRange.max != null ? Number(f.priceRange.max) : null;
+      result = result.filter(p => {
+        const price = Number(p.price) || 0;
+        if (min != null && price < min) return false;
+        if (max != null && price > max) return false;
+        return true;
+      });
+    }
+
+    // Brands (any-of)
+    if (Array.isArray(f.brands) && f.brands.length) {
+      const setB = new Set(f.brands.map(b => b.toString().toLowerCase()));
+      result = result.filter(p => setB.has((p.brand || '').toString().toLowerCase()));
+    }
+
+    // Rating (min of selected list)
+    if (Array.isArray(f.rating) && f.rating.length) {
+      const minRating = Math.max(...f.rating.map(r => Number(r)).filter(n => !Number.isNaN(n)));
+      if (minRating) {
+        result = result.filter(p => (Number(p.rating) || 0) >= minRating);
+      }
+    }
+
+    // Features (AND semantics for known features)
+    if (Array.isArray(f.features) && f.features.length) {
+      const need = new Set(f.features);
+      result = result.filter(p => {
+        for (const feat of need) {
+          if (feat === 'free-shipping' && !p.isFreeShipping) return false;
+          if (feat === 'new-arrivals' && !p.isNew) return false;
+          if (feat === 'on-sale' && !(Number(p.discount) > 0)) return false;
+          if (feat === 'best-seller' && !((p.sales_count || 0) > 100)) return false;
+          // 'eco-friendly', 'premium' not derivable from current data; ignore (do not filter out)
+        }
+        return true;
+      });
+    }
+
+    // Categories multi-select (if provided)
+    if (Array.isArray(f.categories) && f.categories.length) {
+      const setC = new Set(f.categories.map(c => c.toString().toLowerCase()));
+      result = result.filter(p => setC.has((p.category || '').toString().toLowerCase()));
+    }
+
+    return result;
+  }, [products, filters]);
+
+  const sortedVisibleProducts = useMemo(() => {
+    const arr = [...visibleProducts];
+    switch (sortBy) {
+      case 'price-low':
+        return arr.sort((a, b) => a.price - b.price);
+      case 'price-high':
+        return arr.sort((a, b) => b.price - a.price);
+      case 'rating':
+        return arr.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      case 'newest':
+        return arr.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      case 'popular':
+        return arr.sort((a, b) => (b.sales_count || 0) - (a.sales_count || 0));
+      case 'relevance':
+      default:
+        return arr; // original order
+    }
+  }, [visibleProducts, sortBy]);
+
+  // Keep results count in sync with visible products
+  useEffect(() => {
+    setResultsCount(sortedVisibleProducts.length);
+  }, [sortedVisibleProducts]);
 
   // Remove filter
   const handleRemoveFilter = useCallback((filterType, value) => {
@@ -400,7 +655,14 @@ const ProductCatalog = () => {
       
       const searchQuery = searchParams.get('q') || '';
       const skip = currentPage * 20;
-      const response = await api.getAllProducts(skip, 20, true, searchQuery);
+      const response = await api.getAllProducts(
+        skip,
+        20,
+        true,
+        searchQuery,
+        selectedCategory !== 'all' ? selectedCategory : null,
+        filters
+      );
       
       if (response.length === 0) {
         setHasMore(false);
@@ -421,7 +683,7 @@ const ProductCatalog = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, hasMore, loading, searchParams]);
+  }, [currentPage, hasMore, loading, searchParams, selectedCategory, filters]);
 
   // Add to cart
   const handleAddToCart = useCallback(async (product) => {
@@ -495,7 +757,7 @@ const ProductCatalog = () => {
                     className="flex items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-lg"
                   >
                     <Icon name="Filter" size={16} />
-                    Filters
+                    {t('filter.filters')}
                     {Object.keys(filters).length > 0 && (
                       <span className="bg-teal-500 text-white text-xs rounded-full px-2 py-1 ml-1">
                         {Object.keys(filters).length}
@@ -580,30 +842,16 @@ const ProductCatalog = () => {
 
               {/* Active Filters */}
               {Object.keys(filters).length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {Object.entries(filters).map(([key, values]) => 
-                    Array.isArray(values) ? values.map(value => (
-                      <span 
-                        key={`${key}-${value}`}
-                        className="inline-flex items-center px-3 py-1 bg-teal-100 text-teal-800 text-sm rounded-full transition-all duration-300 hover:scale-105 hover:bg-teal-200 animate-fadeIn"
-                      >
-                        {value}
-                        <button
-                          onClick={() => handleRemoveFilter(key, value)}
-                          className="ml-2 hover:text-teal-600 transition-all duration-200 hover:scale-110"
-                        >
-                          <Icon name="X" size={12} />
-                        </button>
-                      </span>
-                    )) : null
-                  )}
-                  <button
-                    onClick={handleClearAllFilters}
-                    className="text-sm text-gray-500 hover:text-gray-700 underline transition-all duration-200 hover:scale-105"
-                  >
-                    Clear all
-                  </button>
-                </div>
+                <FilterChips 
+                  filters={filters}
+                  onRemoveFilter={(type, value) => handleRemoveFilter(type, value)}
+                  onClearAll={handleClearAllFilters}
+                  className="mt-4 flex flex-wrap gap-2"
+                  chipClassName="inline-flex items-center px-3 py-1 bg-teal-100 text-teal-800 text-sm rounded-full transition-all duration-300 hover:scale-105 hover:bg-teal-200 animate-fadeIn"
+                  clearClassName="text-sm text-gray-500 hover:text-gray-700 underline transition-all duration-200 hover:scale-105"
+                  showPriceChip={false}
+                  showHeader={false}
+                />
               )}
             </div>
           </div>
@@ -623,7 +871,7 @@ const ProductCatalog = () => {
             `}</style>
             {console.log('Rendering ProductGrid with products:', products, 'loading:', loading)}
             <ProductGrid
-              products={products}
+              products={sortedVisibleProducts}
               loading={loading}
               onLoadMore={handleLoadMore}
               hasMore={hasMore}

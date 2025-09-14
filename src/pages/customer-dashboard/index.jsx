@@ -5,6 +5,9 @@ import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
 import { showToast } from '../../components/ui/Toast';
 import LoadingScreen from '../../components/ui/LoadingScreen';
+import Header from '../../components/ui/Header';
+import NavigationSection from '../../components/ui/NavigationSection';
+import MobileBottomTab from '../../components/ui/MobileBottomTab';
 import api from '../../services/api';
 
 const CustomerDashboard = () => {
@@ -54,14 +57,26 @@ const CustomerDashboard = () => {
       // Fetch data in parallel for better performance
       const [statsData, ordersData, wishlistData] = await Promise.all([
         api.getCustomerStats(),
-        api.getCustomerOrders({ limit: 5 }),
+        api.getCustomerRecentOrders(5),
         api.getCustomerWishlist({ limit: 1 }) // Just get count
       ]);
       
       console.log('Customer data loaded:', { statsData, ordersData, wishlistData });
       
-      // Update state with fresh data
-      setStats(statsData);
+      // Update state with fresh data - map backend fields to frontend structure
+      const mappedStats = {
+        total_orders: statsData.total_orders || 0,
+        active_orders: statsData.pending_orders || 0,
+        delivered_orders: (statsData.total_orders || 0) - (statsData.pending_orders || 0),
+        total_spent: statsData.total_spent || 0,
+        saved_amount: 0, // Not provided by backend yet
+        loyalty_points: 0, // Not provided by backend yet
+        favorite_categories: [], // Not provided by backend yet
+        last_order_date: null, // Not provided by backend yet
+        avg_order_value: statsData.avg_order_value || 0
+      };
+
+      setStats(mappedStats);
       setRecentOrders(ordersData);
       setWishlistCount(wishlistData.length);
       setLastUpdated(new Date());
@@ -70,9 +85,23 @@ const CustomerDashboard = () => {
       console.error('Failed to load customer data:', error);
       showToast({
         type: 'error',
-        message: 'Failed to load dashboard data. Using demo data.',
+        message: 'Failed to load dashboard data. Please check your connection.',
         duration: 4000
       });
+
+      // Set empty states for real data only
+      setStats({
+        total_orders: 0,
+        active_orders: 0,
+        delivered_orders: 0,
+        total_spent: 0,
+        saved_amount: 0,
+        loyalty_points: 0,
+        favorite_categories: [],
+        last_order_date: null
+      });
+      setRecentOrders([]);
+      setWishlistCount(0);
     } finally {
       setLoading(false);
     }
@@ -85,17 +114,35 @@ const CustomerDashboard = () => {
       
       const [statsData, ordersData, wishlistData] = await Promise.all([
         api.getCustomerStats(),
-        api.getCustomerOrders({ limit: 5 }),
+        api.getCustomerRecentOrders(5),
         api.getCustomerWishlist({ limit: 1 })
       ]);
       
-      setStats(statsData);
+      // Map backend fields to frontend structure
+      const mappedStats = {
+        total_orders: statsData.total_orders || 0,
+        active_orders: statsData.pending_orders || 0,
+        delivered_orders: (statsData.total_orders || 0) - (statsData.pending_orders || 0),
+        total_spent: statsData.total_spent || 0,
+        saved_amount: 0, // Not provided by backend yet
+        loyalty_points: 0, // Not provided by backend yet
+        favorite_categories: [], // Not provided by backend yet
+        last_order_date: null, // Not provided by backend yet
+        avg_order_value: statsData.avg_order_value || 0
+      };
+
+      setStats(mappedStats);
       setRecentOrders(ordersData);
       setWishlistCount(wishlistData.length);
       setLastUpdated(new Date());
       
     } catch (error) {
       console.warn('Failed to refresh customer data:', error);
+      showToast({
+        type: 'error',
+        message: 'Failed to refresh data. Please try again.',
+        duration: 3000
+      });
     } finally {
       setRefreshing(false);
     }
@@ -140,17 +187,23 @@ const CustomerDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
+      {/* Main Navigation Header */}
+      <Header />
+      
+      {/* Secondary Navigation */}
+      <NavigationSection />
+      
+      {/* Dashboard Header */}
+      <div className="bg-gradient-to-r from-teal-50 to-cyan-50 shadow-sm border-b border-teal-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Customer Dashboard</h1>
-              <p className="text-gray-600">Welcome back, {user?.first_name || 'Customer'}</p>
+              <h1 className="text-2xl font-bold text-teal-900">Customer Dashboard</h1>
+              <p className="text-teal-700">Welcome back, {user?.first_name || 'Customer'}</p>
             </div>
             <div className="flex items-center space-x-3">
               {/* Status Indicators */}
-              <div className="hidden lg:flex items-center space-x-2 text-sm text-gray-500">
+              <div className="hidden lg:flex items-center space-x-2 text-sm text-teal-600">
                 {lastUpdated && (
                   <span className="flex items-center space-x-1">
                     <Icon name="Clock" size={12} />
@@ -158,8 +211,8 @@ const CustomerDashboard = () => {
                   </span>
                 )}
                 {refreshing && (
-                  <div className="flex items-center space-x-1 text-blue-600">
-                    <div className="animate-spin rounded-full h-3 w-3 border border-blue-600 border-t-transparent"></div>
+                  <div className="flex items-center space-x-1 text-teal-600">
+                    <div className="animate-spin rounded-full h-3 w-3 border border-teal-600 border-t-transparent"></div>
                     <span>Refreshing...</span>
                   </div>
                 )}
@@ -274,45 +327,45 @@ const CustomerDashboard = () => {
         {/* Enhanced Stats Cards with Real Data */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Total Orders Card */}
-          <div className="bg-white rounded-lg p-6 border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/my-orders')}>
+          <div className="bg-white rounded-lg p-6 border border-teal-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/my-orders')}>
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center">
                     <Icon name="Package" size={20} className="text-white" />
                   </div>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Total Orders</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.total_orders}</p>
+                  <p className="text-sm font-medium text-teal-600">Total Orders</p>
+                  <p className="text-2xl font-bold text-teal-900">{stats.total_orders}</p>
                   {stats.last_order_date && (
-                    <p className="text-xs text-gray-400">Last: {formatDate(stats.last_order_date)}</p>
+                    <p className="text-xs text-teal-500">Last: {formatDate(stats.last_order_date)}</p>
                   )}
                 </div>
               </div>
-              <div className="text-blue-600">
+              <div className="text-teal-600">
                 <Icon name="TrendingUp" size={16} />
               </div>
             </div>
           </div>
 
           {/* Active Orders Card */}
-          <div className="bg-white rounded-lg p-6 border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/my-orders?status=active')}>
+          <div className="bg-white rounded-lg p-6 border border-teal-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/my-orders?status=active')}>
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg flex items-center justify-center">
                     <Icon name="Clock" size={20} className="text-white" />
                   </div>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Active Orders</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.active_orders}</p>
-                  <p className="text-xs text-gray-400">In progress</p>
+                  <p className="text-sm font-medium text-teal-600">Active Orders</p>
+                  <p className="text-2xl font-bold text-teal-900">{stats.active_orders}</p>
+                  <p className="text-xs text-teal-500">In progress</p>
                 </div>
               </div>
               {stats.active_orders > 0 && (
-                <div className="text-orange-600 animate-pulse">
+                <div className="text-amber-600 animate-pulse">
                   <Icon name="Clock" size={16} />
                 </div>
               )}
@@ -320,46 +373,46 @@ const CustomerDashboard = () => {
           </div>
 
           {/* Delivered Orders Card */}
-          <div className="bg-white rounded-lg p-6 border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/my-orders?status=delivered')}>
+          <div className="bg-white rounded-lg p-6 border border-teal-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/my-orders?status=delivered')}>
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
                     <Icon name="CheckCircle" size={20} className="text-white" />
                   </div>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Delivered</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.delivered_orders}</p>
+                  <p className="text-sm font-medium text-teal-600">Delivered</p>
+                  <p className="text-2xl font-bold text-teal-900">{stats.delivered_orders}</p>
                   {stats.total_orders > 0 && (
-                    <p className="text-xs text-gray-400">{Math.round((stats.delivered_orders / stats.total_orders) * 100)}% success rate</p>
+                    <p className="text-xs text-teal-500">{Math.round((stats.delivered_orders / stats.total_orders) * 100)}% success rate</p>
                   )}
                 </div>
               </div>
-              <div className="text-green-600">
+              <div className="text-emerald-600">
                 <Icon name="CheckCircle" size={16} />
               </div>
             </div>
           </div>
 
           {/* Total Spent Card */}
-          <div className="bg-white rounded-lg p-6 border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer">
+          <div className="bg-white rounded-lg p-6 border border-teal-200 hover:shadow-lg transition-shadow cursor-pointer">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-teal-600 rounded-lg flex items-center justify-center">
                     <Icon name="Banknote" size={20} className="text-white" />
                   </div>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Total Spent</p>
-                  <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.total_spent)}</p>
+                  <p className="text-sm font-medium text-teal-600">Total Spent</p>
+                  <p className="text-2xl font-bold text-teal-900">{formatCurrency(stats.total_spent)}</p>
                   {stats.saved_amount > 0 && (
-                    <p className="text-xs text-green-600">Saved: {formatCurrency(stats.saved_amount)}</p>
+                    <p className="text-xs text-emerald-600">Saved: {formatCurrency(stats.saved_amount)}</p>
                   )}
                 </div>
               </div>
-              <div className="text-purple-600">
+              <div className="text-cyan-600">
                 <Icon name="TrendingUp" size={16} />
               </div>
             </div>
@@ -368,16 +421,16 @@ const CustomerDashboard = () => {
 
         {/* Loyalty Points Card */}
         {stats.loyalty_points > 0 && (
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-6 border border-amber-200 mb-8">
+          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg p-6 border border-teal-200 mb-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center">
                   <Icon name="Star" size={24} className="text-white" />
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Loyalty Points</h3>
-                  <p className="text-2xl font-bold text-amber-600">{stats.loyalty_points} points</p>
-                  <p className="text-sm text-gray-600">Redeem for discounts and rewards</p>
+                  <h3 className="text-lg font-semibold text-teal-900">Loyalty Points</h3>
+                  <p className="text-2xl font-bold text-teal-600">{stats.loyalty_points} points</p>
+                  <p className="text-sm text-teal-700">Redeem for discounts and rewards</p>
                 </div>
               </div>
               <div className="flex space-x-2">
@@ -442,7 +495,22 @@ const CustomerDashboard = () => {
             </Button>
           </div>
           <div className="divide-y divide-gray-200">
-            {recentOrders.map((order) => (
+            {recentOrders.length === 0 ? (
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Icon name="Package" size={32} className="text-gray-400" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Orders Yet</h3>
+                <p className="text-gray-500 mb-4">You haven't placed any orders yet. Start shopping to see your orders here!</p>
+                <Button
+                  onClick={() => navigate('/product-catalog')}
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  Browse Products
+                </Button>
+              </div>
+            ) : (
+              recentOrders.map((order) => (
               <div key={order.id} className="p-6 hover:bg-gray-50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
@@ -504,25 +572,26 @@ const CustomerDashboard = () => {
                   </div>
                 </div>
               </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
         {/* Enhanced Quick Actions with Real Data */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Browse Products Card */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200 text-center hover:shadow-lg transition-all cursor-pointer" onClick={() => navigate('/product-catalog')}>
-            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg p-6 border border-teal-200 text-center hover:shadow-lg transition-all cursor-pointer" onClick={() => navigate('/product-catalog')}>
+            <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center mx-auto mb-4 shadow-lg">
               <Icon name="Search" size={28} className="text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Browse Products</h3>
-            <p className="text-sm text-gray-600 mb-3">Discover new products from verified sellers</p>
+            <h3 className="text-lg font-semibold text-teal-900 mb-2">Browse Products</h3>
+            <p className="text-sm text-teal-700 mb-3">Discover new products from verified sellers</p>
             {stats.favorite_categories && stats.favorite_categories.length > 0 && (
               <div className="mb-4">
-                <p className="text-xs text-blue-600 font-medium mb-2">Recommended for you:</p>
+                <p className="text-xs text-teal-600 font-medium mb-2">Recommended for you:</p>
                 <div className="flex flex-wrap justify-center gap-1">
                   {stats.favorite_categories.slice(0, 2).map((category, index) => (
-                    <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                    <span key={index} className="px-2 py-1 bg-teal-100 text-teal-700 rounded-full text-xs">
                       {category}
                     </span>
                   ))}
@@ -532,15 +601,15 @@ const CustomerDashboard = () => {
             <Button
               variant="default"
               fullWidth
-              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+              className="bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700"
             >
               Start Shopping
             </Button>
           </div>
 
           {/* Enhanced Wishlist Card */}
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-6 border border-green-200 text-center hover:shadow-lg transition-all cursor-pointer" onClick={() => navigate('/wishlist')}>
-            <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mx-auto mb-4 shadow-lg relative">
+          <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg p-6 border border-emerald-200 text-center hover:shadow-lg transition-all cursor-pointer" onClick={() => navigate('/wishlist')}>
+            <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center mx-auto mb-4 shadow-lg relative">
               <Icon name="Heart" size={28} className="text-white" />
               {wishlistCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold">
@@ -548,39 +617,39 @@ const CustomerDashboard = () => {
                 </span>
               )}
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Your Wishlist</h3>
-            <p className="text-sm text-gray-600 mb-2">Save items for later and track price changes</p>
+            <h3 className="text-lg font-semibold text-teal-900 mb-2">Your Wishlist</h3>
+            <p className="text-sm text-teal-700 mb-2">Save items for later and track price changes</p>
             {wishlistCount > 0 ? (
               <div className="mb-4">
-                <p className="text-lg font-bold text-green-600">{wishlistCount} items saved</p>
-                <p className="text-xs text-gray-500">Click to view all saved items</p>
+                <p className="text-lg font-bold text-emerald-600">{wishlistCount} items saved</p>
+                <p className="text-xs text-teal-600">Click to view all saved items</p>
               </div>
             ) : (
               <div className="mb-4">
-                <p className="text-sm text-gray-500">No items saved yet</p>
-                <p className="text-xs text-gray-400">Start adding products you love!</p>
+                <p className="text-sm text-teal-600">No items saved yet</p>
+                <p className="text-xs text-teal-500">Start adding products you love!</p>
               </div>
             )}
             <Button
               variant="default"
               fullWidth
-              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+              className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700"
             >
               View Wishlist {wishlistCount > 0 ? `(${wishlistCount})` : ''}
             </Button>
           </div>
 
           {/* Enhanced Customer Support Card */}
-          <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-lg p-6 border border-purple-200 text-center hover:shadow-lg transition-all cursor-pointer" onClick={() => navigate('/customer-support')}>
-            <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-violet-600 rounded-lg flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <div className="bg-gradient-to-br from-cyan-50 to-teal-50 rounded-lg p-6 border border-cyan-200 text-center hover:shadow-lg transition-all cursor-pointer" onClick={() => navigate('/customer-support')}>
+            <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-teal-600 rounded-lg flex items-center justify-center mx-auto mb-4 shadow-lg">
               <Icon name="MessageCircle" size={28} className="text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Customer Support</h3>
-            <p className="text-sm text-gray-600 mb-3">Get help with orders, returns, and questions</p>
+            <h3 className="text-lg font-semibold text-teal-900 mb-2">Customer Support</h3>
+            <p className="text-sm text-teal-700 mb-3">Get help with orders, returns, and questions</p>
             <div className="mb-4">
-              <div className="flex items-center justify-center space-x-4 text-xs text-gray-500">
+              <div className="flex items-center justify-center space-x-4 text-xs text-teal-600">
                 <div className="flex items-center space-x-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
                   <span>Online 24/7</span>
                 </div>
                 <div className="flex items-center space-x-1">
@@ -592,7 +661,7 @@ const CustomerDashboard = () => {
             <Button
               variant="default"
               fullWidth
-              className="bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700"
+              className="bg-gradient-to-r from-cyan-500 to-teal-600 hover:from-cyan-600 hover:to-teal-700"
             >
               Contact Support
             </Button>
@@ -638,6 +707,9 @@ const CustomerDashboard = () => {
           </Button>
         </div>
       </div>
+      
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomTab />
     </div>
   );
 };

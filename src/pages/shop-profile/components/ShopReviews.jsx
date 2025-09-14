@@ -3,26 +3,28 @@ import Icon from '../../../components/AppIcon';
 import Image from '../../../components/AppImage';
 import Button from '../../../components/ui/Button';
 import Select from '../../../components/ui/Select';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 const ShopReviews = ({ reviews, shopRating, totalReviews }) => {
+  const { t } = useLanguage();
   const [sortBy, setSortBy] = useState('newest');
   const [filterRating, setFilterRating] = useState('all');
 
   const sortOptions = [
-    { value: 'newest', label: 'Newest First' },
-    { value: 'oldest', label: 'Oldest First' },
-    { value: 'highest', label: 'Highest Rating' },
-    { value: 'lowest', label: 'Lowest Rating' },
-    { value: 'helpful', label: 'Most Helpful' }
+    { value: 'newest', label: t('reviews.newestFirst') },
+    { value: 'oldest', label: t('reviews.oldestFirst') },
+    { value: 'highest', label: t('reviews.highestRating') },
+    { value: 'lowest', label: t('reviews.lowestRating') },
+    { value: 'helpful', label: t('reviews.mostHelpful') }
   ];
 
   const ratingOptions = [
-    { value: 'all', label: 'All Ratings' },
-    { value: '5', label: '5 Stars' },
-    { value: '4', label: '4 Stars' },
-    { value: '3', label: '3 Stars' },
-    { value: '2', label: '2 Stars' },
-    { value: '1', label: '1 Star' }
+    { value: 'all', label: t('reviews.allRatings') },
+    { value: '5', label: t('reviews.stars').replace('{count}', '5') },
+    { value: '4', label: t('reviews.stars').replace('{count}', '4') },
+    { value: '3', label: t('reviews.stars').replace('{count}', '3') },
+    { value: '2', label: t('reviews.stars').replace('{count}', '2') },
+    { value: '1', label: t('reviews.star').replace('{count}', '1') }
   ];
 
   const ratingDistribution = [

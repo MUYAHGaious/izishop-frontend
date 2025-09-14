@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Image from '../../../components/AppImage';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 const ReviewsSection = ({ reviews, averageRating, totalReviews }) => {
+  const { t } = useLanguage();
   const [currentPage, setCurrentPage] = useState(1);
   const [showWriteReview, setShowWriteReview] = useState(false);
   const reviewsPerPage = 5;
@@ -44,7 +46,7 @@ const ReviewsSection = ({ reviews, averageRating, totalReviews }) => {
     <div className="space-y-6 py-6 border-t border-border">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-text-primary">
-          Customer Reviews ({totalReviews})
+          {t('reviews.customerReviews')} ({totalReviews})
         </h3>
         <Button
           variant="outline"
@@ -53,7 +55,7 @@ const ReviewsSection = ({ reviews, averageRating, totalReviews }) => {
           iconPosition="left"
           onClick={() => setShowWriteReview(true)}
         >
-          Write Review
+          {t('reviews.writeReview')}
         </Button>
       </div>
 
@@ -69,7 +71,7 @@ const ReviewsSection = ({ reviews, averageRating, totalReviews }) => {
               {renderStars(averageRating)}
             </div>
             <div className="text-sm text-text-secondary mt-1">
-              Based on {totalReviews} reviews
+              {t('reviews.basedOn').replace('{count}', totalReviews)}
             </div>
           </div>
         </div>
@@ -124,7 +126,7 @@ const ReviewsSection = ({ reviews, averageRating, totalReviews }) => {
                   {review.verified && (
                     <div className="flex items-center space-x-1 text-success text-sm">
                       <Icon name="CheckCircle" size={14} />
-                      <span>Verified Purchase</span>
+                      <span>{t('reviews.verifiedPurchase')}</span>
                     </div>
                   )}
                 </div>
@@ -140,7 +142,7 @@ const ReviewsSection = ({ reviews, averageRating, totalReviews }) => {
                       <Image
                         key={index}
                         src={image}
-                        alt={`Review image ${index + 1}`}
+                        alt={t('reviews.reviewImage').replace('{index}', index + 1)}
                         className="w-16 h-16 rounded-md object-cover"
                       />
                     ))}
@@ -151,10 +153,10 @@ const ReviewsSection = ({ reviews, averageRating, totalReviews }) => {
                 <div className="flex items-center space-x-4 text-sm">
                   <button className="flex items-center space-x-1 text-text-secondary hover:text-text-primary transition-colors">
                     <Icon name="ThumbsUp" size={14} />
-                    <span>Helpful ({review.helpfulCount})</span>
+                    <span>{t('reviews.helpful')} ({review.helpfulCount})</span>
                   </button>
                   <button className="text-text-secondary hover:text-text-primary transition-colors">
-                    Reply
+                    {t('reviews.reply')}
                   </button>
                 </div>
               </div>
@@ -174,7 +176,7 @@ const ReviewsSection = ({ reviews, averageRating, totalReviews }) => {
             iconName="ChevronLeft"
             iconPosition="left"
           >
-            Previous
+            {t('reviews.previous')}
           </Button>
           
           <div className="flex items-center space-x-1">
@@ -202,7 +204,7 @@ const ReviewsSection = ({ reviews, averageRating, totalReviews }) => {
             iconName="ChevronRight"
             iconPosition="right"
           >
-            Next
+            {t('reviews.next')}
           </Button>
         </div>
       )}
@@ -212,7 +214,7 @@ const ReviewsSection = ({ reviews, averageRating, totalReviews }) => {
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-surface rounded-lg p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-text-primary">Write a Review</h3>
+              <h3 className="text-lg font-semibold text-text-primary">{t('reviews.writeAReview')}</h3>
               <Button
                 variant="ghost"
                 size="icon"

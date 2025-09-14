@@ -208,6 +208,17 @@ const Header = () => {
                       My Profile
                     </button>
                     
+                    {/* Customer Dashboard Button */}
+                    {(user?.role === 'CUSTOMER' || user?.role === 'customer' || !user?.role) && (
+                      <button
+                        onClick={() => navigate('/customer-dashboard')}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <Icon name="LayoutDashboard" size={16} className="mr-3 text-gray-500" />
+                        Dashboard
+                      </button>
+                    )}
+                    
                     {(user?.role === 'SHOP_OWNER' || user?.role === 'shop_owner') && (
                       <>
                         <button

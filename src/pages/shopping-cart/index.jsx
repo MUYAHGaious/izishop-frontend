@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 // FRESH REDESIGNED SHOPPING CART - FORCE RELOAD v2.0
 import { useCart } from '../../contexts/CartContext';
@@ -17,6 +18,7 @@ import Icon from '../../components/AppIcon';
 
 const ShoppingCart = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   
   // Cart context with error handling
   let cartHook;
@@ -27,7 +29,7 @@ const ShoppingCart = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Cart Error</h1>
+          <h1 className="text-2xl font-bold text-red-600 mb-4">{t('cart.error', 'Cart Error')}</h1>
           <p className="text-gray-600 mb-4">Unable to load cart. Please refresh the page.</p>
           <button 
             onClick={() => window.location.reload()} 
@@ -136,7 +138,7 @@ const ShoppingCart = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Helmet>
-          <title>Shopping Cart - IziShop</title>
+          <title>{t('cart.title')} - IziShop</title>
           <meta name="description" content="Review your cart items and proceed to checkout on IziShop marketplace" />
         </Helmet>
         
@@ -159,7 +161,7 @@ const ShoppingCart = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-100">
       <Helmet>
-        <title>{`Shopping Cart (${itemCount}) - IziShop`}</title>
+        <title>{`${t('cart.title')} (${itemCount}) - IziShop`}</title>
         <meta name="description" content="Review your cart items and proceed to checkout on IziShop marketplace" />
       </Helmet>
       
@@ -182,7 +184,7 @@ const ShoppingCart = () => {
                         <Icon name="ShoppingCart" size={20} className="text-white" />
                       </div>
                       <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                        Shopping Cart
+                        {t('cart.title')}
                       </h1>
                     </div>
                     <p className="text-gray-600 text-sm sm:text-base">

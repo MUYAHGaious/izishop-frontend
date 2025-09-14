@@ -4,6 +4,7 @@ import Icon from '../AppIcon';
 import Image from '../AppImage';
 import Button from '../ui/Button';
 import { useWishlist } from '../../contexts/WishlistContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { getProductTags } from '../../utils/productTags';
 import TagList from '../ui/Tag';
 
@@ -29,6 +30,7 @@ const ProductCard = ({
   }
 
   const { isInWishlist, toggleWishlist, isLoading: wishlistLoading } = useWishlist();
+  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   
   // Check if this product is in the wishlist
@@ -263,8 +265,8 @@ const ProductCard = ({
             product.stock > 10 ? 'text-success' : 
             product.stock > 0 ? 'text-warning' : 'text-destructive'
           }`}>
-            {product.stock > 10 ? 'In Stock' : 
-             product.stock > 0 ? `Only ${product.stock} left` : 'Out of Stock'}
+            {product.stock > 10 ? t('ui.inStock') :
+             product.stock > 0 ? t('ui.onlyLeftInStock').replace('{count}', product.stock) : t('ui.outOfStock')}
           </span>
         </div>
       )}
@@ -280,7 +282,7 @@ const ProductCard = ({
           iconName="ShoppingCart"
           iconPosition="left"
         >
-          {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+          {product.stock === 0 ? t('ui.outOfStock') : t('button.addToCart')}
         </Button>
       </div>
     </div>

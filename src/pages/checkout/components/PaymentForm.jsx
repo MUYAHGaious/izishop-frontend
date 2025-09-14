@@ -1,46 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import { Checkbox } from '../../../components/ui/Checkbox';
 import Icon from '../../../components/AppIcon';
 import { useCart } from '../../../contexts/CartContext';
+import { useAuth } from '../../../contexts/AuthContext';
+import { useLanguage } from '../../../contexts/LanguageContext';
+import tranzakService from '../../../services/tranzakService';
+import { showToast } from '../../../components/ui/Toast';
 
 
-const PaymentForm = ({ onBack, formData, setFormData }) => {
-  const { clearCart } = useCart();
+const PaymentForm = ({ formData, setFormData }) => {
+  const { cart, cartTotal, clearCart } = useCart();
+  const { user } = useAuth();
+  const { t } = useLanguage();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [paymentDetails, setPaymentDetails] = useState({});
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [orderNotes, setOrderNotes] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState({});
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [isLoadingMethods, setIsLoadingMethods] = useState(false);
 
-  const paymentMethods = [
-    {
-      id: 'mtn-momo',
-      name: 'MTN Mobile Money',
-      icon: 'Smartphone',
-      description: 'Pay with your MTN MoMo account',
-      logo: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=100',
-      popular: true
-    },
-    {
-      id: 'orange-money',
-      name: 'Orange Money',
-      icon: 'Smartphone',
-      description: 'Pay with your Orange Money account',
-      logo: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=100'
-    },
-    {
-      id: 'visa-card',
-      name: 'Visa Card',
-      icon: 'CreditCard',
-      description: 'International credit/debit cards',
-      logo: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=100'
+  // Calculate totals from real cart data
+  const subtotal = cartTotal || 0;
+  const deliveryFee = formData.deliveryCost || 0;
+  const total = subtotal + deliveryFee;
+
+  useEffect(() => {
+    loadPaymentMethods();
+  }, []);
+
+  const loadPaymentMethods = async () => {
+    setIsLoadingMethods(true);
+    try {
+      const methods = await tranzakService.getPaymentMethods();
+
+      // Map Tranzak methods to our format
+      const formattedMethods = [
+        {
+          id: 'mtn_momo',
+          name: 'MTN Mobile Money',
+          icon: 'Smartphone',
+          description: t('payment.mtnDescription'),
+          popular: true
+        },
+        {
+          id: 'orange_money',
+          name: 'Orange Money',
+          icon: 'Smartphone',
+          description: t('payment.orangeDescription')
+        },
+        {
+          id: 'card',
+          name: 'Credit/Debit Card',
+          icon: 'CreditCard',
+          description: t('payment.cardDescription')
+        }
+      ];
+
+      setPaymentMethods(formattedMethods);
+    } catch (error) {
+      console.error('Error loading payment methods:', error);
+      showToast('Failed to load payment methods', 'error');
+    } finally {
+      setIsLoadingMethods(false);
     }
-  ];
-
-  const total = 1430000; // From previous calculation
+  };
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('fr-CM', {
@@ -93,31 +120,86 @@ const PaymentForm = ({ onBack, formData, setFormData }) => {
     if (!validatePaymentDetails()) return;
 
     setIsProcessing(true);
-    
+
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // In a real app, this would integrate with Tranzak API
-      console.log('Processing payment with:', {
-        method: selectedPaymentMethod,
-        details: paymentDetails,
+      // Prepare payment data
+      const paymentData = {
         amount: total,
-        orderNotes
-      });
-      
-      // Clear cart after successful payment
-      clearCart();
-      
-      // Clear checkout data
-      localStorage.removeItem('checkoutData');
-      localStorage.removeItem('checkoutFormData');
-      
-      // Redirect to success page
-      window.location.href = '/order-success';
+        currency: 'XAF',
+        description: `IziShopin Order - ${cart.length} items`,
+        customerEmail: user?.email || formData.email,
+        customerPhone: formData.phone,
+        customerName: formData.fullName,
+        reference: `ORDER_${Date.now()}_${user?.id || 'guest'}`,
+        orderId: `ORDER_${Date.now()}`,
+        customerId: user?.id,
+        metadata: {
+          items: cart.map(item => ({
+            id: item.id,
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price
+          })),
+          deliveryAddress: {
+            address: formData.address,
+            city: formData.city,
+            region: formData.region
+          },
+          deliveryInstructions: formData.deliveryInstructions,
+          orderNotes: orderNotes
+        }
+      };
+
+      let paymentResult;
+
+      if (selectedPaymentMethod === 'mtn_momo' || selectedPaymentMethod === 'orange_money') {
+        // Process direct mobile money charge
+        const chargeData = {
+          ...paymentData,
+          phone: paymentDetails.phone,
+          network: selectedPaymentMethod === 'mtn_momo' ? 'mtn' : 'orange'
+        };
+
+        paymentResult = await tranzakService.processDirectCharge(chargeData);
+      } else {
+        // Create payment request for cards and other methods
+        paymentResult = await tranzakService.createPaymentRequest(paymentData);
+
+        // For card payments, redirect to payment page
+        if (paymentResult.payment_url) {
+          window.location.href = paymentResult.payment_url;
+          return;
+        }
+      }
+
+      // Handle successful payment
+      if (paymentResult.status === 'success' || paymentResult.status === 'pending') {
+        showToast(t('payment.success'), 'success');
+
+        // Save order to backend (TODO: implement actual API call)
+        // TODO: Save order to backend
+        // await api.post('/orders', orderData);
+
+        // Clear cart and checkout data after successful payment
+        clearCart();
+        localStorage.removeItem('checkoutData');
+        localStorage.removeItem('checkoutFormData');
+
+        // Redirect to success page
+        window.location.href = `/order-success?ref=${paymentResult.reference || paymentResult.transaction_id}`;
+      } else {
+        throw new Error(paymentResult.message || t('payment.failed'));
+      }
     } catch (error) {
-      console.error('Payment failed:', error);
-      setErrors({ payment: 'Payment error. Please try again.' });
+      console.error('Payment processing error:', error);
+
+      let errorMessage = t('payment.generalError');
+      if (error.message) {
+        errorMessage = error.message;
+      }
+
+      setErrors({ payment: errorMessage });
+      showToast(errorMessage, 'error');
     } finally {
       setIsProcessing(false);
     }

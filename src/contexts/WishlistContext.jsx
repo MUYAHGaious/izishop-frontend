@@ -20,7 +20,7 @@ export const WishlistProvider = ({ children }) => {
     const loadWishlist = async () => {
       try {
         // Try to load from backend first
-        const backendWishlist = await api.getWishlistItems();
+        const backendWishlist = await api.getCustomerWishlist();
         console.log('🔄 Loaded wishlist from backend:', backendWishlist.length, 'items');
 
         if (Array.isArray(backendWishlist)) {

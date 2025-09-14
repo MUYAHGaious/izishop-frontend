@@ -1,14 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
-import CheckoutProgress from './components/CheckoutProgress';
+import Stepper, { Step } from '../../components/ui/Stepper';
 import DeliveryAddressForm from './components/DeliveryAddressForm';
 import DeliveryOptionsForm from './components/DeliveryOptionsForm';
 import OrderReviewForm from './components/OrderReviewForm';
 import PaymentForm from './components/PaymentForm';
 import Icon from '../../components/AppIcon';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const Checkout = () => {
-  const [currentStep, setCurrentStep] = useState(1);
+  // Safe language hook usage with fallback
+  let t;
+  try {
+    const languageContext = useLanguage();
+    t = languageContext.t;
+  } catch (error) {
+    console.warn('Language context not available, using fallback translations');
+    // Fallback translation function
+    t = (key) => {
+      const fallbacks = {
+        'checkout.title': 'Secure Checkout',
+        'checkout.securePayment': 'Secure Payment',
+        'checkout.secureCheckout': 'Secure Checkout',
+        'checkout.completeOrder': 'Complete your order securely',
+        'checkout.escrowProtection': 'Escrow Protection',
+        'checkout.fastDelivery': 'Fast Delivery',
+        'checkout.support247': '24/7 Support',
+        'checkout.poweredByTranzak': 'Powered by Tranzak',
+        'common.previous': 'Previous',
+        'common.next': 'Next',
+        'footer.allRightsReserved': 'All rights reserved'
+      };
+      return fallbacks[key] || key;
+    };
+  }
+  
   const [formData, setFormData] = useState({
     // Address data
     fullName: '',
@@ -18,18 +44,16 @@ const Checkout = () => {
     region: '',
     postalCode: '',
     deliveryInstructions: '',
-    
+
     // Delivery data
     deliveryOption: '',
     deliveryOptionDetails: null,
     deliveryCost: 0,
-    
+
     // Payment data
     paymentMethod: '',
     paymentDetails: {}
   });
-
-  const totalSteps = 4;
 
   // Load saved data from localStorage on component mount
   useEffect(() => {
@@ -49,151 +73,149 @@ const Checkout = () => {
     localStorage.setItem('checkoutFormData', JSON.stringify(formData));
   }, [formData]);
 
-  const handleNext = () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
-  const renderCurrentStep = () => {
-    switch (currentStep) {
+  const validateStep = (step) => {
+    switch (step) {
       case 1:
-        return (
-          <DeliveryAddressForm
-            onNext={handleNext}
-            formData={formData}
-            setFormData={setFormData}
-          />
-        );
+        return formData.fullName && formData.phone && formData.address && formData.city;
       case 2:
-        return (
-          <DeliveryOptionsForm
-            onNext={handleNext}
-            onBack={handleBack}
-            formData={formData}
-            setFormData={setFormData}
-          />
-        );
+        return formData.deliveryOption;
       case 3:
-        return (
-          <OrderReviewForm
-            onNext={handleNext}
-            onBack={handleBack}
-            formData={formData}
-            setFormData={setFormData}
-          />
-        );
+        return true; // Review step doesn't need validation
       case 4:
-        return (
-          <PaymentForm
-            onBack={handleBack}
-            formData={formData}
-            setFormData={setFormData}
-          />
-        );
+        return formData.paymentMethod;
       default:
-        return null;
+        return true;
     }
+  };
+
+  const handleStepChange = (newStep) => {
+    // Validate current step before allowing progression
+    if (newStep > 1 && !validateStep(newStep - 1)) {
+      console.log('Step validation failed, preventing progression');
+      return false;
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return true;
+  };
+
+  const handleCheckoutComplete = () => {
+    // Handle final checkout completion with Tranzak API
+    console.log('Checkout completed with data:', formData);
+    // TODO: Implement Tranzak payment processing
   };
 
   return (
     <>
       <Helmet>
-        <title>Checkout - IziShop</title>
+        <title>{t('checkout.title')} - IziShop</title>
         <meta name="description" content="Complete your order securely with IziShop. Secure escrow payment and fast delivery in Cameroon." />
         <meta name="keywords" content="checkout, payment, delivery, Cameroon, MTN MoMo, Orange Money" />
       </Helmet>
 
-      <div className="min-h-screen bg-background">
-        {/* Custom Header for Checkout */}
-        <header className="bg-surface border-b border-border sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100">
+        {/* Clean Header */}
+        <header className="bg-white shadow-sm sticky top-0 z-50">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              <div className="flex items-center space-x-3">
-                <button 
+              <div className="flex items-center space-x-4">
+                <button
                   onClick={() => window.history.back()}
-                  className="p-2 hover:bg-muted rounded-lg transition-micro"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                   title="Go back"
                 >
-                  <Icon name="ArrowLeft" size={20} className="text-muted-foreground" />
+                  <Icon name="ArrowLeft" size={20} className="text-gray-600" />
                 </button>
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <Icon name="ShoppingBag" size={20} color="white" />
-                </div>
-                <div>
-                  <h1 className="text-lg font-semibold text-foreground">IziShop</h1>
-                  <p className="text-xs text-muted-foreground">Secure Checkout</p>
+                <div className="flex items-center space-x-2">
+                  <Icon name="Package" size={24} className="text-teal-600" />
+                  <span className="text-xl font-bold text-gray-900">IziShopin</span>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-4">
-                <div className="hidden sm:flex items-center space-x-2 text-sm text-muted-foreground">
-                  <Icon name="Shield" size={16} className="text-success" />
-                  <span>Secure Payment</span>
+                <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-600">
+                  <Icon name="Shield" size={16} className="text-green-500" />
+                  <span>{t('checkout.securePayment')}</span>
                 </div>
-                <div className="hidden sm:flex items-center space-x-2 text-sm text-muted-foreground">
-                  <Icon name="Lock" size={16} className="text-success" />
-                  <span>SSL Encrypted</span>
+                <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-600">
+                  <Icon name="Lock" size={16} className="text-green-500" />
+                  <span>SSL</span>
                 </div>
               </div>
             </div>
           </div>
         </header>
 
-        {/* Progress Indicator */}
-        <CheckoutProgress currentStep={currentStep} totalSteps={totalSteps} />
-
         {/* Main Content */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {renderCurrentStep()}
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="p-8">
+              <div className="text-center mb-8">
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                  {t('checkout.secureCheckout')}
+                </h1>
+                <p className="text-gray-600">
+                  {t('checkout.completeOrder')}
+                </p>
+              </div>
+
+              <Stepper
+                initialStep={1}
+                onStepChange={handleStepChange}
+                onFinalStepCompleted={handleCheckoutComplete}
+                backButtonText={t('common.previous')}
+                nextButtonText={t('common.next')}
+                validateStep={validateStep}
+              >
+                <Step>
+                  <DeliveryAddressForm
+                    formData={formData}
+                    setFormData={setFormData}
+                  />
+                </Step>
+                <Step>
+                  <DeliveryOptionsForm
+                    formData={formData}
+                    setFormData={setFormData}
+                  />
+                </Step>
+                <Step>
+                  <OrderReviewForm
+                    formData={formData}
+                    setFormData={setFormData}
+                  />
+                </Step>
+                <Step>
+                  <PaymentForm
+                    formData={formData}
+                    setFormData={setFormData}
+                  />
+                </Step>
+              </Stepper>
+            </div>
+          </div>
         </main>
 
-        {/* Security Footer */}
-        <footer className="bg-surface border-t border-border mt-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
-              <div className="flex items-center space-x-6">
-                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                  <Icon name="Shield" size={16} className="text-success" />
-                  <span>Escrow Protection</span>
-                </div>
-                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                  <Icon name="Truck" size={16} className="text-primary" />
-                  <span>Fast Delivery</span>
-                </div>
-                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                  <Icon name="Headphones" size={16} className="text-secondary" />
-                  <span>Support 24/7</span>
-                </div>
+        {/* Trust Indicators Footer */}
+        <footer className="bg-white border-t border-gray-200 mt-12">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-8">
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <Icon name="Shield" size={16} className="text-green-500" />
+                <span>{t('checkout.escrowProtection')}</span>
               </div>
-              
-              <div className="flex items-center space-x-4">
-                <span className="text-xs text-muted-foreground">Payment Partners:</span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-5 bg-muted rounded flex items-center justify-center">
-                    <span className="text-xs font-bold text-muted-foreground">MTN</span>
-                  </div>
-                  <div className="w-8 h-5 bg-muted rounded flex items-center justify-center">
-                    <span className="text-xs font-bold text-muted-foreground">OM</span>
-                  </div>
-                  <div className="w-8 h-5 bg-muted rounded flex items-center justify-center">
-                    <span className="text-xs font-bold text-muted-foreground">VISA</span>
-                  </div>
-                </div>
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <Icon name="Truck" size={16} className="text-blue-500" />
+                <span>{t('checkout.fastDelivery')}</span>
+              </div>
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <Icon name="Headphones" size={16} className="text-purple-500" />
+                <span>{t('checkout.support247')}</span>
               </div>
             </div>
-            
-            <div className="mt-4 pt-4 border-t border-border text-center">
-              <p className="text-xs text-muted-foreground">
-                © {new Date().getFullYear()} IziShop. All rights reserved. Secure payments by Tranzak.
+
+            <div className="mt-4 pt-4 border-t border-gray-200 text-center">
+              <p className="text-sm text-gray-500">
+                © {new Date().getFullYear()} IziShopin. {t('footer.allRightsReserved')}. {t('checkout.poweredByTranzak')}.
               </p>
             </div>
           </div>

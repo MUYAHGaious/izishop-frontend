@@ -8,6 +8,7 @@ export default function Stepper({
   initialStep = 1,
   onStepChange = () => { },
   onFinalStepCompleted = () => { },
+  validateStep = () => true,
   stepCircleContainerClassName = "",
   stepContainerClassName = "",
   contentClassName = "",
@@ -49,8 +50,14 @@ export default function Stepper({
 
   const handleNext = () => {
     if (!isLastStep) {
-      setDirection(1);
-      updateStep(currentStep + 1);
+      // Validate current step before proceeding
+      if (validateStep(currentStep)) {
+        setDirection(1);
+        updateStep(currentStep + 1);
+      } else {
+        console.log('Step validation failed, cannot proceed');
+        // You could show an error message here
+      }
     }
   };
 
@@ -58,8 +65,15 @@ export default function Stepper({
     console.log('Complete button clicked');
     console.log('Current step:', currentStep);
     console.log('Total steps:', totalSteps);
-    setDirection(1);
-    updateStep(totalSteps + 1);
+    
+    // Validate final step before completing
+    if (validateStep(currentStep)) {
+      setDirection(1);
+      updateStep(totalSteps + 1);
+    } else {
+      console.log('Final step validation failed, cannot complete');
+      // You could show an error message here
+    }
   };
 
   return (
@@ -76,8 +90,11 @@ export default function Stepper({
                     step: stepNumber,
                     currentStep,
                     onStepClick: (clicked) => {
-                      setDirection(clicked > currentStep ? 1 : -1);
-                      updateStep(clicked);
+                      // Only allow going back or to validated steps
+                      if (clicked < currentStep || (clicked > currentStep && validateStep(clicked - 1))) {
+                        setDirection(clicked > currentStep ? 1 : -1);
+                        updateStep(clicked);
+                      }
                     },
                   })
                 ) : (
@@ -86,8 +103,11 @@ export default function Stepper({
                     disableStepIndicators={disableStepIndicators}
                     currentStep={currentStep}
                     onClickStep={(clicked) => {
-                      setDirection(clicked > currentStep ? 1 : -1);
-                      updateStep(clicked);
+                      // Only allow going back or to validated steps
+                      if (clicked < currentStep || (clicked > currentStep && validateStep(clicked - 1))) {
+                        setDirection(clicked > currentStep ? 1 : -1);
+                        updateStep(clicked);
+                      }
                     }}
                   />
                 )}

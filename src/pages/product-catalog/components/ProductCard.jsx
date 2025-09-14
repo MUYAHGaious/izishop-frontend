@@ -139,13 +139,45 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist }) => {
 
       {/* Product Info */}
       <div className="p-2">
-        {/* Shop Name */}
-        <Link 
-          to={`/shop-profile?id=${product.shopId}`}
-          className="text-xs text-text-secondary hover:text-primary transition-colors mb-1 block"
-        >
-          {product.shopName}
-        </Link>
+        {/* Shop Info Section */}
+        <div className="flex items-center justify-between mb-2">
+          <Link
+            to={`/shop-profile?id=${product.shopId}`}
+            className="flex items-center space-x-1 text-xs text-text-secondary hover:text-primary transition-colors flex-1"
+          >
+            <Icon name="Store" size={12} className="flex-shrink-0" />
+            <span className="truncate">{product.shopName || 'IziShopin Store'}</span>
+            {product.shopVerified && (
+              <Icon name="CheckCircle" size={12} className="text-blue-500 flex-shrink-0" />
+            )}
+          </Link>
+
+          {/* Seller Type Badge */}
+          <div className="flex items-center space-x-1">
+            {product.sellerType && (
+              <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                product.sellerType === 'shop_owner'
+                  ? 'bg-blue-100 text-blue-700'
+                  : product.sellerType === 'casual_seller'
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-gray-100 text-gray-700'
+              }`}>
+                {product.sellerType === 'shop_owner' ? 'Shop' :
+                 product.sellerType === 'casual_seller' ? 'Seller' : 'Store'}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Shop Rating (if available) */}
+        {product.shopRating && (
+          <div className="flex items-center space-x-1 mb-1">
+            <Icon name="Star" size={10} className="text-amber-400 fill-current" />
+            <span className="text-xs text-text-secondary">
+              {product.shopRating.toFixed(1)} shop rating
+            </span>
+          </div>
+        )}
 
         {/* Product Name */}
         <Link to={`/product-detail-modal?id=${product.id}`}>

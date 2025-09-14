@@ -7,12 +7,14 @@ import MobileBottomTab from '../../components/ui/MobileBottomTab';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
 import { showToast } from '../../components/ui/Toast';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const Wishlist = () => {
-  const { 
-    wishlistItems, 
-    isLoading, 
-    clearWishlist, 
+  const { t } = useLanguage();
+  const {
+    wishlistItems,
+    isLoading,
+    clearWishlist,
     moveToCart,
     removeFromWishlist
   } = useWishlist();
@@ -37,7 +39,7 @@ const Wishlist = () => {
       try {
         const result = await clearWishlist();
         if (result.success) {
-          showToast('Wishlist cleared successfully', 'success');
+          showToast(t('wishlist.cleared'), 'success');
         }
       } catch (error) {
         console.error('Error clearing wishlist:', error);
@@ -178,7 +180,7 @@ const Wishlist = () => {
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-text-secondary">Loading wishlist...</p>
+            <p className="text-text-secondary">{t('wishlist.loading')}</p>
           </div>
         </div>
         <MobileBottomTab />
@@ -198,7 +200,7 @@ const Wishlist = () => {
               <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
                 <Icon name="Heart" size={20} className="text-white" />
               </div>
-              My Wishlist
+              {t('wishlist.title')}
             </h1>
             <p className="text-text-secondary">
               {wishlistItems.length === 0 

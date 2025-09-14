@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Header from '../../components/ui/Header';
 import MobileBottomTab from '../../components/ui/MobileBottomTab';
@@ -18,6 +18,7 @@ import CategoryNavigation from './components/CategoryNavigation';
 const CasualMarketplace = () => {
   const { user, isAuthenticated } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('browse'); // browse, my-listings, create
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [listings, setListings] = useState([]);
@@ -141,10 +142,29 @@ const CasualMarketplace = () => {
       if (priceRange.max) params.append('max_price', priceRange.max);
       params.append('sort', sortBy);
 
+      // Filter to show only customer and casual seller products (exclude shop owners and delivery agents)
+      params.append('seller_type', 'customer,casual_seller');
+
       const response = await api.get(`casual-listings/?${params.toString()}`, {}, false);
-      setListings(response.data);
-      setResultsCount(response.data.length);
-      updateCategoryCounts(response.data);
+      let listings = response.data;
+
+      // Additional client-side filtering to ensure only customer and casual_seller products are shown
+      listings = listings.filter(listing =>
+        listing.seller_type === 'customer' ||
+        listing.seller_type === 'casual_seller' ||
+        listing.sellerType === 'customer' ||
+        listing.sellerType === 'casual_seller'
+      );
+
+      console.log('Marketplace listings filtered:', {
+        total: response.data.length,
+        filtered: listings.length,
+        sellerTypes: [...new Set(listings.map(l => l.seller_type || l.sellerType))]
+      });
+
+      setListings(listings);
+      setResultsCount(listings.length);
+      updateCategoryCounts(listings);
     } catch (error) {
       console.error('Error fetching listings:', error);
       showToast('Failed to load listings', 'error');
@@ -211,6 +231,11 @@ const CasualMarketplace = () => {
     
     if (user?.role === 'CUSTOMER') {
       showToast('Please upgrade to Casual Seller to create listings', 'error');
+      return;
+    }
+
+    if (user?.role === 'DELIVERY_AGENT') {
+      showToast('Delivery agents cannot create listings', 'error');
       return;
     }
 
@@ -364,10 +389,22 @@ const CasualMarketplace = () => {
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Upgrade Required</h2>
                 <p className="text-gray-600 mb-6">You need to be a Casual Seller to create listings.</p>
                 <Button
-                  onClick={() => window.location.href = '/settings'}
+                  onClick={() => navigate('/settings?tab=subscription')}
                   className="bg-teal-500 hover:bg-teal-600 text-white px-8 py-3"
                 >
                   Upgrade to Casual Seller (Free!)
+                </Button>
+              </div>
+            ) : user?.role === 'DELIVERY_AGENT' ? (
+              <div className="text-center py-12 bg-white rounded-xl shadow-sm">
+                <span className="text-6xl mb-4 block">🚫</span>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Restricted</h2>
+                <p className="text-gray-600 mb-6">Delivery agents cannot create marketplace listings.</p>
+                <Button
+                  onClick={() => setActiveTab('browse')}
+                  className="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3"
+                >
+                  Browse Marketplace
                 </Button>
               </div>
             ) : (
@@ -571,7 +608,7 @@ const CasualMarketplace = () => {
       </div>
 
       {/* Tab Navigation - Only for My Listings */}
-      {activeTab === 'my-listings' && isAuthenticated() && user?.role !== 'CUSTOMER' && (
+      {activeTab === 'my-listings' && isAuthenticated() && user?.role !== 'CUSTOMER' && user?.role !== 'DELIVERY_AGENT' && (
         <div className="bg-white border-b border-gray-200">
           <div className="container mx-auto px-4 py-4">
             <div className="flex justify-between items-center">
@@ -823,10 +860,26 @@ const CasualMarketplace = () => {
                         You need to be a Casual Seller to view and manage your listings.
                       </p>
                       <Button
-                        onClick={() => window.location.href = '/settings'}
+                        onClick={() => navigate('/settings?tab=subscription')}
                         className="bg-teal-500 hover:bg-teal-600 text-white px-8 py-3"
                       >
                         Upgrade to Casual Seller (Free!)
+                      </Button>
+                    </div>
+                  </div>
+                ) : user?.role === 'DELIVERY_AGENT' ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center py-12">
+                      <span className="text-6xl mb-4 block">🚫</span>
+                      <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Restricted</h2>
+                      <p className="text-gray-600 mb-6 max-w-md">
+                        Delivery agents cannot create or manage marketplace listings.
+                      </p>
+                      <Button
+                        onClick={() => setActiveTab('browse')}
+                        className="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3"
+                      >
+                        Browse Marketplace
                       </Button>
                     </div>
                   </div>

@@ -806,21 +806,48 @@ class ApiService {
     }
   }
 
-  async getAllProducts(skip = 0, limit = 100, activeOnly = true, search = null, category = null) {
+  async getAllProducts(skip = 0, limit = 100, activeOnly = true, search = null, category = null, filters = null) {
     const params = new URLSearchParams({
       skip: skip.toString(),
       limit: limit.toString(),
       active_only: activeOnly.toString()
     });
-    
+
     if (search) {
       params.append('search', search);
     }
-    
+
     if (category && category !== 'all') {
       params.append('category', category);
     }
-    
+
+    // Optional filter parameters
+    if (filters && typeof filters === 'object') {
+      const { priceRange, brands, rating, features, categories } = filters;
+
+      if (priceRange && (priceRange.min != null || priceRange.max != null)) {
+        if (priceRange.min != null) params.append('min_price', String(priceRange.min));
+        if (priceRange.max != null) params.append('max_price', String(priceRange.max));
+      }
+
+      if (Array.isArray(brands) && brands.length) {
+        brands.slice(0, 50).forEach(b => params.append('brands', String(b)));
+      }
+
+      if (Array.isArray(rating) && rating.length) {
+        const minRating = Math.max(...rating.map(r => Number(r)).filter(n => !Number.isNaN(n)));
+        if (minRating) params.append('min_rating', String(Math.min(Math.max(minRating, 1), 5)));
+      }
+
+      if (Array.isArray(features) && features.length) {
+        features.slice(0, 50).forEach(f => params.append('features', String(f)));
+      }
+
+      if (Array.isArray(categories) && categories.length) {
+        categories.slice(0, 50).forEach(c => params.append('categories', String(c)));
+      }
+    }
+
     return this.request(`/api/products/?${params}`);
   }
 
@@ -1515,7 +1542,7 @@ class ApiService {
   // Customer API methods
   async getCustomerStats() {
     try {
-      return await this.request('/customer/stats', {
+      return await this.request('/api/customer/stats', {
         method: 'GET'
       });
     } catch (error) {
@@ -1533,13 +1560,29 @@ class ApiService {
       if (filters.offset) queryParams.append('offset', filters.offset);
       if (filters.date_from) queryParams.append('date_from', filters.date_from);
       if (filters.date_to) queryParams.append('date_to', filters.date_to);
-      
-      const endpoint = queryParams.toString() ? `/customer/orders?${queryParams}` : '/customer/orders';
+
+      const endpoint = queryParams.toString() ? `/api/customer/orders?${queryParams}` : '/api/customer/orders';
       return await this.request(endpoint, {
         method: 'GET'
       });
     } catch (error) {
       console.warn('Failed to fetch customer orders:', error);
+      // Return empty data instead of mock data
+      throw error;
+    }
+  }
+
+  async getCustomerRecentOrders(limit = 5) {
+    try {
+      const queryParams = new URLSearchParams();
+      if (limit) queryParams.append('limit', limit);
+
+      const endpoint = `/api/customer/recent-orders?${queryParams}`;
+      return await this.request(endpoint, {
+        method: 'GET'
+      });
+    } catch (error) {
+      console.warn('Failed to fetch customer recent orders:', error);
       // Return empty data instead of mock data
       throw error;
     }
@@ -1551,7 +1594,7 @@ class ApiService {
       if (filters.limit) queryParams.append('limit', filters.limit);
       if (filters.category) queryParams.append('category', filters.category);
       
-      const endpoint = queryParams.toString() ? `/customer/wishlist?${queryParams}` : '/customer/wishlist';
+      const endpoint = queryParams.toString() ? `/api/customer/wishlist?${queryParams}` : '/api/customer/wishlist';
       return await this.request(endpoint, {
         method: 'GET'
       });

@@ -1,8 +1,16 @@
 import React from 'react';
 import Icon from '../../../components/AppIcon';
-import Button from '../../../components/ui/Button';
 
-const FilterChips = ({ filters, onRemoveFilter, onClearAll }) => {
+const FilterChips = ({ 
+  filters, 
+  onRemoveFilter, 
+  onClearAll,
+  className = 'mt-4 flex flex-wrap gap-2',
+  chipClassName = 'inline-flex items-center px-3 py-1 bg-teal-100 text-teal-800 text-sm rounded-full transition-all duration-300 hover:scale-105 hover:bg-teal-200 animate-fadeIn',
+  clearClassName = 'text-sm text-gray-500 hover:text-gray-700 underline transition-all duration-200 hover:scale-105',
+  showPriceChip = false,
+  showHeader = false
+}) => {
   const getFilterChips = () => {
     const chips = [];
     
@@ -15,13 +23,11 @@ const FilterChips = ({ filters, onRemoveFilter, onClearAll }) => {
             label: getFilterLabel(filterType, value)
           });
         });
-      } else if (filterType === 'priceRange' && (values.min || values.max)) {
-        const label = `Price: ${values.min || '0'} - ${values.max || '∞'} XAF`;
-        chips.push({
-          type: filterType,
-          value: values,
-          label: label
-        });
+      } else if (showPriceChip && filterType === 'priceRange' && (values.min != null || values.max != null)) {
+        const minVal = values.min != null ? values.min : 0;
+        const maxVal = values.max != null ? values.max : 'Max';
+        const label = `Price: ${minVal} - ${maxVal}`;
+        chips.push({ type: filterType, value: values, label });
       }
     });
     
@@ -65,7 +71,7 @@ const FilterChips = ({ filters, onRemoveFilter, onClearAll }) => {
       }
     };
 
-    return labelMaps[type]?.[value] || value;
+    return labelMaps[type]?.[String(value)] || value;
   };
 
   const handleRemoveFilter = (chip) => {
@@ -83,38 +89,32 @@ const FilterChips = ({ filters, onRemoveFilter, onClearAll }) => {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2 p-4 bg-muted/50 border-b border-border">
-      <span className="text-sm font-medium text-text-secondary mr-2">
-        Active Filters:
-      </span>
-      
+    <div className={className}>
+      {showHeader && (
+        <span className="text-sm font-medium text-gray-700 mr-2">Active Filters:</span>
+      )}
+
       {chips.map((chip, index) => (
-        <div
-          key={`${chip.type}-${index}`}
-          className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary text-sm rounded-full border border-primary/20"
-        >
-          <span>{chip.label}</span>
+        <span key={`${chip.type}-${index}`} className={chipClassName}>
+          {chip.label}
           <button
             onClick={() => handleRemoveFilter(chip)}
-            className="hover:text-destructive transition-colors"
+            className="ml-2 hover:text-teal-600 transition-all duration-200 hover:scale-110"
           >
-            <Icon name="X" size={14} />
+            <Icon name="X" size={12} />
           </button>
-        </div>
+        </span>
       ))}
-      
-      {chips.length > 1 && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onClearAll}
-          className="text-destructive hover:text-destructive ml-2"
-        >
-          Clear All
-        </Button>
-      )}
+
+      <button
+        onClick={onClearAll}
+        className={`${clearClassName} ml-2`}
+      >
+        Clear all
+      </button>
     </div>
   );
 };
 
 export default FilterChips;
+

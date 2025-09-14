@@ -714,7 +714,7 @@ class ApiService {
 
   // Product methods
   async createProduct(productData) {
-    return this.request('/products/', {
+    return this.request('/api/products/', {
       method: 'POST',
       body: JSON.stringify(productData)
     });
@@ -929,13 +929,13 @@ class ApiService {
     if (params.status) queryParams.append('status', params.status);
     if (params.search) queryParams.append('search', params.search);
     
-    return await this.request(`/orders/shop-owner/orders?${queryParams.toString()}`, {
+    return await this.request(`/api/orders/shop-owner/orders?${queryParams.toString()}`, {
       method: 'GET'
     });
   }
 
   async getOrderStats() {
-    return await this.request('/orders/shop-owner/orders/stats', {
+    return await this.request('/api/orders/shop-owner/orders/stats', {
       method: 'GET'
     });
   }
@@ -944,14 +944,14 @@ class ApiService {
     const payload = { status };
     if (trackingNumber) payload.tracking_number = trackingNumber;
     
-    return await this.request(`/orders/${orderId}/status`, {
+    return await this.request(`/api/orders/${orderId}/status`, {
       method: 'PATCH',
       body: JSON.stringify(payload)
     });
   }
 
   async getOrderDetails(orderId) {
-    return await this.request(`/orders/${orderId}`, {
+    return await this.request(`/api/orders/${orderId}`, {
       method: 'GET'
     });
   }
@@ -1056,9 +1056,27 @@ class ApiService {
 
   async getShopOwnerTodayStats() {
     try {
-      return await this.request('/shop-owner/dashboard/today-stats', {
-        method: 'GET'
-      });
+      // Use existing product stats endpoint as fallback
+      const productStats = await this.getMyProductStats();
+      const orderStats = await this.getOrderStats();
+      
+      return {
+        today_sales: orderStats.today_revenue || 0,
+        today_orders: orderStats.today_orders || 0,
+        yesterday_sales: orderStats.yesterday_revenue || 0,
+        yesterday_orders: orderStats.yesterday_orders || 0,
+        sales_change: orderStats.sales_change_percent || 0,
+        orders_change: orderStats.orders_change_percent || 0,
+        this_month_sales: orderStats.month_revenue || 0,
+        this_month_orders: orderStats.month_orders || 0,
+        last_month_sales: orderStats.last_month_revenue || 0,
+        last_month_orders: orderStats.last_month_orders || 0,
+        monthly_sales_change: orderStats.monthly_sales_change || 0,
+        monthly_orders_change: orderStats.monthly_orders_change || 0,
+        total_products: productStats.total_products || 0,
+        active_products: productStats.active_products || 0,
+        low_stock_products: productStats.low_stock_products || 0
+      };
     } catch (error) {
       console.warn('Failed to fetch today stats:', error);
       return {
@@ -1084,9 +1102,8 @@ class ApiService {
 
   async getShopOwnerRecentOrders(limit = 5) {
     try {
-      return await this.request(`/shop-owner/orders/recent?limit=${limit}`, {
-        method: 'GET'
-      });
+      // Use existing orders endpoint with limit
+      return await this.getShopOwnerOrders({ limit });
     } catch (error) {
       console.warn('Failed to fetch recent orders:', error);
       return [];
@@ -1095,9 +1112,9 @@ class ApiService {
 
   async getShopOwnerLowStockProducts() {
     try {
-      return await this.request('/shop-owner/products/low-stock', {
-        method: 'GET'
-      });
+      // Use existing products endpoint and filter for low stock
+      const products = await this.getMyProducts(0, 100, false);
+      return products.filter(product => product.stock_quantity <= 10 && product.stock_quantity > 0);
     } catch (error) {
       console.warn('Failed to fetch low stock products:', error);
       return [];
@@ -1105,23 +1122,12 @@ class ApiService {
   }
 
   async createOrder(orderData) {
-    return await this.request('/orders/create', {
+    return await this.request('/api/orders/create', {
       method: 'POST',
       body: JSON.stringify(orderData)
     });
   }
 
-  async updateOrderStatus(orderId, status) {
-    try {
-      return await this.request(`/shop-owner/orders/${orderId}/status`, {
-        method: 'PUT',
-        body: JSON.stringify({ status })
-      });
-    } catch (error) {
-      console.warn('Failed to update order status:', error);
-      throw error;
-    }
-  }
 
   async getShopOwnerCustomers(filters = {}) {
     try {
@@ -1269,9 +1275,20 @@ class ApiService {
 
   async getMyShopRatingStats() {
     try {
-      return await this.request('/shop-owner/rating-stats', {
-        method: 'GET'
-      });
+      // Use existing shop data as fallback
+      const shop = await this.getMyShop();
+      return {
+        average_rating: shop.average_rating || 0,
+        total_reviews: shop.total_ratings || 0,
+        rating_distribution: {
+          '5': shop.rating_5 || 0,
+          '4': shop.rating_4 || 0,
+          '3': shop.rating_3 || 0,
+          '2': shop.rating_2 || 0,
+          '1': shop.rating_1 || 0
+        },
+        isNewShop: false
+      };
     } catch (error) {
       // 404 is expected for new shop owners with no ratings yet
       if (error.status === 404 || error.message.includes('404')) {
@@ -2022,37 +2039,9 @@ class ApiService {
     });
   }
 
-  // Orders API methods
-  async getShopOwnerOrders(params = {}) {
-    const queryParams = new URLSearchParams();
-    if (params.page) queryParams.append('page', params.page);
-    if (params.limit) queryParams.append('limit', params.limit);
-    if (params.status) queryParams.append('status', params.status);
-    if (params.search) queryParams.append('search', params.search);
-
-    return this.request(`/orders/shop-owner/orders?${queryParams}`, {
-      method: 'GET'
-    });
-  }
-
-  async getOrderStats() {
-    return this.request('/orders/shop-owner/orders/stats', {
-      method: 'GET'
-    });
-  }
-
-  async updateOrderStatus(orderId, status, trackingNumber = null) {
-    const body = { status };
-    if (trackingNumber) body.tracking_number = trackingNumber;
-
-    return this.request(`/orders/${orderId}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify(body)
-    });
-  }
 
   async getOrderDetails(orderId) {
-    return this.request(`/orders/${orderId}`, {
+    return this.request(`/${orderId}`, {
       method: 'GET'
     });
   }
@@ -2062,215 +2051,6 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify(orderData)
     });
-  }
-
-  // Shop Owner Dashboard API methods
-  async getShopOwnerTodayStats() {
-    return this.request('/shop-owner/dashboard/today-stats', {
-      method: 'GET'
-    });
-  }
-
-  async getMyShop() {
-    try {
-      console.log('🏪 Fetching shop data via /api/shops/my-shop...');
-      const result = await this.request('/api/shops/my-shop', {
-        method: 'GET'
-      });
-      console.log('🏪 Shop data found:', result);
-      return result;
-    } catch (error) {
-      console.log('🏪 Shop fetch error:', error.status, error.message);
-      // Re-throw the error so calling code can handle it appropriately
-      throw error;
-    }
-  }
-
-  async getMyProductStats() {
-    return this.request('/products/my-stats', {
-      method: 'GET'
-    });
-  }
-
-  async getMyProducts(skip = 0, limit = 100, activeOnly = true) {
-    const params = new URLSearchParams();
-    params.append('skip', skip);
-    params.append('limit', limit);
-    if (activeOnly !== undefined) params.append('active_only', activeOnly);
-
-    return this.request(`/products/my-products?${params}`, {
-      method: 'GET'
-    });
-  }
-
-  // Subscription Management Methods
-  async cancelSubscription(data) {
-    const response = await this.request('/api/subscription/cancel', {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
-    return response;
-  }
-
-  async downgradeRole(data) {
-    const response = await this.request('/api/subscription/downgrade', {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
-    return response;
-  }
-
-  async getSubscriptionStatus(userId) {
-    const response = await this.request(`/api/subscription/status/${userId}`, {
-      method: 'GET'
-    });
-    return response;
-  }
-
-  // Wishlist Batch Operations
-  async batchWishlistOperation(operationType, items, config = null) {
-    try {
-      const response = await this.request('/api/batch/wishlist/batch', {
-        method: 'POST',
-        body: JSON.stringify({
-          operation_type: operationType,
-          items: items,
-          config: config
-        })
-      });
-      return response;
-    } catch (error) {
-      console.error(`Wishlist batch ${operationType} operation failed:`, error);
-      throw error;
-    }
-  }
-
-  // Convenience methods for specific wishlist batch operations
-  async batchAddToWishlist(productIds) {
-    const items = productIds.map(id => ({ product_id: id }));
-    return await this.batchWishlistOperation('add', items);
-  }
-
-  async batchRemoveFromWishlist(productIds) {
-    const items = productIds.map(id => ({ product_id: id }));
-    return await this.batchWishlistOperation('remove', items);
-  }
-
-  async batchToggleWishlist(productIds) {
-    const items = productIds.map(id => ({ product_id: id }));
-    return await this.batchWishlistOperation('toggle', items);
-  }
-
-  async batchClearWishlist() {
-    return await this.batchWishlistOperation('clear', [{}]);
-  }
-
-  async batchSyncWishlist(wishlistItems) {
-    const items = [{ wishlist_items: wishlistItems }];
-    return await this.batchWishlistOperation('sync', items);
-  }
-
-  // Standard Wishlist API endpoints (non-batch)
-  async getWishlistItems(limit = 50, offset = 0) {
-    try {
-      const response = await this.request(`/api/wishlist/?limit=${limit}&offset=${offset}`, {
-        method: 'GET'
-      });
-      return response;
-    } catch (error) {
-      console.error('Failed to get wishlist items:', error);
-      throw error;
-    }
-  }
-
-  async addToWishlistSingle(productId, priority = 'normal', notes = null) {
-    try {
-      const response = await this.request('/api/wishlist/add', {
-        method: 'POST',
-        body: JSON.stringify({
-          product_id: productId,
-          priority: priority,
-          notes: notes
-        })
-      });
-      return response;
-    } catch (error) {
-      console.error('Failed to add to wishlist:', error);
-      throw error;
-    }
-  }
-
-  async removeFromWishlistSingle(productId) {
-    try {
-      const response = await this.request(`/api/wishlist/${productId}`, {
-        method: 'DELETE'
-      });
-      return response;
-    } catch (error) {
-      console.error('Failed to remove from wishlist:', error);
-      throw error;
-    }
-  }
-
-  async toggleWishlistSingle(productId) {
-    try {
-      const response = await this.request(`/api/wishlist/toggle/${productId}`, {
-        method: 'POST'
-      });
-      return response;
-    } catch (error) {
-      console.error('Failed to toggle wishlist:', error);
-      throw error;
-    }
-  }
-
-  async getWishlistCount() {
-    try {
-      const response = await this.request('/api/wishlist/count', {
-        method: 'GET'
-      });
-      return response;
-    } catch (error) {
-      console.error('Failed to get wishlist count:', error);
-      throw error;
-    }
-  }
-
-  async clearWishlistSingle() {
-    try {
-      const response = await this.request('/api/wishlist/clear', {
-        method: 'DELETE'
-      });
-      return response;
-    } catch (error) {
-      console.error('Failed to clear wishlist:', error);
-      throw error;
-    }
-  }
-
-  async getWishlistPreferences() {
-    try {
-      const response = await this.request('/api/wishlist/preferences', {
-        method: 'GET'
-      });
-      return response;
-    } catch (error) {
-      console.error('Failed to get wishlist preferences:', error);
-      throw error;
-    }
-  }
-
-  async updateWishlistPreferences(preferences) {
-    try {
-      const response = await this.request('/api/wishlist/preferences', {
-        method: 'PUT',
-        body: JSON.stringify(preferences)
-      });
-      return response;
-    } catch (error) {
-      console.error('Failed to update wishlist preferences:', error);
-      throw error;
-    }
   }
 }
 

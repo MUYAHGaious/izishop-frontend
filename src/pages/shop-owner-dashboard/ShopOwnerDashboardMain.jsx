@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import DashboardHeaderNav from './components/DashboardHeaderNav';
+import Header from '../../components/ui/Header';
+import NavigationSection from '../../components/ui/NavigationSection';
 import TabNavigation from './components/TabNavigation';
 import QuickActionsPanel from './components/QuickActionsPanel';
 import ShopOverview from './components/ShopOverview';
@@ -103,8 +104,9 @@ const ShopOwnerDashboardMain = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <DashboardHeaderNav />
-        <div className="pt-16 flex items-center justify-center min-h-screen">
+        <Header />
+        <NavigationSection />
+        <div className="pt-32 flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading your dashboard...</p>
@@ -117,8 +119,9 @@ const ShopOwnerDashboardMain = () => {
   if (!shop) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <DashboardHeaderNav />
-        <div className="pt-16 flex items-center justify-center min-h-screen">
+        <Header />
+        <NavigationSection />
+        <div className="pt-32 flex items-center justify-center min-h-screen">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">No Shop Found</h2>
             <p className="text-gray-600 mb-6">You need to create a shop first.</p>
@@ -137,10 +140,11 @@ const ShopOwnerDashboardMain = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       {/* Top Navigation Header */}
-      <DashboardHeaderNav />
+      <Header />
+      <NavigationSection />
       
       {/* Dashboard Header */}
-      <div className="pt-16">
+      <div className="pt-32">
         <DashboardHeader shopData={shop} stats={stats} />
       </div>
       

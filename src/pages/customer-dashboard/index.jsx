@@ -194,7 +194,7 @@ const CustomerDashboard = () => {
       <NavigationSection />
       
       {/* Dashboard Header */}
-      <div className="bg-gradient-to-r from-teal-50 to-cyan-50 shadow-sm border-b border-teal-200">
+      <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div>
@@ -327,7 +327,7 @@ const CustomerDashboard = () => {
         {/* Enhanced Stats Cards with Real Data */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Total Orders Card */}
-          <div className="bg-white rounded-lg p-6 border border-teal-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/my-orders')}>
+          <div className="bg-white rounded-lg p-6 border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/my-orders')}>
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -350,7 +350,7 @@ const CustomerDashboard = () => {
           </div>
 
           {/* Active Orders Card */}
-          <div className="bg-white rounded-lg p-6 border border-teal-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/my-orders?status=active')}>
+          <div className="bg-white rounded-lg p-6 border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/my-orders?status=active')}>
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -373,7 +373,7 @@ const CustomerDashboard = () => {
           </div>
 
           {/* Delivered Orders Card */}
-          <div className="bg-white rounded-lg p-6 border border-teal-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/my-orders?status=delivered')}>
+          <div className="bg-white rounded-lg p-6 border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/my-orders?status=delivered')}>
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -396,7 +396,7 @@ const CustomerDashboard = () => {
           </div>
 
           {/* Total Spent Card */}
-          <div className="bg-white rounded-lg p-6 border border-teal-200 hover:shadow-lg transition-shadow cursor-pointer">
+          <div className="bg-white rounded-lg p-6 border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -421,7 +421,7 @@ const CustomerDashboard = () => {
 
         {/* Loyalty Points Card */}
         {stats.loyalty_points > 0 && (
-          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg p-6 border border-teal-200 mb-8">
+          <div className="bg-white rounded-lg p-6 border border-gray-200 mb-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center">
@@ -580,7 +580,7 @@ const CustomerDashboard = () => {
         {/* Enhanced Quick Actions with Real Data */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Browse Products Card */}
-          <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg p-6 border border-teal-200 text-center hover:shadow-lg transition-all cursor-pointer" onClick={() => navigate('/product-catalog')}>
+          <div className="bg-white rounded-lg p-6 border border-gray-200 text-center hover:shadow-lg transition-all cursor-pointer" onClick={() => navigate('/product-catalog')}>
             <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center mx-auto mb-4 shadow-lg">
               <Icon name="Search" size={28} className="text-white" />
             </div>
@@ -608,7 +608,7 @@ const CustomerDashboard = () => {
           </div>
 
           {/* Enhanced Wishlist Card */}
-          <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg p-6 border border-emerald-200 text-center hover:shadow-lg transition-all cursor-pointer" onClick={() => navigate('/wishlist')}>
+          <div className="bg-white rounded-lg p-6 border border-gray-200 text-center hover:shadow-lg transition-all cursor-pointer" onClick={() => navigate('/wishlist')}>
             <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center mx-auto mb-4 shadow-lg relative">
               <Icon name="Heart" size={28} className="text-white" />
               {wishlistCount > 0 && (
@@ -640,7 +640,7 @@ const CustomerDashboard = () => {
           </div>
 
           {/* Enhanced Customer Support Card */}
-          <div className="bg-gradient-to-br from-cyan-50 to-teal-50 rounded-lg p-6 border border-cyan-200 text-center hover:shadow-lg transition-all cursor-pointer" onClick={() => navigate('/customer-support')}>
+          <div className="bg-white rounded-lg p-6 border border-gray-200 text-center hover:shadow-lg transition-all cursor-pointer" onClick={() => navigate('/customer-support')}>
             <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-teal-600 rounded-lg flex items-center justify-center mx-auto mb-4 shadow-lg">
               <Icon name="MessageCircle" size={28} className="text-white" />
             </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Header from '../../components/ui/Header';
@@ -21,6 +21,41 @@ const AddProduct = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [hasShop, setHasShop] = useState(false);
+  const [checkingShop, setCheckingShop] = useState(true);
+
+  // Check if user has a shop
+  useEffect(() => {
+    const checkUserShop = async () => {
+      try {
+        setCheckingShop(true);
+        
+        // Check if user is a shop owner
+        if (user?.role !== 'SHOP_OWNER' && user?.role !== 'shop_owner') {
+          setHasShop(false);
+          setCheckingShop(false);
+          return;
+        }
+
+        // Try to get user's shop data
+        const shopData = await api.getMyShop();
+        if (shopData && shopData.id) {
+          setHasShop(true);
+        } else {
+          setHasShop(false);
+        }
+      } catch (error) {
+        console.log('No shop found for user:', error);
+        setHasShop(false);
+      } finally {
+        setCheckingShop(false);
+      }
+    };
+
+    if (user) {
+      checkUserShop();
+    }
+  }, [user]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -204,7 +239,56 @@ const AddProduct = () => {
             </div>
           </div>
 
+          {/* Shop Creation Prompt */}
+          {!checkingShop && !hasShop && (
+            <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-2xl p-6 mb-8">
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center">
+                    <Icon name="Store" size={24} className="text-white" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-teal-900 mb-2">
+                    Create Your Shop First
+                  </h3>
+                  <p className="text-teal-700 mb-4">
+                    You need to create a shop before you can add products. Setting up your shop is quick and easy!
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button
+                      onClick={() => navigate('/create-shop')}
+                      className="bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white border-0 shadow-lg"
+                    >
+                      <Icon name="Plus" size={16} className="mr-2" />
+                      Create Shop Now
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate('/shop-owner-dashboard')}
+                      className="border-teal-200 text-teal-700 hover:bg-teal-50"
+                    >
+                      <Icon name="ArrowLeft" size={16} className="mr-2" />
+                      Back to Dashboard
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Loading State */}
+          {checkingShop && (
+            <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+              <div className="flex items-center justify-center space-x-3">
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-teal-600 border-t-transparent"></div>
+                <span className="text-teal-700 font-medium">Checking your shop status...</span>
+              </div>
+            </div>
+          )}
+
           {/* Form */}
+          {!checkingShop && hasShop && (
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -437,7 +521,7 @@ const AddProduct = () => {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1"
+                  className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white border-0 shadow-lg"
                 >
                   {isSubmitting ? (
                     <>
@@ -454,6 +538,7 @@ const AddProduct = () => {
               </div>
             </form>
           </div>
+          )}
         </div>
       </div>
     </div>

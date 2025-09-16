@@ -1,7 +1,7 @@
 // Enterprise-level authentication service
 // Implements secure token management with automatic refresh and rotation
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = 'https://izishop-backend.onrender.com/api';
 
 class AuthService {
   constructor() {

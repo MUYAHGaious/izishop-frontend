@@ -72,7 +72,7 @@ class EnvironmentDetector {
       type: 'production',
       priority: 3,
       backends: [
-        'http://localhost:8000',
+        'https://izishop-backend.onrender.com',
         'https://api.izishopin.com'
       ],
       features: {

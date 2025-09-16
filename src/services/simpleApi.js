@@ -20,7 +20,7 @@ class SimpleApiService {
         this.currentEndpoint = 'http://127.0.0.1:8000';
         console.log('🔧 Development environment detected - using local backend');
       } else {
-        this.currentEndpoint = 'http://localhost:8000';
+        this.currentEndpoint = 'https://izishop-backend.onrender.com';
         console.log('🌍 Production environment detected - using production backend');
       }
       
@@ -30,7 +30,7 @@ class SimpleApiService {
     } catch (error) {
       console.error('❌ Failed to initialize API service:', error);
       // Fallback to production
-      this.currentEndpoint = 'http://localhost:8000';
+      this.currentEndpoint = 'https://izishop-backend.onrender.com';
       this.environment = 'production';
       return false;
     }

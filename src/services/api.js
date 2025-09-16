@@ -2,7 +2,7 @@
 // Best practices for authentication and error handling
 import authService from './authService';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'https://izishop-backend.onrender.com';
 
 class ApiService {
   constructor() {
@@ -812,11 +812,11 @@ class ApiService {
       limit: limit.toString(),
       active_only: activeOnly.toString()
     });
-
+    
     if (search) {
       params.append('search', search);
     }
-
+    
     if (category && category !== 'all') {
       params.append('category', category);
     }
@@ -847,7 +847,7 @@ class ApiService {
         categories.slice(0, 50).forEach(c => params.append('categories', String(c)));
       }
     }
-
+    
     return this.request(`/api/products/?${params}`);
   }
 
@@ -1577,7 +1577,7 @@ class ApiService {
       if (filters.offset) queryParams.append('offset', filters.offset);
       if (filters.date_from) queryParams.append('date_from', filters.date_from);
       if (filters.date_to) queryParams.append('date_to', filters.date_to);
-
+      
       const endpoint = queryParams.toString() ? `/api/customer/orders?${queryParams}` : '/api/customer/orders';
       return await this.request(endpoint, {
         method: 'GET'
@@ -2029,8 +2029,8 @@ class ApiService {
 
   async getNotificationStats() {
     return this.request('/api/notifications/stats', {
-      method: 'GET'
-    });
+        method: 'GET'
+      });
   }
 
   async getUnreadNotificationCount() {

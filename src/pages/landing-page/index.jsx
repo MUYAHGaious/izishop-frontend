@@ -149,7 +149,6 @@ const LandingPage = () => {
                   loading="eager"
                   decoding="sync"
                   style={{ 
-                    imageRendering: 'auto',
                     imageRendering: '-webkit-optimize-contrast',
                     filter: 'contrast(1.05) brightness(1.02)',
                     transform: 'translateZ(0)',

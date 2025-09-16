@@ -2,7 +2,31 @@
 // Best practices for authentication and error handling
 import authService from './authService';
 
-const API_BASE_URL = 'https://izishop-backend.onrender.com';
+// Environment-aware API base URL
+const getApiBaseUrl = () => {
+  const hostname = window.location.hostname;
+  const port = window.location.port;
+  
+  // Check for local development
+  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.local')) {
+    return 'http://127.0.0.1:8000';
+  }
+  
+  // Check for development ports
+  if (port && ['3000', '4028', '5173', '8080', '3001', '4000', '5000'].includes(port)) {
+    return 'http://127.0.0.1:8000';
+  }
+  
+  // Check environment variables
+  if (import.meta.env?.MODE === 'development' || import.meta.env?.NODE_ENV === 'development') {
+    return 'http://127.0.0.1:8000';
+  }
+  
+  // Default to production
+  return 'https://izishop-backend.onrender.com';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 class ApiService {
   constructor() {

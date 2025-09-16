@@ -81,10 +81,10 @@ const ReviewsSection = ({ product, reviews = [] }) => {
   };
 
   return (
-    <div className="bg-surface border border-border rounded-lg overflow-hidden">
+    <div className="bg-white border border-teal-200 rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="p-6 border-b border-border">
-        <h2 className="text-2xl font-bold text-foreground mb-4">Customer Reviews</h2>
+      <div className="p-6 border-b border-teal-200/50">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Customer Reviews</h2>
         
         {/* Rating Summary */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -92,7 +92,7 @@ const ReviewsSection = ({ product, reviews = [] }) => {
           <div className="space-y-4">
             <div className="flex items-center space-x-4">
               <div className="text-center">
-                <div className="text-4xl font-bold text-foreground">{averageRating}</div>
+                <div className="text-4xl font-bold text-teal-600">{averageRating}</div>
                 <div className="flex items-center justify-center space-x-1 mb-1">
                   {[...Array(5)].map((_, i) => (
                     <Icon
@@ -101,12 +101,12 @@ const ReviewsSection = ({ product, reviews = [] }) => {
                       size={16}
                       className={`${
                         i < Math.floor(averageRating)
-                          ? 'text-warning fill-current' :'text-border'
+                          ? 'text-yellow-400 fill-current' :'text-gray-300'
                       }`}
                     />
                   ))}
                 </div>
-                <div className="text-sm text-text-secondary">{totalReviews} reviews</div>
+                <div className="text-sm text-gray-500">{totalReviews} reviews</div>
               </div>
             </div>
           </div>
@@ -115,17 +115,17 @@ const ReviewsSection = ({ product, reviews = [] }) => {
           <div className="space-y-2">
             {[5, 4, 3, 2, 1].map((rating) => (
               <div key={rating} className="flex items-center space-x-2">
-                <span className="text-sm font-medium text-foreground w-8">{rating}</span>
-                <Icon name="Star" size={14} className="text-warning fill-current" />
-                <div className="flex-1 bg-muted rounded-full h-2">
+                <span className="text-sm font-medium text-gray-900 w-8">{rating}</span>
+                <Icon name="Star" size={14} className="text-yellow-400 fill-current" />
+                <div className="flex-1 bg-gray-200 rounded-full h-2">
                   <div
-                    className="bg-warning rounded-full h-2 marketplace-transition"
+                    className="bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full h-2 transition-all duration-300"
                     style={{
                       width: `${(ratingDistribution[rating] / totalReviews) * 100}%`
                     }}
                   />
                 </div>
-                <span className="text-sm text-text-secondary w-8">
+                <span className="text-sm text-gray-500 w-8">
                   {ratingDistribution[rating]}
                 </span>
               </div>
@@ -138,8 +138,10 @@ const ReviewsSection = ({ product, reviews = [] }) => {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setSelectedRating('all')}
-              className={`px-3 py-1 rounded-full text-sm font-medium marketplace-transition ${
-                selectedRating === 'all' ?'bg-primary text-primary-foreground' :'bg-muted text-text-secondary hover:bg-muted/80'
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                selectedRating === 'all' 
+                  ? 'bg-teal-500 text-white shadow-md' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-teal-50 hover:text-teal-600'
               }`}
             >
               All Reviews
@@ -148,10 +150,10 @@ const ReviewsSection = ({ product, reviews = [] }) => {
               <button
                 key={rating}
                 onClick={() => setSelectedRating(rating.toString())}
-                className={`px-3 py-1 rounded-full text-sm font-medium marketplace-transition ${
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                   selectedRating === rating.toString()
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-text-secondary hover:bg-muted/80'
+                    ? 'bg-teal-500 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-600 hover:bg-teal-50 hover:text-teal-600'
                 }`}
               >
                 {rating} Stars ({ratingDistribution[rating]})
@@ -162,7 +164,7 @@ const ReviewsSection = ({ product, reviews = [] }) => {
       </div>
 
       {/* Reviews List */}
-      <div className="divide-y divide-border">
+      <div className="divide-y divide-teal-200/30">
         {displayedReviews.length > 0 ? (
           displayedReviews.map((review) => {
             const isExpanded = expandedReviews.has(review.id);
@@ -183,12 +185,12 @@ const ReviewsSection = ({ product, reviews = [] }) => {
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2 mb-1">
-                      <h4 className="font-medium text-foreground">{review.user.name}</h4>
+                      <h4 className="font-medium text-gray-900">{review.user.name}</h4>
                       {review.user.isVerified && (
-                        <Icon name="BadgeCheck" size={16} className="text-primary" />
+                        <Icon name="BadgeCheck" size={16} className="text-teal-600" />
                       )}
                       {review.isVerifiedPurchase && (
-                        <span className="bg-success/10 text-success px-2 py-0.5 rounded-full text-xs font-medium">
+                        <span className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-xs font-medium">
                           Verified Purchase
                         </span>
                       )}
@@ -203,32 +205,32 @@ const ReviewsSection = ({ product, reviews = [] }) => {
                             size={14}
                             className={`${
                               i < review.rating
-                                ? 'text-warning fill-current' :'text-border'
+                                ? 'text-yellow-400 fill-current' :'text-gray-300'
                             }`}
                           />
                         ))}
                       </div>
-                      <span className="text-sm text-text-secondary">
+                      <span className="text-sm text-gray-500">
                         {formatDate(review.date)}
                       </span>
                     </div>
                     
                     {review.title && (
-                      <h5 className="font-medium text-foreground mb-2">{review.title}</h5>
+                      <h5 className="font-medium text-gray-900 mb-2">{review.title}</h5>
                     )}
                   </div>
                 </div>
 
                 {/* Review Content */}
                 <div className="space-y-3">
-                  <p className="text-sm text-foreground leading-relaxed">
+                  <p className="text-sm text-gray-700 leading-relaxed">
                     {displayContent}
                   </p>
                   
                   {shouldTruncate && (
                     <button
                       onClick={() => toggleExpandReview(review.id)}
-                      className="text-primary hover:text-primary/80 text-sm font-medium marketplace-transition"
+                      className="text-teal-600 hover:text-teal-700 text-sm font-medium transition-colors duration-300"
                     >
                       {isExpanded ? 'Show Less' : 'Read More'}
                     </button>
@@ -242,7 +244,7 @@ const ReviewsSection = ({ product, reviews = [] }) => {
                           key={index}
                           src={image}
                           alt={`Review image ${index + 1}`}
-                          className="w-20 h-20 rounded-md object-cover flex-shrink-0 cursor-pointer hover:opacity-80 marketplace-transition"
+                          className="w-20 h-20 rounded-xl object-cover flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity duration-300"
                         />
                       ))}
                     </div>
@@ -251,26 +253,26 @@ const ReviewsSection = ({ product, reviews = [] }) => {
 
                 {/* Seller Response */}
                 {review.sellerResponse && (
-                  <div className="bg-muted/50 rounded-lg p-4 ml-8">
+                  <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-xl p-4 ml-8">
                     <div className="flex items-center space-x-2 mb-2">
-                      <Icon name="Store" size={16} className="text-primary" />
-                      <span className="text-sm font-medium text-foreground">Seller Response</span>
-                      <span className="text-xs text-text-secondary">
+                      <Icon name="Store" size={16} className="text-teal-600" />
+                      <span className="text-sm font-medium text-gray-900">Seller Response</span>
+                      <span className="text-xs text-gray-500">
                         {formatDate(review.sellerResponse.date)}
                       </span>
                     </div>
-                    <p className="text-sm text-foreground">{review.sellerResponse.content}</p>
+                    <p className="text-sm text-gray-700">{review.sellerResponse.content}</p>
                   </div>
                 )}
 
                 {/* Review Actions */}
                 <div className="flex items-center space-x-4 text-sm">
-                  <button className="flex items-center space-x-1 text-text-secondary hover:text-foreground marketplace-transition">
+                  <button className="flex items-center space-x-1 text-gray-500 hover:text-teal-600 transition-colors duration-300">
                     <Icon name="ThumbsUp" size={14} />
                     <span>Helpful ({review.helpful})</span>
                   </button>
                   
-                  <button className="flex items-center space-x-1 text-text-secondary hover:text-foreground marketplace-transition">
+                  <button className="flex items-center space-x-1 text-gray-500 hover:text-red-500 transition-colors duration-300">
                     <Icon name="Flag" size={14} />
                     <span>Report</span>
                   </button>
@@ -280,19 +282,22 @@ const ReviewsSection = ({ product, reviews = [] }) => {
           })
         ) : (
           <div className="p-8 text-center">
-            <Icon name="MessageSquare" size={48} className="mx-auto mb-4 text-text-secondary" />
-            <h3 className="text-lg font-medium text-foreground mb-2">No reviews yet</h3>
-            <p className="text-text-secondary">Be the first to review this product</p>
+            <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Icon name="MessageSquare" size={32} className="text-white" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No reviews yet</h3>
+            <p className="text-gray-500">Be the first to review this product</p>
           </div>
         )}
       </div>
 
       {/* Load More Button */}
       {filteredReviews.length > 3 && (
-        <div className="p-6 border-t border-border text-center">
+        <div className="p-6 border-t border-teal-200/50 text-center">
           <Button
             variant="outline"
             onClick={() => setShowAllReviews(!showAllReviews)}
+            className="border-teal-300 text-teal-600 hover:bg-teal-50 hover:border-teal-400"
           >
             {showAllReviews ? 'Show Less Reviews' : `Show All ${filteredReviews.length} Reviews`}
           </Button>
@@ -300,8 +305,11 @@ const ReviewsSection = ({ product, reviews = [] }) => {
       )}
 
       {/* Write Review Button */}
-      <div className="p-6 border-t border-border">
-        <Button variant="default" fullWidth>
+      <div className="p-6 border-t border-teal-200/50">
+        <Button 
+          className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white w-full py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+          fullWidth
+        >
           <Icon name="Edit3" size={16} className="mr-2" />
           Write a Review
         </Button>

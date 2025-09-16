@@ -6,6 +6,8 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Icon from '../../components/AppIcon';
 import { showToast } from '../../components/ui/Toast';
+import CategorySelector from '../../components/CategorySelector';
+import SpecificationsBuilder from '../../components/SpecificationsBuilder';
 import api from '../../services/api';
 
 const AddProduct = () => {
@@ -16,9 +18,16 @@ const AddProduct = () => {
     description: '',
     price: '',
     stock_quantity: '',
+    sku: '',
+    brand: '',
+    condition: 'new',
+    category: '',
+    category_id: '',
     images: [],
     videos: []
   });
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [specifications, setSpecifications] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [hasShop, setHasShop] = useState(false);
@@ -153,6 +162,16 @@ const AddProduct = () => {
         description: formData.description.trim(),
         price: parseFloat(formData.price),
         stock_quantity: parseInt(formData.stock_quantity),
+        sku: formData.sku.trim() || null,
+        brand: formData.brand.trim() || null,
+        condition: formData.condition,
+        category: formData.category.trim() || null,
+        // Product specifications
+        weight: specifications.weight || null,
+        dimensions: specifications.dimensions || null,
+        specifications: specifications.specifications || null,
+        materials: specifications.materials || null,
+        manufacturing_location: specifications.manufacturing_location || null,
         is_active: true,
         image_urls: formData.images.map(img => img.url),
         video_urls: formData.videos.map(vid => vid.url)
@@ -172,9 +191,16 @@ const AddProduct = () => {
         description: '',
         price: '',
         stock_quantity: '',
+        sku: '',
+        brand: '',
+        condition: 'new',
+        category: '',
+        category_id: '',
         images: [],
         videos: []
       });
+      setSelectedCategory(null);
+      setSpecifications({});
       setErrors({});
 
       // Navigate based on user role immediately after success
@@ -352,6 +378,83 @@ const AddProduct = () => {
                 />
               </div>
 
+              {/* Enhanced Product Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Input
+                  label="SKU (Optional)"
+                  type="text"
+                  name="sku"
+                  placeholder="Product SKU"
+                  value={formData.sku}
+                  onChange={handleInputChange}
+                  error={errors.sku}
+                />
+
+                <Input
+                  label="Brand"
+                  type="text"
+                  name="brand"
+                  placeholder="Product brand"
+                  value={formData.brand}
+                  onChange={handleInputChange}
+                  error={errors.brand}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Product Condition <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="condition"
+                    value={formData.condition}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
+                    required
+                  >
+                    <option value="new">New</option>
+                    <option value="used">Used</option>
+                    <option value="refurbished">Refurbished</option>
+                  </select>
+                  {errors.condition && (
+                    <p className="text-sm text-red-500 mt-1">{errors.condition}</p>
+                  )}
+                </div>
+
+                <CategorySelector
+                  value={formData.category_id}
+                  onChange={(categoryId, categoryData) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      category_id: categoryId,
+                      category: categoryData ? categoryData.name : ''
+                    }));
+                    setSelectedCategory(categoryData);
+
+                    // Clear category error when user selects
+                    if (errors.category) {
+                      setErrors(prev => ({ ...prev, category: '' }));
+                    }
+                  }}
+                  error={errors.category}
+                  className="flex-1"
+                />
+              </div>
+
+              {/* Product Specifications */}
+              <div className="md:col-span-2">
+                <SpecificationsBuilder
+                  specifications={specifications.specifications || {}}
+                  dimensions={specifications.dimensions || {}}
+                  weight={specifications.weight || ''}
+                  materials={specifications.materials || ''}
+                  manufacturingLocation={specifications.manufacturing_location || ''}
+                  selectedCategory={selectedCategory}
+                  onChange={setSpecifications}
+                />
+              </div>
+
               {/* Image Upload */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -483,9 +586,29 @@ const AddProduct = () => {
                         Stock: {formData.stock_quantity || '0'}
                       </span>
                     </div>
+                    <div className="flex items-center gap-4 mt-1">
+                      {formData.brand && (
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                          {formData.brand}
+                        </span>
+                      )}
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        formData.condition === 'new' ? 'bg-green-100 text-green-700' :
+                        formData.condition === 'used' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-purple-100 text-purple-700'
+                      }`}>
+                        {formData.condition.charAt(0).toUpperCase() + formData.condition.slice(1)}
+                      </span>
+                      {formData.category && (
+                        <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                          {formData.category}
+                        </span>
+                      )}
+                    </div>
                     {formData.images.length > 0 && (
                       <div className="text-xs text-gray-500 mt-1">
                         {formData.images.length} image(s) • {formData.videos.length} video(s)
+                        {formData.sku && ` • SKU: ${formData.sku}`}
                       </div>
                     )}
                   </div>

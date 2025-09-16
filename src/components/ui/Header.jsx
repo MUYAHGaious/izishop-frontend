@@ -170,7 +170,7 @@ const Header = () => {
             )}
           </Link>
 
-
+            
             {/* User Avatar */}
             {isAuthenticated() ? (
               <div className="relative group">
@@ -297,9 +297,9 @@ const Header = () => {
               </div>
               </div>
           ) : (
-            <Button
-              variant="default"
-              iconName="Plus"
+            <Button 
+              variant="default" 
+              iconName="Plus" 
               size="sm"
               onClick={() => navigate('/authentication-login-register')}
               className="bg-teal-500 hover:bg-teal-600 text-white border-0 shadow-sm"

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import Image from '../../../components/AppImage';
 
@@ -8,7 +8,6 @@ const ImageGallery = ({ images = [], productName = '' }) => {
   const [isZoomed, setIsZoomed] = useState(false);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
-  const imageRef = useRef(null);
 
   const minSwipeDistance = 50;
 
@@ -80,10 +79,12 @@ const ImageGallery = ({ images = [], productName = '' }) => {
 
   if (!images || images.length === 0) {
     return (
-      <div className="w-full h-96 bg-muted rounded-lg flex items-center justify-center">
+      <div className="w-full h-96 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-2xl flex items-center justify-center">
         <div className="text-center">
-          <Icon name="Image" size={48} className="mx-auto mb-2 text-text-secondary" />
-          <p className="text-text-secondary">No images available</p>
+          <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Icon name="Image" size={32} className="text-white" />
+          </div>
+          <p className="text-gray-600 font-medium">No images available</p>
         </div>
       </div>
     );
@@ -91,8 +92,9 @@ const ImageGallery = ({ images = [], productName = '' }) => {
 
   return (
     <>
+    <div className="space-y-4">
       {/* Main Image Container */}
-      <div className="relative bg-surface rounded-lg overflow-hidden">
+      <div className="relative bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-200">
         <div
           className="relative aspect-square cursor-pointer"
           onTouchStart={onTouchStart}
@@ -101,7 +103,6 @@ const ImageGallery = ({ images = [], productName = '' }) => {
           onClick={toggleFullscreen}
         >
           <Image
-            ref={imageRef}
             src={images[currentImageIndex]}
             alt={`${productName} - Image ${currentImageIndex + 1}`}
             className="w-full h-full object-cover marketplace-transition"
@@ -153,30 +154,31 @@ const ImageGallery = ({ images = [], productName = '' }) => {
           </button>
         </div>
 
-        {/* Thumbnail Navigation */}
-        {images.length > 1 && (
-          <div className="p-4">
-            <div className="flex space-x-2 overflow-x-auto scrollbar-hide">
-              {images.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleThumbnailClick(index)}
-                  className={`flex-shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 marketplace-transition ${
-                    index === currentImageIndex
-                      ? 'border-primary' :'border-border hover:border-primary/50'
-                  }`}
-                >
-                  <Image
-                    src={image}
-                    alt={`${productName} thumbnail ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Thumbnail Navigation */}
+      {images.length > 1 && (
+        <div className="flex space-x-3 overflow-x-auto scrollbar-hide py-2">
+          {images.map((image, index) => (
+            <button
+              key={index}
+              onClick={() => handleThumbnailClick(index)}
+              className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                index === currentImageIndex
+                  ? 'border-teal-500 shadow-lg ring-2 ring-teal-200'
+                  : 'border-gray-200 hover:border-teal-300 hover:shadow-md'
+              }`}
+            >
+              <Image
+                src={image}
+                alt={`${productName} thumbnail ${index + 1}`}
+                className="w-full h-full object-cover"
+              />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
 
       {/* Fullscreen Modal */}
       {isFullscreen && (

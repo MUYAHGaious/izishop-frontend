@@ -21,25 +21,25 @@ const SellerCard = ({ seller }) => {
         return {
           icon: 'Store',
           label: 'Verified Shop',
-          color: 'text-primary bg-primary/10'
+          color: 'text-teal-700 bg-teal-100'
         };
-      case 'casual':
+      case 'individual':
         return {
           icon: 'User',
-          label: 'Casual Seller',
-          color: 'text-secondary bg-secondary/10'
+          label: 'Individual Seller',
+          color: 'text-gray-700 bg-gray-100'
         };
       case 'premium':
         return {
           icon: 'Crown',
           label: 'Premium Seller',
-          color: 'text-warning bg-warning/10'
+          color: 'text-yellow-700 bg-yellow-100'
         };
       default:
         return {
           icon: 'User',
           label: 'Seller',
-          color: 'text-text-secondary bg-muted'
+          color: 'text-gray-600 bg-gray-100'
         };
     }
   };
@@ -61,13 +61,13 @@ const SellerCard = ({ seller }) => {
 
   if (!seller) {
     return (
-      <div className="bg-surface border border-border rounded-lg p-4">
+      <div className="bg-white border border-teal-200 rounded-2xl p-4 shadow-lg">
         <div className="animate-pulse space-y-3">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-muted rounded-full"></div>
+            <div className="w-12 h-12 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-full"></div>
             <div className="flex-1 space-y-2">
-              <div className="h-4 bg-muted rounded w-3/4"></div>
-              <div className="h-3 bg-muted rounded w-1/2"></div>
+              <div className="h-4 bg-gradient-to-r from-teal-100 to-cyan-100 rounded w-3/4"></div>
+              <div className="h-3 bg-gradient-to-r from-teal-100 to-cyan-100 rounded w-1/2"></div>
             </div>
           </div>
         </div>
@@ -78,7 +78,7 @@ const SellerCard = ({ seller }) => {
   const badge = getSellerBadge(seller.type);
 
   return (
-    <div className="bg-surface border border-border rounded-lg p-4 space-y-4">
+    <div className="bg-white border border-teal-200 rounded-2xl p-6 space-y-4">
       {/* Seller Header */}
       <div className="flex items-start space-x-3">
         <div className="relative">
@@ -88,17 +88,17 @@ const SellerCard = ({ seller }) => {
             className="w-12 h-12 rounded-full object-cover"
           />
           {seller.isOnline && (
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success border-2 border-surface rounded-full"></div>
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
           )}
         </div>
         
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-2 mb-1">
-            <h3 className="font-semibold text-foreground truncate">
+            <h3 className="font-semibold text-gray-900 truncate">
               {seller.name}
             </h3>
             {seller.isVerified && (
-              <Icon name="BadgeCheck" size={16} className="text-primary flex-shrink-0" />
+              <Icon name="BadgeCheck" size={16} className="text-teal-600 flex-shrink-0" />
             )}
           </div>
           
@@ -109,61 +109,69 @@ const SellerCard = ({ seller }) => {
             </span>
             
             {seller.isOnline && (
-              <span className="text-xs text-success font-medium">Online</span>
+              <span className="text-xs text-green-600 font-medium">Online</span>
             )}
           </div>
           
-          <div className="flex items-center space-x-4 text-sm text-text-secondary">
-            <div className="flex items-center space-x-1">
-              <Icon name="Star" size={14} className="text-warning fill-current" />
-              <span className="font-medium">{seller.rating}</span>
-              <span>({seller.reviewCount})</span>
-            </div>
-            
+          <div className="flex items-center space-x-4 text-sm text-gray-500">
+            {seller.rating && (
+              <div className="flex items-center space-x-1">
+                <Icon name="Star" size={14} className="text-yellow-400 fill-current" />
+                <span className="font-medium">{seller.rating}</span>
+                <span>({seller.reviewCount || 0})</span>
+              </div>
+            )}
+
             <div className="flex items-center space-x-1">
               <Icon name="Package" size={14} />
-              <span>{seller.productCount} products</span>
+              <span>{seller.productCount || 0} products</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Seller Stats */}
-      <div className="grid grid-cols-2 gap-4 py-3 border-t border-border">
-        <div className="text-center">
-          <div className="text-lg font-bold text-foreground">
-            {seller.responseRate}%
-          </div>
-          <div className="text-xs text-text-secondary">Response Rate</div>
+      {/* Seller Stats - only show if data exists */}
+      {(seller.responseRate || seller.responseTime) && (
+        <div className="grid grid-cols-2 gap-4 py-3 border-t border-teal-200/50">
+          {seller.responseRate && (
+            <div className="text-center">
+              <div className="text-lg font-bold text-teal-600">
+                {seller.responseRate}%
+              </div>
+              <div className="text-xs text-gray-500">Response Rate</div>
+            </div>
+          )}
+
+          {seller.responseTime && (
+            <div className="text-center">
+              <div className="text-lg font-bold text-teal-600">
+                {formatResponseTime(seller.responseTime)}
+              </div>
+              <div className="text-xs text-gray-500">Response Time</div>
+            </div>
+          )}
         </div>
-        
-        <div className="text-center">
-          <div className="text-lg font-bold text-foreground">
-            {formatResponseTime(seller.responseTime)}
-          </div>
-          <div className="text-xs text-text-secondary">Response Time</div>
-        </div>
-      </div>
+      )}
 
       {/* Additional Info */}
       <div className="space-y-2 text-sm">
         {seller.location && (
-          <div className="flex items-center space-x-2 text-text-secondary">
-            <Icon name="MapPin" size={14} />
+          <div className="flex items-center space-x-2 text-gray-500">
+            <Icon name="MapPin" size={14} className="text-teal-600" />
             <span>{seller.location}</span>
           </div>
         )}
         
         {seller.joinedDate && (
-          <div className="flex items-center space-x-2 text-text-secondary">
-            <Icon name="Calendar" size={14} />
+          <div className="flex items-center space-x-2 text-gray-500">
+            <Icon name="Calendar" size={14} className="text-teal-600" />
             <span>Joined {seller.joinedDate}</span>
           </div>
         )}
         
         {seller.lastSeen && (
-          <div className="flex items-center space-x-2 text-text-secondary">
-            <Icon name="Clock" size={14} />
+          <div className="flex items-center space-x-2 text-gray-500">
+            <Icon name="Clock" size={14} className="text-teal-600" />
             <span>Last seen {seller.lastSeen}</span>
           </div>
         )}
@@ -172,12 +180,12 @@ const SellerCard = ({ seller }) => {
       {/* Seller Badges/Achievements */}
       {seller.badges && seller.badges.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-medium text-foreground">Achievements</h4>
+          <h4 className="text-sm font-medium text-gray-900">Achievements</h4>
           <div className="flex flex-wrap gap-1">
             {seller.badges.map((badge, index) => (
               <span
                 key={index}
-                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent"
+                className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-700"
               >
                 <Icon name={badge.icon} size={12} className="mr-1" />
                 {badge.name}
@@ -188,19 +196,34 @@ const SellerCard = ({ seller }) => {
       )}
 
       {/* Action Buttons */}
-      <div className="space-y-2 pt-2 border-t border-border">
-        <Button variant="outline" fullWidth onClick={handleViewShop}>
+      <div className="space-y-2 pt-2 border-t border-teal-200/50">
+        <Button 
+          className="border-teal-300 text-teal-600 hover:bg-teal-50 hover:border-teal-400 w-full py-3 rounded-xl font-medium transition-all duration-300"
+          variant="outline" 
+          fullWidth 
+          onClick={handleViewShop}
+        >
           <Icon name="Store" size={16} className="mr-2" />
           View Shop
         </Button>
         
-        <Button variant="default" fullWidth onClick={handleContactSeller}>
+        <Button 
+          className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white w-full py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+          variant="default" 
+          fullWidth 
+          onClick={handleContactSeller}
+        >
           <Icon name="MessageCircle" size={16} className="mr-2" />
           Contact Seller
         </Button>
         
         {seller.type === 'shop' && (
-          <Button variant="ghost" fullWidth onClick={handleFollowShop}>
+          <Button 
+            className="text-teal-600 hover:bg-teal-50 w-full py-3 rounded-xl font-medium transition-all duration-300"
+            variant="ghost" 
+            fullWidth 
+            onClick={handleFollowShop}
+          >
             <Icon name="Heart" size={16} className="mr-2" />
             Follow Shop
           </Button>
@@ -208,36 +231,36 @@ const SellerCard = ({ seller }) => {
       </div>
 
       {/* Trust Indicators */}
-      <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-        <h4 className="text-sm font-medium text-foreground flex items-center">
-          <Icon name="Shield" size={14} className="mr-2" />
+      <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-xl p-4 space-y-2">
+        <h4 className="text-sm font-medium text-gray-900 flex items-center">
+          <Icon name="Shield" size={14} className="mr-2 text-teal-600" />
           Trust & Safety
         </h4>
         
-        <div className="space-y-1 text-xs text-text-secondary">
+        <div className="space-y-1 text-xs text-gray-600">
           {seller.isVerified && (
             <div className="flex items-center space-x-2">
-              <Icon name="Check" size={12} className="text-success" />
+              <Icon name="Check" size={12} className="text-green-500" />
               <span>Identity verified</span>
             </div>
           )}
           
           {seller.hasBusinessLicense && (
             <div className="flex items-center space-x-2">
-              <Icon name="Check" size={12} className="text-success" />
+              <Icon name="Check" size={12} className="text-green-500" />
               <span>Business license verified</span>
             </div>
           )}
           
           {seller.hasReturnPolicy && (
             <div className="flex items-center space-x-2">
-              <Icon name="Check" size={12} className="text-success" />
+              <Icon name="Check" size={12} className="text-green-500" />
               <span>Return policy available</span>
             </div>
           )}
           
           <div className="flex items-center space-x-2">
-            <Icon name="Check" size={12} className="text-success" />
+            <Icon name="Check" size={12} className="text-green-500" />
             <span>Secure payment protected</span>
           </div>
         </div>

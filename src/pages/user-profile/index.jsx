@@ -387,7 +387,7 @@ const UserProfile = () => {
             <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-transparent to-black/30 group-hover:from-black/40 group-hover:to-black/50 transition-all duration-300"></div>
             
             {/* Edit Cover Button with glass morphism */}
-            <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 rounded-xl px-4 py-2 opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg">
+            <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 rounded-xl px-4 py-2 opacity-0 group-hover:opacity-100 transition-all duration-300 ">
               <div className="flex items-center space-x-2">
                 <Icon name="Camera" size={16} className="text-white" />
                 <span className="text-sm font-semibold text-white">Edit Cover</span>
@@ -408,7 +408,7 @@ const UserProfile = () => {
           <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 sm:left-6 sm:transform-none z-20">
             <div className="relative group">
               <div 
-                className="w-28 h-28 sm:w-36 sm:h-36 bg-white rounded-full p-1 shadow-lg cursor-pointer"
+                className="w-28 h-28 sm:w-36 sm:h-36 bg-white rounded-full p-1  cursor-pointer"
                 onClick={handleProfilePictureClick}
               >
                 <div className="w-full h-full bg-gradient-to-br from-teal-500 to-emerald-600 rounded-full flex items-center justify-center overflow-hidden relative">
@@ -435,7 +435,7 @@ const UserProfile = () => {
               
               {/* Mobile-friendly camera button */}
               <button 
-                className="absolute -bottom-1 -right-1 w-10 h-10 bg-teal-600 hover:bg-teal-700 rounded-full flex items-center justify-center text-white transition-colors shadow-lg sm:hidden"
+                className="absolute -bottom-1 -right-1 w-10 h-10 bg-teal-600 hover:bg-teal-700 rounded-full flex items-center justify-center text-white transition-colors  sm:hidden"
                 onClick={handleProfilePictureClick}
               >
                 <Icon name="Camera" size={18} />
@@ -506,12 +506,12 @@ const UserProfile = () => {
             <div className="lg:col-span-2 space-y-6">
               
               {/* About Section */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 relative overflow-hidden">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl  border border-white/20 p-6 relative overflow-hidden">
                 {/* Subtle blur effect */}
                 <div className="absolute top-0 right-0 w-24 h-24 bg-teal-400/5 rounded-full -translate-y-12 translate-x-12 pointer-events-none"></div>
                 
                 <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center relative z-10">
-                  <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                  <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center mr-3 ">
                     <Icon name="User" size={18} className="text-white" />
                   </div>
                   About
@@ -602,12 +602,12 @@ const UserProfile = () => {
 
               {/* My Shops Section - Only for Shop Owners */}
               {(user?.role === 'SHOP_OWNER' || user?.role === 'shop_owner') && (
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 relative overflow-hidden">
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl  border border-white/20 p-6 relative overflow-hidden">
                   {/* Subtle blur effect */}
                   <div className="absolute top-0 right-0 w-32 h-32 bg-teal-400/5 rounded-full -translate-y-16 translate-x-16 pointer-events-none"></div>
                   
                   <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center relative z-10">
-                    <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center mr-3 ">
                       <Icon name="Store" size={18} className="text-white" />
                     </div>
                     My Shops ({userShops.length})
@@ -664,12 +664,12 @@ const UserProfile = () => {
               )}
 
               {/* Recent Activity */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 relative overflow-hidden">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl  border border-white/20 p-6 relative overflow-hidden">
                 {/* Subtle blur effect */}
                 <div className="absolute top-0 right-0 w-28 h-28 bg-purple-400/5 rounded-full -translate-y-14 translate-x-14 pointer-events-none"></div>
                 
                 <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center relative z-10" style={{ fontFamily: "'Playfair Display', serif" }}>
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mr-3 ">
                     <Icon name="Activity" size={18} className="text-white" />
                   </div>
                   Recent Activity
@@ -703,7 +703,7 @@ const UserProfile = () => {
             <div className="space-y-6">
               
               {/* Quick Actions */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 relative overflow-hidden">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl  border border-white/20 p-6 relative overflow-hidden">
                 {/* Subtle blur effect */}
                 <div className="absolute top-0 right-0 w-24 h-24 bg-teal-400/5 rounded-full -translate-y-12 translate-x-12 pointer-events-none"></div>
                 
@@ -715,7 +715,7 @@ const UserProfile = () => {
                     onClick={navigateToDashboard}
                     className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-teal-50/50 to-teal-100/30 hover:from-teal-100/70 hover:to-teal-200/50 rounded-xl transition-all duration-300 text-left active:scale-95 border border-teal-200/30 hover:border-teal-300/50 shadow-sm hover:shadow-md"
                   >
-                    <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center ">
                       <Icon name="LayoutDashboard" size={18} className="text-white" />
                     </div>
                     <span className="text-sm font-semibold text-gray-700">Dashboard</span>
@@ -725,7 +725,7 @@ const UserProfile = () => {
                     onClick={() => navigate('/shopping-cart')}
                     className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-emerald-50/50 to-emerald-100/30 hover:from-emerald-100/70 hover:to-emerald-200/50 rounded-xl transition-all duration-300 text-left active:scale-95 border border-emerald-200/30 hover:border-emerald-300/50 shadow-sm hover:shadow-md"
                   >
-                    <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center ">
                       <Icon name="ShoppingCart" size={18} className="text-white" />
                     </div>
                     <span className="text-sm font-semibold text-gray-700">My Cart</span>
@@ -735,7 +735,7 @@ const UserProfile = () => {
                     onClick={() => navigate('/order-management')}
                     className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50/50 to-blue-100/30 hover:from-blue-100/70 hover:to-blue-200/50 rounded-xl transition-all duration-300 text-left active:scale-95 border border-blue-200/30 hover:border-blue-300/50 shadow-sm hover:shadow-md"
                   >
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center ">
                       <Icon name="Package" size={18} className="text-white" />
                     </div>
                     <span className="text-sm font-semibold text-gray-700">Orders</span>
@@ -754,7 +754,7 @@ const UserProfile = () => {
               </div>
 
               {/* Account Settings */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 relative overflow-hidden">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl  border border-white/20 p-6 relative overflow-hidden">
                 {/* Subtle blur effect */}
                 <div className="absolute top-0 right-0 w-24 h-24 bg-gray-400/5 rounded-full -translate-y-12 translate-x-12 pointer-events-none"></div>
                 
@@ -766,7 +766,7 @@ const UserProfile = () => {
                     onClick={() => showToast('Security settings coming soon', 'info')}
                     className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-gray-50/50 to-gray-100/30 hover:from-gray-100/70 hover:to-gray-200/50 rounded-xl transition-all duration-300 text-left border border-gray-200/30 hover:border-gray-300/50 shadow-sm hover:shadow-md"
                   >
-                    <div className="w-10 h-10 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center ">
                       <Icon name="Lock" size={18} className="text-white" />
                     </div>
                     <span className="text-sm font-semibold text-gray-700">Security</span>
@@ -776,7 +776,7 @@ const UserProfile = () => {
                     onClick={() => showToast('Notification settings coming soon', 'info')}
                     className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-indigo-50/50 to-indigo-100/30 hover:from-indigo-100/70 hover:to-indigo-200/50 rounded-xl transition-all duration-300 text-left border border-indigo-200/30 hover:border-indigo-300/50 shadow-sm hover:shadow-md"
                   >
-                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center ">
                       <Icon name="Bell" size={18} className="text-white" />
                     </div>
                     <span className="text-sm font-semibold text-gray-700">Notifications</span>
@@ -786,7 +786,7 @@ const UserProfile = () => {
                     onClick={() => showToast('Privacy settings coming soon', 'info')}
                     className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-teal-50/50 to-teal-100/30 hover:from-teal-100/70 hover:to-teal-200/50 rounded-xl transition-all duration-300 text-left border border-teal-200/30 hover:border-teal-300/50 shadow-sm hover:shadow-md"
                   >
-                    <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center ">
                       <Icon name="Shield" size={18} className="text-white" />
                     </div>
                     <span className="text-sm font-semibold text-gray-700">Privacy</span>
@@ -796,7 +796,7 @@ const UserProfile = () => {
                     onClick={handleLogout}
                     className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-red-50/50 to-red-100/30 hover:from-red-100/70 hover:to-red-200/50 rounded-xl transition-all duration-300 text-left active:scale-95 border border-red-200/30 hover:border-red-300/50 shadow-sm hover:shadow-md"
                   >
-                    <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center shadow-lg">
+                    <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center ">
                       <Icon name="LogOut" size={18} className="text-white" />
                     </div>
                     <span className="text-sm font-semibold text-red-700">Sign Out</span>

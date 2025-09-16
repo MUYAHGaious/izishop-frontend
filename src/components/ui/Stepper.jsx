@@ -31,13 +31,19 @@ export default function Stepper({
   const updateStep = (newStep) => {
     console.log('updateStep called with:', newStep);
     console.log('Total steps:', totalSteps);
-    setCurrentStep(newStep);
+    
     if (newStep > totalSteps) {
       console.log('Calling onFinalStepCompleted');
       onFinalStepCompleted();
+      setCurrentStep(newStep);
     } else {
       console.log('Calling onStepChange with:', newStep);
-      onStepChange(newStep);
+      const canProceed = onStepChange(newStep);
+      if (canProceed !== false) {
+        setCurrentStep(newStep);
+      } else {
+        console.log('Step change prevented by onStepChange callback');
+      }
     }
   };
 

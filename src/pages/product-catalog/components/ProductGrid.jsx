@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import { useWishlist } from '../../../contexts/WishlistContext';
@@ -7,6 +8,7 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const { isInWishlist, toggleWishlist, isLoading: wishlistLoading } = useWishlist();
+  const navigate = useNavigate();
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('fr-FR').format(price);
@@ -36,6 +38,10 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
     }
   };
 
+  const handleViewDetails = () => {
+    navigate(`/product-detail?id=${product.id}`);
+  };
+
   if (viewMode === 'list') {
     return (
       <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 overflow-hidden">
@@ -45,26 +51,14 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
             {!imageLoaded && (
               <div className="absolute inset-0 bg-gray-200 animate-pulse rounded-lg"></div>
             )}
-            <img 
-              src={product.image} 
+            <img
+              src={product.image}
               alt={product.name}
               className={`w-full h-full object-cover rounded-lg transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
               onLoad={() => setImageLoaded(true)}
             />
+
             
-            {/* Badges */}
-            <div className="absolute top-2 left-2 flex flex-col gap-1">
-              {product.discount > 0 && (
-                <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                  -{product.discount}%
-                </span>
-              )}
-              {product.isNew && (
-                <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                  NEW
-                </span>
-              )}
-            </div>
 
             {/* Wishlist Button */}
             <button
@@ -121,12 +115,8 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
             <div className="flex items-center space-x-2 mb-3">
               <Icon name="Store" size={14} className="text-gray-400" />
               <span className="text-sm text-gray-600">{product.shopName}</span>
-              {product.isFreeShipping && (
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                  Free Shipping
-                </span>
-              )}
             </div>
+
 
             {/* Action Buttons */}
             <div className="flex gap-2">
@@ -147,12 +137,14 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
               <Button
                 variant="outline"
                 className="px-4 h-10 border-gray-300 hover:border-teal-500 hover:text-teal-500"
+                onClick={handleViewDetails}
               >
                 <Icon name="Eye" size={16} />
               </Button>
             </div>
           </div>
         </div>
+
       </div>
     );
   }
@@ -165,42 +157,26 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
         {!imageLoaded && (
           <div className="absolute inset-0 bg-gray-200 animate-pulse"></div>
         )}
-        <img 
-          src={product.image} 
+        <img
+          src={product.image}
           alt={product.name}
           className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
           onLoad={() => setImageLoaded(true)}
         />
+
         
         {/* Overlay on hover */}
         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
           <Button
             variant="outline"
             className="bg-white/90 backdrop-blur-sm border-white text-gray-900 hover:bg-white"
+            onClick={handleViewDetails}
           >
             <Icon name="Eye" size={16} className="mr-2" />
-            Quick View
+            Preview
           </Button>
         </div>
 
-        {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1">
-          {product.discount > 0 && (
-            <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
-              -{product.discount}%
-            </span>
-          )}
-          {product.isNew && (
-            <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
-              NEW
-            </span>
-          )}
-          {product.isBestSeller && (
-            <span className="bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
-              BESTSELLER
-            </span>
-          )}
-        </div>
 
         {/* Wishlist Button */}
         <button
@@ -217,12 +193,6 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
           />
         </button>
 
-        {/* Stock indicator */}
-        {product.stock <= 5 && (
-          <div className="absolute bottom-3 left-3 bg-teal-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-            Only {product.stock} left!
-          </div>
-        )}
       </div>
 
       {/* Product Info */}
@@ -265,19 +235,29 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
           <span className="text-xs text-gray-600 truncate">{product.shopName}</span>
         </div>
 
-        {/* Features */}
+        {/* Clean Badges */}
         <div className="flex flex-wrap gap-1 mb-3">
-          {product.isFreeShipping && (
-            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-              Free Shipping
-            </span>
-          )}
-          {product.badges?.slice(0, 1).map((badge, index) => (
-            <span key={index} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-              {badge}
-            </span>
-          ))}
+          {product.badges?.slice(0, 3).map((badge, index) => {
+            const lightColorClasses = {
+              red: 'bg-red-100 text-red-700',
+              green: 'bg-green-100 text-green-700',
+              blue: 'bg-blue-100 text-blue-700',
+              orange: 'bg-orange-100 text-orange-700',
+              purple: 'bg-purple-100 text-purple-700',
+              yellow: 'bg-yellow-100 text-yellow-700'
+            };
+
+            return (
+              <span
+                key={index}
+                className={`text-xs font-medium ${lightColorClasses[badge.color] || 'bg-gray-100 text-gray-700'} px-2 py-1 rounded-full`}
+              >
+                {badge.label}
+              </span>
+            );
+          })}
         </div>
+
 
         {/* Add to Cart Button */}
         <Button
@@ -295,16 +275,17 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
           )}
         </Button>
       </div>
+
     </div>
   );
 };
 
-const ProductGrid = ({ 
-  products, 
-  loading, 
-  onLoadMore, 
-  hasMore, 
-  onAddToCart, 
+const ProductGrid = ({
+  products,
+  loading,
+  onLoadMore,
+  hasMore,
+  onAddToCart,
   onToggleWishlist,
   viewMode = 'grid'
 }) => {
@@ -436,6 +417,7 @@ const ProductGrid = ({
           </Button>
         </div>
       )}
+
     </div>
   );
 };

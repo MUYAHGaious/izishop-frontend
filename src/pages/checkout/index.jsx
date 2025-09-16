@@ -74,21 +74,36 @@ const Checkout = () => {
   }, [formData]);
 
   const validateStep = (step) => {
+    console.log('Validating step:', step, 'Form data:', formData);
     switch (step) {
       case 1:
-        return formData.fullName && formData.phone && formData.address && formData.city;
+        const step1Valid = formData.fullName && formData.phone && formData.address && formData.city;
+        console.log('Step 1 validation:', step1Valid, {
+          fullName: formData.fullName,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city
+        });
+        return step1Valid;
       case 2:
-        return formData.deliveryOption;
+        const step2Valid = formData.deliveryOption;
+        console.log('Step 2 validation:', step2Valid, { deliveryOption: formData.deliveryOption });
+        return step2Valid;
       case 3:
+        console.log('Step 3 validation: true (review step)');
         return true; // Review step doesn't need validation
       case 4:
-        return formData.paymentMethod;
+        const step4Valid = formData.paymentMethod;
+        console.log('Step 4 validation:', step4Valid, { paymentMethod: formData.paymentMethod });
+        return step4Valid;
       default:
+        console.log('Default validation: true');
         return true;
     }
   };
 
   const handleStepChange = (newStep) => {
+    console.log('handleStepChange called with newStep:', newStep);
     // Validate current step before allowing progression
     if (newStep > 1 && !validateStep(newStep - 1)) {
       console.log('Step validation failed, preventing progression');
@@ -112,7 +127,7 @@ const Checkout = () => {
         <meta name="keywords" content="checkout, payment, delivery, Cameroon, MTN MoMo, Orange Money" />
       </Helmet>
 
-      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100">
+      <div className="min-h-screen bg-gradient-to-r from-teal-50 to-cyan-50">
         {/* Clean Header */}
         <header className="bg-white shadow-sm sticky top-0 z-50">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -145,9 +160,69 @@ const Checkout = () => {
           </div>
         </header>
 
+        {/* Payment Partners Section */}
+        <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border-b border-teal-200">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Secure Payment Partners</h2>
+              <p className="text-gray-600">We accept payments through trusted mobile money services</p>
+            </div>
+            
+            <div className="flex items-center justify-center space-x-16">
+              {/* Visa */}
+              <div className="flex flex-col items-center space-y-3">
+                <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center p-4">
+                  <svg width="60" height="36" viewBox="0 0 50 30" fill="none">
+                    <rect width="50" height="30" rx="6" fill="#1A1F71"/>
+                    <text x="25" y="20" textAnchor="middle" fill="#FFF" fontSize="12" fontWeight="bold">VISA</text>
+                  </svg>
+                </div>
+                <span className="text-sm font-medium text-gray-700">Visa</span>
+              </div>
+
+              {/* Mastercard */}
+              <div className="flex flex-col items-center space-y-3">
+                <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center p-4">
+                  <svg width="60" height="36" viewBox="0 0 50 30" fill="none">
+                    <rect width="50" height="30" rx="6" fill="#EB001B"/>
+                    <circle cx="18" cy="15" r="9" fill="#EB001B"/>
+                    <circle cx="32" cy="15" r="9" fill="#F79E1B"/>
+                    <path d="M25 6c-5 0-9 4-9 9s4 9 9 9 9-4 9-9-4-9-9-9z" fill="#FF5F00"/>
+                  </svg>
+                </div>
+                <span className="text-sm font-medium text-gray-700">Mastercard</span>
+              </div>
+
+              {/* MTN Mobile Money */}
+              <div className="flex flex-col items-center space-y-3">
+                <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center p-4">
+                  <img 
+                    src="/assets/brands/69-691715_mtn-mm-logo-generic-mtn-mobile-money-logo.svg" 
+                    alt="MTN Mobile Money" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <span className="text-sm font-medium text-gray-700">MTN Mobile Money</span>
+              </div>
+
+              {/* Orange Money */}
+              <div className="flex flex-col items-center space-y-3">
+                <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center p-4">
+                  <img 
+                    src="/assets/brands/Orange_Money-Logo.wine.svg" 
+                    alt="Orange Money" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <span className="text-sm font-medium text-gray-700">Orange Money</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Main Content */}
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
             <div className="p-8">
               <div className="text-center mb-8">
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">

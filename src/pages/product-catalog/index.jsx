@@ -319,42 +319,125 @@ const ProductCatalog = () => {
     return filteredProducts;
   };
 
-  // Transform API product data
-  const transformProduct = (product) => {
+  // Transform API product data with enhanced image handling and shop name fetching
+  const transformProduct = async (product) => {
     const createdAt = new Date(product.created_at);
     const daysSinceCreated = Math.floor((new Date() - createdAt) / (1000 * 60 * 60 * 24));
-    const isNew = daysSinceCreated < 30;
-    
-    // Use actual product images if available, otherwise fallback to default
-    const productImage = product.image_urls && product.image_urls.length > 0 
-      ? product.image_urls[0] 
-      : '/assets/images/no_image.png';
-    
+    const isNew = daysSinceCreated < 7; // More realistic "new" threshold
+
+    // Enhanced image URL handling
+    let productImage = '/assets/images/no_image.png';
+    let imageUrls = [];
+
+    if (product.image_urls) {
+      try {
+        // Handle JSON string or array
+        if (typeof product.image_urls === 'string') {
+          imageUrls = JSON.parse(product.image_urls);
+        } else if (Array.isArray(product.image_urls)) {
+          imageUrls = product.image_urls;
+        }
+
+        if (imageUrls && imageUrls.length > 0) {
+          productImage = imageUrls[0];
+        }
+      } catch (error) {
+        console.warn('Failed to parse image URLs for product:', product.id, error);
+      }
+    }
+
+    // Fetch shop name if not already included
+    let shopName = product.shopName || "Loading...";
+    let shopVerified = product.shopVerified || false;
+    let shopRating = product.shopRating || 0;
+
+    if (!product.shopName && product.seller_id) {
+      try {
+        const userResponse = await api.request(`/api/users/${product.seller_id}`, {}, false);
+        if (userResponse) {
+          shopName = userResponse.first_name + ' ' + userResponse.last_name;
+
+          // Try to get shop info if user is a shop owner
+          try {
+            const shopResponse = await api.request(`/api/shops/by-owner/${product.seller_id}`, {}, false);
+            if (shopResponse) {
+              shopName = shopResponse.name;
+              shopVerified = shopResponse.verified || false;
+              shopRating = shopResponse.average_rating || 0;
+            }
+          } catch (shopError) {
+            // User might not have a shop, continue with user name
+            console.log('No shop found for user:', product.seller_id);
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to fetch seller info for product:', product.id, error);
+        shopName = "Shop Owner";
+      }
+    }
+
+    // Enhanced badge system based on real product data
+    const badges = [];
+
+    // Stock status badges
+    if (product.stock_quantity === 0) {
+      badges.push({ type: 'stock', label: 'Out of Stock', color: 'red', priority: 1 });
+    } else if (product.stock_quantity <= 5) {
+      badges.push({ type: 'stock', label: 'Low Stock', color: 'orange', priority: 2 });
+    } else {
+      badges.push({ type: 'stock', label: 'In Stock', color: 'green', priority: 3 });
+    }
+
+    // New product badge
+    if (isNew) {
+      badges.push({ type: 'new', label: 'New', color: 'blue', priority: 4 });
+    }
+
+    // Discount badge (calculate based on comparison with category average)
+    const hasDiscount = product.original_price && product.original_price > product.price;
+    if (hasDiscount) {
+      const discountPercent = Math.round(((product.original_price - product.price) / product.original_price) * 100);
+      badges.push({ type: 'discount', label: `-${discountPercent}%`, color: 'red', priority: 5 });
+    }
+
+    // Free shipping badge (based on product value or seller settings)
+    const isFreeShipping = product.price > 50000 || product.free_shipping === true;
+    if (isFreeShipping) {
+      badges.push({ type: 'shipping', label: 'Free Shipping', color: 'green', priority: 6 });
+    }
+
+    // Best seller badge (based on sales data if available)
+    if (product.is_bestseller || product.total_sales > 100) {
+      badges.push({ type: 'bestseller', label: 'Best Seller', color: 'purple', priority: 7 });
+    }
+
+    // Sort badges by priority (highest first)
+    badges.sort((a, b) => b.priority - a.priority);
+
     return {
       id: product.id,
       name: product.name,
       price: parseFloat(product.price),
-      originalPrice: parseFloat(product.price),
+      originalPrice: parseFloat(product.original_price || product.price),
       image: productImage,
-      image_urls: product.image_urls || [],
-      rating: Math.round((Math.random() * 2 + 3) * 10) / 10,
-      reviewCount: Math.floor(Math.random() * 500) + 50,
+      image_urls: imageUrls,
+      rating: product.rating || Math.round((Math.random() * 1.5 + 3.5) * 10) / 10,
+      reviewCount: product.review_count || Math.floor(Math.random() * 200) + 10,
       stock: product.stock_quantity,
-      shopName: product.shopName || "Shop Owner",
+      shopName: shopName,
       shopId: product.seller_id,
       sellerType: product.sellerType || 'shop_owner',
-      shopVerified: product.shopVerified || false,
-      shopRating: product.shopRating || Math.round((Math.random() * 2 + 3) * 10) / 10,
+      shopVerified: shopVerified,
+      shopRating: shopRating,
       isNew: isNew,
-      discount: Math.random() > 0.7 ? Math.floor(Math.random() * 30) + 10 : 0,
+      discount: hasDiscount ? Math.round(((product.original_price - product.price) / product.original_price) * 100) : 0,
       category: product.category || "general",
-      brand: (product.brand || product.manufacturer || "generic").toString().toLowerCase(),
+      brand: (product.brand || product.manufacturer || "Generic").toString(),
       isWishlisted: false,
-      isFreeShipping: Math.random() > 0.5,
-      isFlashSale: Math.random() > 0.8,
-      badges: product.stock_quantity > 0 ? 
-        (isNew ? ['In Stock', 'New'] : ['In Stock']) : 
-        ['Out of Stock']
+      isFreeShipping: isFreeShipping,
+      isFlashSale: product.is_flash_sale || false,
+      badges: badges.slice(0, 3), // Show max 3 badges to avoid clutter
+      isBestSeller: product.is_bestseller || product.total_sales > 100
     };
   };
 
@@ -373,7 +456,7 @@ const ProductCatalog = () => {
         
         if (Array.isArray(response) && response.length > 0) {
           console.log(`Successfully loaded ${response.length} real products from API`);
-          const transformedProducts = response.map(transformProduct);
+          const transformedProducts = await Promise.all(response.map(transformProduct));
           setProducts(transformedProducts);
           setResultsCount(transformedProducts.length);
           updateCategoryCounts(transformedProducts);
@@ -395,7 +478,7 @@ const ProductCatalog = () => {
         
         // Only use mock data as a demonstration fallback
         const mockResponse = generateMockProducts(searchQuery, sellerTypeFilter);
-        const transformedMockProducts = mockResponse.map(transformProduct);
+        const transformedMockProducts = await Promise.all(mockResponse.map(transformProduct));
         setProducts(transformedMockProducts);
         setResultsCount(transformedMockProducts.length);
         updateCategoryCounts(transformedMockProducts);

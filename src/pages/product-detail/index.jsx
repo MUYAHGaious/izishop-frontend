@@ -39,28 +39,98 @@ const ProductDetail = () => {
       
       try {
         // Load product details
-        const productResponse = await api.get(`/api/products/${productId}`);
-        const productData = productResponse.data;
-        setProduct(productData);
+        const productData = await api.getProduct(productId);
+
+        // Map backend response to frontend expected format
+        const mappedProduct = {
+          ...productData,
+          images: productData.image_urls || [],
+          videos: productData.video_urls || [],
+          stock: productData.stock_quantity,
+          // Use actual data only, no defaults
+          rating: productData.rating || null,
+          reviewCount: productData.review_count || 0
+        };
+
+        // Try to fetch shop data using seller_id
+        try {
+          const shopsResponse = await api.get(`/api/shops/?limit=100`, {}, false);
+          const shops = shopsResponse.data || [];
+          const sellerShop = shops.find(shop => shop.owner_id === productData.seller_id);
+
+          if (sellerShop) {
+            mappedProduct.shop = {
+              id: sellerShop.id,
+              name: sellerShop.name,
+              avatar: sellerShop.profile_photo,
+              rating: sellerShop.rating || null,
+              reviewCount: sellerShop.review_count || 0,
+              productCount: sellerShop.product_count || 0,
+              responseRate: sellerShop.response_rate || null,
+              responseTime: sellerShop.response_time || null,
+              isVerified: sellerShop.is_verified || false,
+              isOnline: sellerShop.is_online || false,
+              type: 'shop',
+              location: sellerShop.address,
+              joinedDate: new Date(sellerShop.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+              lastSeen: sellerShop.last_seen || null,
+              email: sellerShop.email,
+              phone: sellerShop.phone
+            };
+          } else {
+            // Fallback if no shop found - use minimal real data
+            mappedProduct.shop = {
+              id: productData.seller_id,
+              name: 'Individual Seller',
+              avatar: null,
+              rating: null,
+              reviewCount: 0,
+              productCount: 0,
+              responseRate: null,
+              responseTime: null,
+              isVerified: false,
+              isOnline: false,
+              type: 'individual',
+              location: null
+            };
+          }
+        } catch (error) {
+          console.log('Could not fetch shop data, using fallback');
+          mappedProduct.shop = {
+            id: productData.seller_id,
+            name: 'Seller',
+            avatar: null,
+            rating: null,
+            reviewCount: 0,
+            productCount: 0,
+            responseRate: null,
+            responseTime: null,
+            isVerified: false,
+            isOnline: false,
+            type: 'individual'
+          };
+        }
+
+        setProduct(mappedProduct);
         
         // Set default variant if available
-        if (productData.variants && productData.variants.length > 0) {
-          setSelectedVariant(productData.variants[0]);
+        if (mappedProduct.variants && mappedProduct.variants.length > 0) {
+          setSelectedVariant(mappedProduct.variants[0]);
         }
         
         // Load product reviews
         try {
-          const reviewsResponse = await api.get(`/api/products/${productId}/reviews`);
-          setReviews(reviewsResponse.data || []);
+          const reviewsData = await api.get(`/api/products/${productId}/reviews`, {}, false);
+          setReviews(reviewsData || []);
         } catch (error) {
           console.log('No reviews available for this product');
           setReviews([]);
         }
-        
+
         // Load related products
         try {
-          const relatedResponse = await api.get(`/api/products/${productId}/related`);
-          setRelatedProducts(relatedResponse.data || []);
+          const relatedData = await api.get(`/api/products/${productId}/related`, {}, false);
+          setRelatedProducts(relatedData || []);
         } catch (error) {
           console.log('No related products available');
           setRelatedProducts([]);
@@ -144,17 +214,17 @@ const ProductDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
         <Header />
-        <div className="pt-16">
+        <div className="pt-32">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="animate-pulse space-y-8">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="aspect-square bg-muted rounded-lg"></div>
+                <div className="aspect-square bg-gradient-to-br from-teal-100 to-cyan-100 rounded-2xl"></div>
                 <div className="space-y-4">
-                  <div className="h-8 bg-muted rounded w-3/4"></div>
-                  <div className="h-6 bg-muted rounded w-1/2"></div>
-                  <div className="h-12 bg-muted rounded w-full"></div>
+                  <div className="h-8 bg-gradient-to-r from-teal-100 to-cyan-100 rounded-xl w-3/4"></div>
+                  <div className="h-6 bg-gradient-to-r from-teal-100 to-cyan-100 rounded-xl w-1/2"></div>
+                  <div className="h-12 bg-gradient-to-r from-teal-100 to-cyan-100 rounded-xl w-full"></div>
                 </div>
               </div>
             </div>
@@ -166,15 +236,20 @@ const ProductDetail = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
         <Header />
-        <div className="pt-16">
+        <div className="pt-32">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="text-center">
-              <Icon name="Package" size={64} className="mx-auto mb-4 text-text-secondary" />
-              <h1 className="text-2xl font-bold text-foreground mb-2">Product Not Found</h1>
-              <p className="text-text-secondary mb-6">The product you're looking for doesn't exist or has been removed.</p>
-              <Button onClick={handleBack}>
+              <div className="w-24 h-24 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Icon name="Package" size={48} className="text-white" />
+              </div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">Product Not Found</h1>
+              <p className="text-gray-600 mb-8 text-lg">The product you're looking for doesn't exist or has been removed.</p>
+              <Button 
+                onClick={handleBack}
+                className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white px-8 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+              >
                 <Icon name="ArrowLeft" size={16} className="mr-2" />
                 Go Back
               </Button>
@@ -186,27 +261,27 @@ const ProductDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       <Header />
       
-      <div className="pt-16 pb-20">
+      <div className="pt-32 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Breadcrumb & Actions */}
-          <div className="flex items-center justify-between py-4 border-b border-border">
+          <div className="flex items-center justify-between py-6 border-b border-teal-200/50 bg-white/80 backdrop-blur-sm rounded-2xl px-6 mb-8 shadow-sm">
             <div className="flex items-center space-x-2">
               <button
                 onClick={handleBack}
-                className="p-2 rounded-md text-text-secondary hover:text-foreground hover:bg-muted marketplace-transition"
+                className="p-3 rounded-xl text-gray-600 hover:text-teal-600 hover:bg-teal-50 transition-all duration-300 shadow-sm hover:shadow-md"
               >
                 <Icon name="ArrowLeft" size={20} />
               </button>
               
               <nav className="flex items-center space-x-2 text-sm">
-                <span className="text-text-secondary">Home</span>
-                <Icon name="ChevronRight" size={14} className="text-text-secondary" />
-                <span className="text-text-secondary">{product.category}</span>
-                <Icon name="ChevronRight" size={14} className="text-text-secondary" />
-                <span className="text-foreground font-medium truncate max-w-[200px]">
+                <span className="text-gray-500 hover:text-teal-600 transition-colors">Home</span>
+                <Icon name="ChevronRight" size={14} className="text-gray-400" />
+                <span className="text-gray-500 hover:text-teal-600 transition-colors">{product.category}</span>
+                <Icon name="ChevronRight" size={14} className="text-gray-400" />
+                <span className="text-gray-900 font-medium truncate max-w-[200px]">
                   {product.name}
                 </span>
               </nav>
@@ -215,9 +290,10 @@ const ProductDetail = () => {
             <div className="flex items-center space-x-2">
               <button
                 onClick={handleWishlistToggle}
-                className={`p-2 rounded-md marketplace-transition ${
+                className={`p-3 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md ${
                   isInWishlist(productId)
-                    ? 'text-error bg-error/10 hover:bg-error/20' :'text-text-secondary hover:text-foreground hover:bg-muted'
+                    ? 'text-red-500 bg-red-50 hover:bg-red-100' 
+                    : 'text-gray-600 hover:text-teal-600 hover:bg-teal-50'
                 }`}
               >
                 <Icon name="Heart" size={20} className={isInWishlist(productId) ? 'fill-current' : ''} />
@@ -226,7 +302,7 @@ const ProductDetail = () => {
               <div className="relative">
                 <button
                   onClick={() => setShareMenuOpen(!shareMenuOpen)}
-                  className="p-2 rounded-md text-text-secondary hover:text-foreground hover:bg-muted marketplace-transition"
+                  className="p-3 rounded-xl text-gray-600 hover:text-teal-600 hover:bg-teal-50 transition-all duration-300 shadow-sm hover:shadow-md"
                 >
                   <Icon name="Share2" size={20} />
                 </button>
@@ -237,32 +313,32 @@ const ProductDetail = () => {
                       className="fixed inset-0 z-1000"
                       onClick={() => setShareMenuOpen(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-48 bg-popover border border-border rounded-md shadow-modal z-1010">
-                      <div className="py-1">
+                    <div className="absolute right-0 mt-2 w-48 bg-white border border-teal-200 rounded-xl shadow-lg z-1010">
+                      <div className="py-2">
                         <button
                           onClick={() => handleShare('copy')}
-                          className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted marketplace-transition"
+                          className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-600 transition-colors rounded-lg mx-2"
                         >
                           <Icon name="Copy" size={16} className="mr-3" />
                           Copy Link
                         </button>
                         <button
                           onClick={() => handleShare('whatsapp')}
-                          className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted marketplace-transition"
+                          className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-600 transition-colors rounded-lg mx-2"
                         >
                           <Icon name="MessageCircle" size={16} className="mr-3" />
                           WhatsApp
                         </button>
                         <button
                           onClick={() => handleShare('facebook')}
-                          className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted marketplace-transition"
+                          className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-600 transition-colors rounded-lg mx-2"
                         >
                           <Icon name="Facebook" size={16} className="mr-3" />
                           Facebook
                         </button>
                         <button
                           onClick={() => handleShare('twitter')}
-                          className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted marketplace-transition"
+                          className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-600 transition-colors rounded-lg mx-2"
                         >
                           <Icon name="Twitter" size={16} className="mr-3" />
                           Twitter
@@ -276,33 +352,57 @@ const ProductDetail = () => {
           </div>
 
           {/* Main Product Content */}
-          <div className="py-8 space-y-8">
+          <div className="py-8 space-y-12">
             {/* Product Overview */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
               {/* Image Gallery */}
-              <div className="lg:col-span-3">
-                <ImageGallery images={product.images} productName={product.name} />
-              </div>
+                <div className="lg:col-span-3">
+                  <div className="bg-white rounded-2xl overflow-hidden">
+                    <ImageGallery images={product.images} productName={product.name} />
+                  </div>
+                </div>
 
-              {/* Product Info & Seller */}
-              <div className="lg:col-span-2 space-y-6">
-                <ProductInfo product={product} />
-                <SellerCard seller={product.shop} />
-              </div>
+                {/* Product Info & Seller */}
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="bg-white rounded-2xl p-6">
+                    <ProductInfo
+                      product={product}
+                      onAddToCart={async (cartItem) => {
+                        try {
+                          await addToCart(cartItem);
+                        } catch (error) {
+                          console.error('Error adding to cart:', error);
+                        }
+                      }}
+                      onBuyNow={() => {
+                        // Buy now handled within ProductInfo component
+                      }}
+                    />
+                  </div>
+                  <div className="bg-white rounded-2xl p-6">
+                    <SellerCard seller={product.shop} />
+                  </div>
+                </div>
             </div>
 
             {/* Product Description */}
-            <ProductDescription product={product} />
+            <div className="bg-white rounded-2xl p-6">
+              <ProductDescription product={product} />
+            </div>
 
             {/* Reviews Section */}
-            <ReviewsSection product={product} reviews={reviews} />
+            <div className="bg-white rounded-2xl p-6">
+              <ReviewsSection product={product} reviews={reviews} />
+            </div>
 
             {/* Related Products */}
-            <RelatedProducts 
-              currentProductId={product.id} 
-              category={product.category} 
-              relatedProducts={relatedProducts}
-            />
+            <div className="bg-white rounded-2xl p-6">
+              <RelatedProducts 
+                currentProductId={product.id} 
+                category={product.category} 
+                relatedProducts={relatedProducts}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -313,15 +413,32 @@ const ProductDetail = () => {
         selectedVariant={selectedVariant}
         quantity={quantity}
         onQuantityChange={setQuantity}
-        onAddToCart={() => addToCart({
-          id: product.id,
-          name: product.name,
-          price: selectedVariant?.price || product.price,
-          image: product.images?.[0],
-          shopId: product.shop?.id,
-          shopName: product.shop?.name,
-          variant: selectedVariant
-        })}
+        onAddToCart={async () => {
+          if (!isAuthenticated()) {
+            showToast('Please log in to add items to cart', 'info', 3000);
+            navigate('/authentication-login-register');
+            return;
+          }
+
+          const cartItem = {
+            id: product.id,
+            name: product.name,
+            price: selectedVariant?.price || product.price,
+            image: product.images?.[0],
+            shopId: product.shop?.id,
+            shopName: product.shop?.name,
+            variant: selectedVariant,
+            quantity: quantity
+          };
+
+          try {
+            await addToCart(cartItem);
+            showToast(`${product.name} added to cart!`, 'success', 3000);
+          } catch (error) {
+            console.error('Error adding to cart:', error);
+            showToast('Failed to add item to cart', 'error', 3000);
+          }
+        }}
       />
     </div>
   );

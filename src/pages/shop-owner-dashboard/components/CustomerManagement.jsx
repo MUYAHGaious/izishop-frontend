@@ -53,111 +53,13 @@ const CustomerManagement = () => {
         console.error('Error loading customers:', error);
         showToast({
           type: 'error',
-          message: 'Failed to load customers. Using sample data.',
+          message: 'Failed to load customers.',
           duration: 3000
         });
-        
-        // Fallback to sample data if API fails
-        const mockCustomers = [
-      {
-        id: 1,
-        name: 'John Doe',
-        email: 'john@example.com',
-        phone: '+237 6XX XXX XXX',
-        totalOrders: 12,
-        totalSpent: 2450000,
-        averageOrderValue: 204167,
-        lastOrderDate: '2024-07-18',
-        joinDate: '2024-01-15',
-        status: 'active',
-        segment: 'vip',
-        location: 'Douala, Cameroon',
-        rating: 4.8,
-        notes: 'Frequent buyer, prefers electronics'
-      },
-      {
-        id: 2,
-        name: 'Jane Smith',
-        email: 'jane@example.com',
-        phone: '+237 6XX XXX XXX',
-        totalOrders: 8,
-        totalSpent: 1200000,
-        averageOrderValue: 150000,
-        lastOrderDate: '2024-07-16',
-        joinDate: '2024-02-20',
-        status: 'active',
-        segment: 'regular',
-        location: 'Yaoundé, Cameroon',
-        rating: 4.5,
-        notes: 'Interested in fashion items'
-      },
-      {
-        id: 3,
-        name: 'Mike Johnson',
-        email: 'mike@example.com',
-        phone: '+237 6XX XXX XXX',
-        totalOrders: 3,
-        totalSpent: 450000,
-        averageOrderValue: 150000,
-        lastOrderDate: '2024-07-10',
-        joinDate: '2024-05-10',
-        status: 'active',
-        segment: 'new',
-        location: 'Bamenda, Cameroon',
-        rating: 4.2,
-        notes: ''
-      },
-      {
-        id: 4,
-        name: 'Sarah Wilson',
-        email: 'sarah@example.com',
-        phone: '+237 6XX XXX XXX',
-        totalOrders: 1,
-        totalSpent: 89000,
-        averageOrderValue: 89000,
-        lastOrderDate: '2024-06-25',
-        joinDate: '2024-06-20',
-        status: 'inactive',
-        segment: 'new',
-        location: 'Garoua, Cameroon',
-        rating: 4.0,
-        notes: 'Single purchase, no follow-up'
-      },
-      {
-        id: 5,
-        name: 'David Brown',
-        email: 'david@example.com',
-        phone: '+237 6XX XXX XXX',
-        totalOrders: 25,
-        totalSpent: 5600000,
-        averageOrderValue: 224000,
-        lastOrderDate: '2024-07-17',
-        joinDate: '2023-12-05',
-        status: 'active',
-        segment: 'vip',
-        location: 'Douala, Cameroon',
-        rating: 4.9,
-        notes: 'Top customer, bulk orders'
-      },
-      {
-        id: 6,
-        name: 'Lisa Garcia',
-        email: 'lisa@example.com',
-        phone: '+237 6XX XXX XXX',
-        totalOrders: 6,
-        totalSpent: 890000,
-        averageOrderValue: 148333,
-        lastOrderDate: '2024-07-12',
-        joinDate: '2024-03-15',
-        status: 'active',
-        segment: 'regular',
-        location: 'Yaoundé, Cameroon',
-        rating: 4.6,
-        notes: 'Prefers home & garden products'
-      }
-        ];
-        setCustomers(mockCustomers);
-        setFilteredCustomers(mockCustomers);
+
+        // No fallback data - show empty state
+        setCustomers([]);
+        setFilteredCustomers([]);
       } finally {
         setLoading(false);
       }

@@ -75,26 +75,26 @@ const StickyPurchaseBar = ({ product, selectedVariant, quantity, onQuantityChang
   if (!product || !isVisible) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-surface border-t border-border shadow-modal z-1000 marketplace-transition">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-teal-200 shadow-xl z-1000 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between py-3">
+        <div className="flex items-center justify-between py-4">
           {/* Product Info - Hidden on mobile */}
           <div className="hidden md:flex items-center space-x-4 flex-1">
             <img
               src={product.images?.[0] || '/assets/images/no_image.png'}
               alt={product.name}
-              className="w-12 h-12 rounded-md object-cover"
+              className="w-12 h-12 rounded-xl object-cover"
             />
             <div className="min-w-0">
-              <h3 className="font-semibold text-foreground truncate">
+              <h3 className="font-semibold text-gray-900 truncate">
                 {product.name}
               </h3>
               <div className="flex items-center space-x-2">
-                <span className="text-lg font-bold text-primary font-mono">
+                <span className="text-lg font-bold text-teal-600 font-mono">
                   {formatPrice(selectedVariant?.price || product.price)}
                 </span>
                 {product.originalPrice && product.originalPrice > product.price && (
-                  <span className="text-sm text-text-secondary line-through font-mono">
+                  <span className="text-sm text-gray-500 line-through font-mono">
                     {formatPrice(product.originalPrice)}
                   </span>
                 )}
@@ -104,28 +104,28 @@ const StickyPurchaseBar = ({ product, selectedVariant, quantity, onQuantityChang
 
           {/* Mobile Price Display */}
           <div className="md:hidden flex items-center space-x-2">
-            <span className="text-lg font-bold text-primary font-mono">
+            <span className="text-lg font-bold text-teal-600 font-mono">
               {formatPrice(selectedVariant?.price || product.price)}
             </span>
           </div>
 
           {/* Quantity Selector */}
           <div className="flex items-center space-x-4">
-            <div className="flex items-center border border-border rounded-md">
+            <div className="flex items-center border border-teal-300 rounded-xl">
               <button
                 onClick={() => handleQuantityChange(-1)}
                 disabled={quantity <= 1}
-                className="p-2 text-text-secondary hover:text-foreground hover:bg-muted marketplace-transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 text-teal-600 hover:text-teal-700 hover:bg-teal-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Icon name="Minus" size={16} />
               </button>
-              <span className="px-3 py-2 text-foreground font-medium min-w-[50px] text-center">
+              <span className="px-3 py-2 text-gray-900 font-medium min-w-[50px] text-center">
                 {quantity}
               </span>
               <button
                 onClick={() => handleQuantityChange(1)}
-                disabled={quantity >= (selectedVariant?.stock || product.stock || 99)}
-                className="p-2 text-text-secondary hover:text-foreground hover:bg-muted marketplace-transition disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={quantity >= (selectedVariant?.stock || product.stock_quantity || 99)}
+                className="p-2 text-teal-600 hover:text-teal-700 hover:bg-teal-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Icon name="Plus" size={16} />
               </button>
@@ -134,12 +134,12 @@ const StickyPurchaseBar = ({ product, selectedVariant, quantity, onQuantityChang
             {/* Action Buttons */}
             <div className="flex items-center space-x-2">
               <Button
+                className="hidden sm:flex border-teal-300 text-teal-600 hover:bg-teal-50 hover:border-teal-400 px-4 py-2 rounded-xl font-medium transition-all duration-300"
                 variant="outline"
                 size="sm"
                 onClick={handleAddToCart}
-                disabled={!product.inStock || isAddingToCart}
+                disabled={!(selectedVariant?.stock || product?.stock_quantity || 0) > 0 || isAddingToCart}
                 loading={isAddingToCart}
-                className="hidden sm:flex"
               >
                 <Icon name="ShoppingCart" size={16} className="mr-2" />
                 Add to Cart
@@ -148,22 +148,22 @@ const StickyPurchaseBar = ({ product, selectedVariant, quantity, onQuantityChang
               {/* Mobile Add to Cart */}
               <button
                 onClick={handleAddToCart}
-                disabled={!product.inStock || isAddingToCart}
-                className="sm:hidden p-2 border border-border rounded-md text-text-secondary hover:text-foreground hover:bg-muted marketplace-transition disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!(selectedVariant?.stock || product?.stock_quantity || 0) > 0 || isAddingToCart}
+                className="sm:hidden p-2 border border-teal-300 rounded-xl text-teal-600 hover:text-teal-700 hover:bg-teal-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isAddingToCart ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-teal-600 border-t-transparent"></div>
                 ) : (
                   <Icon name="ShoppingCart" size={16} />
                 )}
               </button>
 
               <Button
+                className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white min-w-[100px] px-4 py-2 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300"
                 variant="default"
                 size="sm"
                 onClick={handleBuyNow}
-                disabled={!product.inStock || isAddingToCart}
-                className="min-w-[100px]"
+                disabled={!(selectedVariant?.stock || product?.stock_quantity || 0) > 0 || isAddingToCart}
               >
                 <Icon name="Zap" size={16} className="mr-2" />
                 Buy Now
@@ -173,21 +173,21 @@ const StickyPurchaseBar = ({ product, selectedVariant, quantity, onQuantityChang
         </div>
 
         {/* Stock Warning */}
-        {product.inStock && (selectedVariant?.stock || product.stock) <= 5 && (
+        {(selectedVariant?.stock || product?.stock_quantity || 0) > 0 && (selectedVariant?.stock || product.stock_quantity) <= 5 && (
           <div className="pb-2">
-            <div className="flex items-center justify-center space-x-2 text-warning">
+            <div className="flex items-center justify-center space-x-2 text-yellow-600">
               <Icon name="AlertTriangle" size={14} />
               <span className="text-sm font-medium">
-                Only {selectedVariant?.stock || product.stock} left in stock!
+                Only {selectedVariant?.stock || product.stock_quantity} left in stock!
               </span>
             </div>
           </div>
         )}
 
         {/* Out of Stock */}
-        {!product.inStock && (
+        {(selectedVariant?.stock || product?.stock_quantity || 0) <= 0 && (
           <div className="pb-2">
-            <div className="flex items-center justify-center space-x-2 text-error">
+            <div className="flex items-center justify-center space-x-2 text-red-500">
               <Icon name="XCircle" size={14} />
               <span className="text-sm font-medium">Currently out of stock</span>
             </div>

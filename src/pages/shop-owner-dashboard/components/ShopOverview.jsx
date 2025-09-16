@@ -409,9 +409,8 @@ const ShopOverview = ({ shopData, onTabChange }) => {
         // Fetch unread messages count (if support system exists)
         try {
           // This would be a real API call to get unread support messages
-          // For now, we'll simulate it based on shop activity
-          const mockUnreadCount = (shopData.totalOrders > 5 && Math.random() > 0.7) ? Math.floor(Math.random() * 5) : 0;
-          setUnreadMessagesCount(mockUnreadCount);
+          // For now, set to 0 as we don't have real data
+          setUnreadMessagesCount(0);
         } catch (error) {
           console.warn('Failed to fetch unread messages count:', error);
           setUnreadMessagesCount(0);

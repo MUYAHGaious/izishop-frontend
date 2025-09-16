@@ -54,7 +54,7 @@ const OrdersTab = () => {
         console.error('Error loading orders:', error);
         showToast({
           type: 'error',
-          message: 'Failed to load orders. Using sample data.',
+          message: 'Failed to load orders.',
           duration: 3000
         });
         

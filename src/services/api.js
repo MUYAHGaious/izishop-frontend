@@ -676,7 +676,7 @@ class ApiService {
     const formData = new FormData();
     formData.append('file', file);
     
-    return this.request('/uploads/shop/profile-photo', {
+    return this.request('/api/uploads/shop/profile-photo', {
       method: 'POST',
       body: formData,
       headers: {
@@ -690,7 +690,7 @@ class ApiService {
     const formData = new FormData();
     formData.append('file', file);
     
-    return this.request('/uploads/shop/background-image', {
+    return this.request('/api/uploads/shop/background-image', {
       method: 'POST',
       body: formData,
       headers: {
@@ -701,13 +701,13 @@ class ApiService {
   }
 
   async deleteShopProfilePhoto() {
-    return this.request('/uploads/shop/profile-photo', {
+    return this.request('/api/uploads/shop/profile-photo', {
       method: 'DELETE'
     });
   }
 
   async deleteShopBackgroundImage() {
-    return this.request('/uploads/shop/background-image', {
+    return this.request('/api/uploads/shop/background-image', {
       method: 'DELETE'
     });
   }
@@ -727,7 +727,7 @@ class ApiService {
     if (typeof activeOnly === 'boolean') {
       params.append('active_only', activeOnly.toString());
     }
-    return this.request(`/products/my-products?${params}`);
+    return this.request(`/api/products/my-products?${params}`);
   }
 
   async getMyProductsWithTrends(skip = 0, limit = 100, activeOnly = false) {
@@ -793,7 +793,7 @@ class ApiService {
 
   async getMyProductStats() {
     try {
-      return await this.request('/products/my-stats');
+      return await this.request('/api/products/my-stats');
     } catch (error) {
       console.warn('Failed to fetch product stats:', error);
       return {
@@ -860,20 +860,20 @@ class ApiService {
   }
 
   async updateProduct(productId, productData) {
-    return this.request(`/products/${productId}`, {
+    return this.request(`/api/products/${productId}`, {
       method: 'PUT',
       body: JSON.stringify(productData)
     });
   }
 
   async deleteProduct(productId) {
-    return this.request(`/products/${productId}`, {
+    return this.request(`/api/products/${productId}`, {
       method: 'DELETE'
     });
   }
 
   async updateProductStock(productId, quantityChange) {
-    return this.request(`/products/${productId}/stock`, {
+    return this.request(`/api/products/${productId}/stock`, {
       method: 'PATCH',
       body: JSON.stringify({ quantity_change: quantityChange })
     });
@@ -1045,7 +1045,7 @@ class ApiService {
   // Shop Owner Dashboard methods
   async getShopOwnerDashboardStats() {
     try {
-      return await this.request('/shop-owner/dashboard/stats', {
+      return await this.request('/api/shop-owner/dashboard/stats', {
         method: 'GET'
       });
     } catch (error) {
@@ -1132,7 +1132,7 @@ class ApiService {
   async getShopOwnerCustomers(filters = {}) {
     try {
       const queryParams = new URLSearchParams(filters).toString();
-      return await this.request(`/shop-owner/customers${queryParams ? `?${queryParams}` : ''}`, {
+      return await this.request(`/api/shop-owner/customers${queryParams ? `?${queryParams}` : ''}`, {
         method: 'GET'
       });
     } catch (error) {
@@ -1143,7 +1143,7 @@ class ApiService {
 
   async getShopOwnerAnalytics(timeRange = '7d') {
     try {
-      return await this.request(`/shop-owner/analytics?range=${timeRange}`, {
+      return await this.request(`/api/shop-owner/analytics?range=${timeRange}`, {
         method: 'GET'
       });
     } catch (error) {
@@ -1160,7 +1160,7 @@ class ApiService {
 
   async getShopOwnerTopProducts(limit = 5) {
     try {
-      return await this.request(`/shop-owner/analytics/top-products?limit=${limit}`, {
+      return await this.request(`/api/shop-owner/analytics/top-products?limit=${limit}`, {
         method: 'GET'
       });
     } catch (error) {
@@ -1171,7 +1171,7 @@ class ApiService {
 
   async getShopOwnerSalesData(timeRange = '7d') {
     try {
-      return await this.request(`/shop-owner/analytics/sales?range=${timeRange}`, {
+      return await this.request(`/api/shop-owner/analytics/sales?range=${timeRange}`, {
         method: 'GET'
       });
     } catch (error) {
@@ -1182,7 +1182,7 @@ class ApiService {
 
   async getShopOwnerTrafficSources() {
     try {
-      return await this.request('/shop-owner/analytics/traffic-sources', {
+      return await this.request('/api/shop-owner/analytics/traffic-sources', {
         method: 'GET'
       });
     } catch (error) {
@@ -1374,7 +1374,7 @@ class ApiService {
 
   async getMyRatings() {
     try {
-      return await this.request('/users/my-ratings', {
+      return await this.request('/api/users/my-ratings', {
         method: 'GET'
       });
     } catch (error) {
@@ -1420,7 +1420,7 @@ class ApiService {
   // Delivery Agent API methods
   async getDeliveryAgentStats() {
     try {
-      return await this.request('/delivery-agent/stats', {
+      return await this.request('/api/delivery-agent/stats', {
         method: 'GET'
       });
     } catch (error) {
@@ -1623,7 +1623,7 @@ class ApiService {
 
   async addToWishlist(productId) {
     try {
-      return await this.request('/customer/wishlist', {
+      return await this.request('/api/customer/wishlist', {
         method: 'POST',
         body: JSON.stringify({ product_id: productId })
       });
@@ -1635,7 +1635,7 @@ class ApiService {
 
   async removeFromWishlist(productId) {
     try {
-      return await this.request(`/customer/wishlist/${productId}`, {
+      return await this.request(`/api/customer/wishlist/${productId}`, {
         method: 'DELETE'
       });
     } catch (error) {
@@ -1646,7 +1646,7 @@ class ApiService {
 
   async getCustomerRecommendations() {
     try {
-      return await this.request('/customer/recommendations', {
+      return await this.request('/api/customer/recommendations', {
         method: 'GET'
       });
     } catch (error) {
@@ -1657,7 +1657,7 @@ class ApiService {
 
   async getCustomerAddresses() {
     try {
-      return await this.request('/customer/addresses', {
+      return await this.request('/api/customer/addresses', {
         method: 'GET'
       });
     } catch (error) {
@@ -1668,7 +1668,7 @@ class ApiService {
 
   async getCustomerPaymentMethods() {
     try {
-      return await this.request('/customer/payment-methods', {
+      return await this.request('/api/customer/payment-methods', {
         method: 'GET'
       });
     } catch (error) {
@@ -2047,7 +2047,7 @@ class ApiService {
   }
 
   async createOrder(orderData) {
-    return this.request('/orders/create', {
+    return this.request('/api/orders/create', {
       method: 'POST',
       body: JSON.stringify(orderData)
     });

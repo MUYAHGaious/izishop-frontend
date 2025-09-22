@@ -271,7 +271,10 @@ class ApiService {
 
   // Generic request method with enhanced error handling
   async request(endpoint, options = {}, requireAuth = true) {
-    const url = `${this.baseURL}${endpoint}`;
+    // Ensure proper URL construction with slash handling
+    const baseUrl = this.baseURL.endsWith('/') ? this.baseURL.slice(0, -1) : this.baseURL;
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const url = `${baseUrl}${cleanEndpoint}`;
     
     try {
       let response;

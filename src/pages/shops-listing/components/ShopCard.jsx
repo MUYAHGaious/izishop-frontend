@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import Button from '../../../components/ui/Button';
-import Icon from '../../../components/AppIcon';
+import { Star, MapPin, ShoppingBag, Users, Heart, Clock, Store, TrendingUp, CheckCircle, Plus } from 'lucide-react';
 
 const ShopCard = ({ shop, onVisitShop, onFollowShop, onQuickPreview }) => {
   const [isFollowing, setIsFollowing] = useState(shop.isFollowing);
@@ -21,131 +20,188 @@ const ShopCard = ({ shop, onVisitShop, onFollowShop, onQuickPreview }) => {
     onVisitShop(shop.id);
   };
 
+  const formatRating = (rating) => {
+    return rating ? parseFloat(rating).toFixed(1) : '0.0';
+  };
+
+  const formatJoinDate = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffTime = Math.abs(now - date);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 1) return '1 day ago';
+      if (diffDays < 7) return `${diffDays} days ago`;
+      if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
+      return `${Math.ceil(diffDays / 30)} months ago`;
+    } catch {
+      return 'Recently';
+    }
+  };
+
+  const getShopCategory = () => {
+    // Determine category based on shop data or use default
+    if (shop.category) return shop.category;
+    if (shop.description?.toLowerCase().includes('electronics')) return 'Electronics';
+    if (shop.description?.toLowerCase().includes('fashion')) return 'Fashion';
+    if (shop.description?.toLowerCase().includes('beauty')) return 'Beauty & Personal Care';
+    return 'General';
+  };
+
+  const getShopTags = () => {
+    const tags = [];
+    if (shop.is_verified) tags.push('Verified');
+    if (shop.description?.toLowerCase().includes('handmade')) tags.push('Handmade');
+    if (shop.description?.toLowerCase().includes('organic')) tags.push('Organic');
+    if (shop.description?.toLowerCase().includes('sustainable')) tags.push('Sustainable');
+    if (tags.length === 0) tags.push('Quality', 'Reliable');
+    return tags.slice(0, 3); // Limit to 3 tags
+  };
+
+  const renderStars = (rating) => {
+    return [...Array(5)].map((_, i) => (
+      <Star
+        key={i}
+        size={14}
+        className={`${
+          i < Math.floor(rating || 0)
+            ? 'text-yellow-400 fill-current'
+            : 'text-gray-300'
+        }`}
+      />
+    ));
+  };
+
   return (
-    <div 
-      onClick={handleVisitShop}
-      className="group bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-150 overflow-hidden h-full flex flex-col"
-    >
-      {/* Shop Banner */}
-      <div className="relative h-48 bg-gradient-to-r from-teal-500/20 to-blue-500/20 flex-shrink-0">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden active:shadow-lg transition-all duration-200 active:scale-[0.98] group">
+      {/* Shop Image Header - Mobile First */}
+      <div className="relative h-36 bg-gray-100 overflow-hidden">
         {shop.background_image ? (
           <img
             src={shop.background_image}
             alt={shop.name}
-            className="w-full h-full object-cover transition-all duration-150 group-hover:scale-105"
+            className="w-full h-full object-cover"
             onError={(e) => {
               e.target.style.display = 'none';
             }}
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-teal-400/20 via-blue-500/20 to-purple-500/20 flex items-center justify-center">
-            <Icon name="Store" size={32} className="text-teal-500/40" />
+          <div className="w-full h-full bg-gradient-to-br from-teal-100 via-blue-100 to-indigo-100 flex items-center justify-center">
+            <Store size={28} className="text-teal-400" />
           </div>
         )}
         
-        {/* Overlay on hover */}
-        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center justify-center">
-          <Button
-            onClick={handleQuickPreview}
-            variant="outline"
-            className="bg-white/90 backdrop-blur-sm border-white text-gray-900 hover:bg-white"
-          >
-            <Icon name="Eye" size={16} className="mr-2" />
-            Quick View
-          </Button>
-        </div>
-
-        {/* Shop Status */}
-        <div className="absolute top-3 right-3 flex gap-2">
+        {/* Badges - Mobile First */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1">
           {shop.is_verified && (
-            <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-md backdrop-blur-sm">
-              <Icon name="CheckCircle" size={12} />
+            <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-lg">
+              <CheckCircle size={8} />
               Verified
             </span>
           )}
+        </div>
+        
+        <div className="absolute top-2 right-2 flex flex-col gap-1">
           {shop.is_active && (
-            <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-md backdrop-blur-sm">
-              <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-              Active
+            <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-lg">
+              <TrendingUp size={8} />
+              Trending
+            </span>
+          )}
+          {!shop.is_active && (
+            <span className="bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg">
+              + New
             </span>
           )}
         </div>
-
-        {/* Shop Logo */}
-        <div className="absolute -bottom-8 left-4">
-          <div className="w-16 h-16 bg-white border-4 border-white rounded-xl overflow-hidden shadow-lg">
-            {shop.profile_photo ? (
-              <img
-                src={shop.profile_photo}
-                alt={shop.name}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-teal-500/20 to-blue-500/20 flex items-center justify-center">
-                <Icon name="Store" size={24} className="text-teal-500/60" />
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
-      {/* Shop Info */}
-      <div className="p-4 pt-10 flex-1 flex flex-col">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex-1">
-            <h3 className="font-bold text-lg text-gray-900 group-hover:text-teal-600 transition-colors">
-              {shop.name}
-            </h3>
-            <p className="text-sm text-gray-600 mt-1 line-clamp-2 min-h-[2.5rem]">
-              {shop.description || 'No description available'}
-            </p>
+      {/* Shop Content - Mobile First */}
+      <div className="p-4">
+        {/* Shop Name */}
+        <h3 className="text-base font-bold text-gray-900 mb-2 group-active:text-teal-600 transition-colors line-clamp-1">
+          {shop.name}
+        </h3>
+
+        {/* Rating */}
+        <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center">
+            {renderStars(shop.average_rating)}
+          </div>
+          <span className="text-sm font-semibold text-gray-900">
+            {formatRating(shop.average_rating)} ({shop.total_reviews || 0})
+          </span>
+        </div>
+
+        {/* Description */}
+        <p className="text-sm text-gray-600 mb-3 line-clamp-2 leading-relaxed">
+          {shop.description || 'Quality products and excellent service for all your needs.'}
+        </p>
+
+        {/* Shop Details - Mobile First */}
+        <div className="space-y-2 mb-3">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <MapPin size={14} className="text-gray-400" />
+            <span className="truncate">{shop.address || 'Location not specified'}</span>
           </div>
           
+          <div className="flex items-center gap-4 text-sm text-gray-600">
+            <div className="flex items-center gap-1">
+              <ShoppingBag size={14} className="text-gray-400" />
+              <span>{shop.product_count || 0} products</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Users size={14} className="text-gray-400" />
+              <span>{shop.followers_count || 0} followers</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Tags - Mobile First */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {getShopTags().map((tag, index) => (
+            <span
+              key={index}
+              className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-md"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+
+        {/* Action Buttons - Mobile First */}
+        <div className="flex gap-3">
+          <button
+            onClick={handleVisitShop}
+            className="flex-1 bg-teal-500 active:bg-teal-600 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg active:shadow-xl active:scale-95 flex items-center justify-center gap-2 text-sm"
+          >
+            <Store size={16} />
+            Visit Shop
+          </button>
           <button
             onClick={handleFollow}
-            className={`ml-3 p-2.5 rounded-full transition-all duration-150 hover:scale-105 ${
-              isFollowing 
-                ? 'bg-red-500 text-white shadow-lg' :'bg-gray-100 hover:bg-red-100 hover:text-red-500 text-gray-400'
+            className={`px-4 py-3 rounded-xl font-semibold transition-all duration-200 border active:scale-95 ${
+              isFollowing
+                ? 'bg-red-500 active:bg-red-600 text-white border-red-500'
+                : 'bg-white active:bg-gray-50 text-gray-700 border-gray-200'
             }`}
           >
-            <Icon name={isFollowing ? "Heart" : "Heart"} size={16} />
+            <Heart size={16} className={isFollowing ? 'fill-current' : ''} />
           </button>
         </div>
 
-        {/* Shop Stats */}
-        <div className="flex items-center gap-4 mb-4 mt-3">
-          <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded-lg">
-            <Icon name="Star" size={14} className="text-yellow-500" />
-            <span className="text-sm font-semibold text-yellow-700">
-              {shop.average_rating || 'N/A'}
-            </span>
-            <span className="text-xs text-yellow-600">
-              ({shop.total_reviews || 0})
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-1 flex-1 min-w-0">
-            <Icon name="MapPin" size={14} className="text-gray-400 flex-shrink-0" />
-            <span className="text-sm text-gray-600 truncate">
-              {shop.address || 'No address'}
+        {/* Activity Info - Mobile First */}
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-between text-xs text-gray-500">
+            <div className="flex items-center gap-1">
+              <Clock size={12} />
+              <span className="truncate">Active {formatJoinDate(shop.updated_at)}</span>
+            </div>
+            <span className="bg-gray-100 px-2 py-1 rounded-full text-xs">
+              {getShopCategory()}
             </span>
           </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3 mt-auto pt-4">
-          <Button
-            onClick={handleVisitShop}
-            variant="default"
-            size="sm"
-            className="flex-1 font-semibold bg-teal-500 hover:bg-teal-600 text-white hover:shadow-lg transition-all duration-150"
-            iconName="ExternalLink"
-          >
-            Visit Shop
-          </Button>
         </div>
       </div>
     </div>

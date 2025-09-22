@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import Stepper, { Step } from '../../components/ui/Stepper';
 import DeliveryAddressForm from './components/DeliveryAddressForm';
-import DeliveryOptionsForm from './components/DeliveryOptionsForm';
 import OrderReviewForm from './components/OrderReviewForm';
 import PaymentForm from './components/PaymentForm';
 import Icon from '../../components/AppIcon';
@@ -54,16 +53,38 @@ const Checkout = () => {
     paymentMethod: '',
     paymentDetails: {}
   });
+  
+  const [validationErrors, setValidationErrors] = useState({});
 
   // Load saved data from localStorage on component mount
   useEffect(() => {
     const savedData = localStorage.getItem('checkoutFormData');
+    const checkoutData = localStorage.getItem('checkoutData');
+
     if (savedData) {
       try {
         const parsedData = JSON.parse(savedData);
         setFormData(parsedData);
       } catch (error) {
         console.error('Error loading saved checkout data:', error);
+      }
+    }
+
+    // Load cart data from shopping cart
+    if (checkoutData) {
+      try {
+        const parsedCheckoutData = JSON.parse(checkoutData);
+        console.log('Loaded checkout data from cart:', parsedCheckoutData);
+
+        // Update form data with delivery option and promo code if available
+        setFormData(prev => ({
+          ...prev,
+          deliveryOption: parsedCheckoutData.deliveryOption || prev.deliveryOption,
+          promoCode: parsedCheckoutData.promoCode || prev.promoCode,
+          cartItems: parsedCheckoutData.items || []
+        }));
+      } catch (error) {
+        console.error('Error loading cart checkout data:', error);
       }
     }
   }, []);
@@ -73,50 +94,136 @@ const Checkout = () => {
     localStorage.setItem('checkoutFormData', JSON.stringify(formData));
   }, [formData]);
 
+  // Clear validation errors when form data changes (user is filling the form)
+  useEffect(() => {
+    if (Object.keys(validationErrors).length > 0) {
+      // Check if the current step is now valid
+      const currentStep = 1; // We'll determine this based on the current step
+      if (validateStep(currentStep)) {
+        setValidationErrors({});
+      }
+    }
+  }, [formData, validationErrors]);
+
   const validateStep = (step) => {
     console.log('Validating step:', step, 'Form data:', formData);
     switch (step) {
       case 1:
-        const step1Valid = formData.fullName && formData.phone && formData.address && formData.city;
+        // Include all required fields from DeliveryAddressForm
+        const step1Valid = formData.fullName && formData.phone && formData.address && formData.city && formData.region && formData.postalCode;
         console.log('Step 1 validation:', step1Valid, {
           fullName: formData.fullName,
           phone: formData.phone,
           address: formData.address,
-          city: formData.city
+          city: formData.city,
+          region: formData.region,
+          postalCode: formData.postalCode
         });
         return step1Valid;
       case 2:
-        const step2Valid = formData.deliveryOption;
-        console.log('Step 2 validation:', step2Valid, { deliveryOption: formData.deliveryOption });
+        // Review step - validate that step 1 is still valid
+        const step2Valid = formData.fullName && formData.phone && formData.address && formData.city && formData.region && formData.postalCode;
+        console.log('Step 2 validation:', step2Valid, '(review step - checking step 1 data)');
         return step2Valid;
       case 3:
-        console.log('Step 3 validation: true (review step)');
-        return true; // Review step doesn't need validation
-      case 4:
-        const step4Valid = formData.paymentMethod;
-        console.log('Step 4 validation:', step4Valid, { paymentMethod: formData.paymentMethod });
-        return step4Valid;
+        // Validate payment step - check if payment method is selected and terms are accepted
+        const hasPaymentMethod = formData.selectedPaymentMethod;
+        const hasTermsAccepted = formData.termsAccepted;
+        
+        // Additional validation for mobile money payments
+        let hasRequiredPaymentDetails = true;
+        if (formData.selectedPaymentMethod === 'mtn_momo' || formData.selectedPaymentMethod === 'orange_money') {
+          hasRequiredPaymentDetails = formData.paymentDetails?.phoneNumber && formData.paymentDetails.phoneNumber.trim().length > 0;
+        }
+        
+        const paymentValid = Boolean(hasPaymentMethod) && Boolean(hasTermsAccepted) && Boolean(hasRequiredPaymentDetails);
+        console.log('Step 3 validation:', paymentValid, {
+          selectedPaymentMethod: formData.selectedPaymentMethod,
+          termsAccepted: formData.termsAccepted,
+          paymentDetails: formData.paymentDetails,
+          hasRequiredPaymentDetails,
+          hasPaymentMethod: Boolean(hasPaymentMethod),
+          hasTermsAccepted: Boolean(hasTermsAccepted),
+          hasRequiredPaymentDetailsBool: Boolean(hasRequiredPaymentDetails)
+        });
+        return paymentValid;
       default:
         console.log('Default validation: true');
         return true;
     }
   };
 
+  const getValidationErrors = (step) => {
+    const errors = {};
+    
+    switch (step) {
+      case 1:
+        if (!formData.fullName) errors.fullName = 'Full name is required';
+        if (!formData.phone) errors.phone = 'Phone number is required';
+        if (!formData.address) errors.address = 'Address is required';
+        if (!formData.city) errors.city = 'City is required';
+        if (!formData.region) errors.region = 'Region is required';
+        if (!formData.postalCode) errors.postalCode = 'Postal code is required';
+        break;
+      case 2:
+        // Review step - check step 1 data
+        if (!formData.fullName) errors.fullName = 'Full name is required';
+        if (!formData.phone) errors.phone = 'Phone number is required';
+        if (!formData.address) errors.address = 'Address is required';
+        if (!formData.city) errors.city = 'City is required';
+        if (!formData.region) errors.region = 'Region is required';
+        if (!formData.postalCode) errors.postalCode = 'Postal code is required';
+        break;
+      case 3:
+        if (!formData.selectedPaymentMethod) errors.paymentMethod = 'Please select a payment method';
+        if (!formData.termsAccepted) errors.terms = 'You must accept the terms and conditions';
+        if ((formData.selectedPaymentMethod === 'mtn_momo' || formData.selectedPaymentMethod === 'orange_money') && 
+            (!formData.paymentDetails?.phoneNumber || formData.paymentDetails.phoneNumber.trim().length === 0)) {
+          errors.phoneNumber = 'Phone number is required for mobile money payments';
+        }
+        break;
+    }
+    
+    return errors;
+  };
+
   const handleStepChange = (newStep) => {
     console.log('handleStepChange called with newStep:', newStep);
+    
     // Validate current step before allowing progression
     if (newStep > 1 && !validateStep(newStep - 1)) {
       console.log('Step validation failed, preventing progression');
+      
+      // Set validation errors to show user what's missing
+      const currentStep = newStep - 1;
+      const errors = getValidationErrors(currentStep);
+      setValidationErrors(errors);
+      
+      // Show error message
+      alert(`Please complete all required fields before proceeding:\n\n${Object.values(errors).join('\n')}`);
+      
       return false;
     }
+    
+    // Clear validation errors if step is valid
+    setValidationErrors({});
     window.scrollTo({ top: 0, behavior: 'smooth' });
     return true;
   };
 
+  const paymentFormRef = useRef(null);
+
   const handleCheckoutComplete = () => {
-    // Handle final checkout completion with Tranzak API
-    console.log('Checkout completed with data:', formData);
-    // TODO: Implement Tranzak payment processing
+    console.log('🎯 handleCheckoutComplete called');
+    console.log('Payment form ref:', paymentFormRef.current);
+    
+    // Trigger payment processing when Complete button is clicked
+    if (paymentFormRef.current && paymentFormRef.current.handlePlaceOrder) {
+      console.log('✅ Calling handlePlaceOrder');
+      paymentFormRef.current.handlePlaceOrder();
+    } else {
+      console.log('❌ Payment form ref or handlePlaceOrder not available');
+    }
   };
 
   return (
@@ -233,6 +340,24 @@ const Checkout = () => {
                 </p>
               </div>
 
+              {/* Validation Error Display */}
+              {Object.keys(validationErrors).length > 0 && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Icon name="AlertCircle" size={20} className="text-red-600" />
+                    <h3 className="text-lg font-semibold text-red-800">Please complete the following:</h3>
+                  </div>
+                  <ul className="space-y-1">
+                    {Object.entries(validationErrors).map(([field, error]) => (
+                      <li key={field} className="text-sm text-red-700 flex items-center space-x-2">
+                        <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                        <span>{error}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               <Stepper
                 initialStep={1}
                 onStepChange={handleStepChange}
@@ -248,12 +373,6 @@ const Checkout = () => {
                   />
                 </Step>
                 <Step>
-                  <DeliveryOptionsForm
-                    formData={formData}
-                    setFormData={setFormData}
-                  />
-                </Step>
-                <Step>
                   <OrderReviewForm
                     formData={formData}
                     setFormData={setFormData}
@@ -261,6 +380,7 @@ const Checkout = () => {
                 </Step>
                 <Step>
                   <PaymentForm
+                    ref={paymentFormRef}
                     formData={formData}
                     setFormData={setFormData}
                   />

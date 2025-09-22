@@ -26,20 +26,20 @@
 
 .step-content-default {
   position: relative;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .step-default {
   padding-left: 2rem;
   padding-right: 2rem;
-  padding-bottom: 2rem;
+  padding-bottom: 1rem;
 }
 
 .footer-container {
   padding-left: 2rem;
   padding-right: 2rem;
   padding-bottom: 2rem;
-  margin-top: 3rem;
+  margin-top: 1.5rem;
 }
 
 .footer-nav {
@@ -104,6 +104,22 @@
   transform: scale(0.98);
 }
 
+.next-button.disabled,
+.next-button:disabled {
+  background-color: #9ca3af;
+  color: #6b7280;
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+.next-button.disabled:hover,
+.next-button:disabled:hover {
+  background-color: #9ca3af;
+  transform: none;
+  box-shadow: none;
+}
+
 .step-indicator {
   position: relative;
   cursor: pointer;
@@ -161,22 +177,24 @@
   .step-indicator-row {
     padding: 1rem 1.5rem 0.5rem 1.5rem;
   }
-  
+
   .step-default {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
+    padding-bottom: 0.5rem;
   }
-  
+
   .footer-container {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
+    margin-top: 1rem;
   }
-  
+
   .step-indicator-inner {
     height: 1.75rem;
     width: 1.75rem;
   }
-  
+
   .step-number {
     font-size: 0.75rem;
   }

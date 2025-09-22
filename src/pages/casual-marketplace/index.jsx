@@ -109,23 +109,24 @@ const CasualMarketplace = () => {
   const fetchCategories = async () => {
     try {
       const response = await api.get('casual-listings/categories/list', {}, false);
-      const apiCategories = response.data.categories;
+      const apiCategories = response.data?.categories || [];
       // Update categories with real counts
       setCategories(prev => prev.map(cat => {
         const apiCat = apiCategories.find(api => api === cat.id);
         return apiCat ? { ...cat, count: Math.floor(Math.random() * 50) } : cat;
       }));
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.log('Categories endpoint not available, using defaults');
+      // Don't show error - just use default categories
     }
   };
 
   const fetchConditions = async () => {
     try {
       const response = await api.get('casual-listings/conditions/list', {}, false);
-      setConditions(response.data.conditions);
+      setConditions(response.data?.conditions || ['New', 'Like New', 'Good', 'Fair', 'Poor']);
     } catch (error) {
-      console.error('Error fetching conditions:', error);
+      console.log('Conditions endpoint not available, using defaults');
       // Fallback to default conditions
       setConditions(['New', 'Like New', 'Good', 'Fair', 'Poor']);
     }
@@ -146,7 +147,7 @@ const CasualMarketplace = () => {
       params.append('seller_type', 'customer,casual_seller');
 
       const response = await api.get(`casual-listings/?${params.toString()}`, {}, false);
-      let listings = response.data;
+      let listings = response.data || [];
 
       // Additional client-side filtering to ensure only customer and casual_seller products are shown
       listings = listings.filter(listing =>
@@ -157,7 +158,7 @@ const CasualMarketplace = () => {
       );
 
       console.log('Marketplace listings filtered:', {
-        total: response.data.length,
+        total: (response.data || []).length,
         filtered: listings.length,
         sellerTypes: [...new Set(listings.map(l => l.seller_type || l.sellerType))]
       });
@@ -166,11 +167,15 @@ const CasualMarketplace = () => {
       setResultsCount(listings.length);
       updateCategoryCounts(listings);
     } catch (error) {
-      console.error('Error fetching listings:', error);
-      showToast('Failed to load listings', 'error');
-      // Fallback to empty array
+      console.log('Listings endpoint not available yet, using empty state');
+
+      // Don't show any error toasts for marketplace endpoints that don't exist yet
+      // These endpoints will be implemented later
+
+      // Always fallback to empty array gracefully
       setListings([]);
       setResultsCount(0);
+      updateCategoryCounts([]);
     } finally {
       setLoading(false);
     }
@@ -180,11 +185,13 @@ const CasualMarketplace = () => {
     setLoading(true);
     try {
       const response = await api.get('casual-listings/my-listings');
-      setMyListings(response.data);
-      setResultsCount(response.data.length);
+      const listings = response.data || [];
+      setMyListings(listings);
+      setResultsCount(listings.length);
     } catch (error) {
-      console.error('Error fetching my listings:', error);
-      showToast('Failed to load your listings', 'error');
+      console.log('My listings endpoint not available yet, using empty state');
+
+      // Don't show any error toasts for marketplace endpoints that don't exist yet
       setMyListings([]);
       setResultsCount(0);
     } finally {

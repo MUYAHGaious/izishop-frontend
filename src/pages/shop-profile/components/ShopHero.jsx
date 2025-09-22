@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Camera, Plus, X, MapPin, Star, Package, Users, Calendar, Shield, Phone, Mail } from 'lucide-react';
+import { Camera, Plus, X, MapPin, Star, Package, Users, Calendar, Shield, Phone, Mail, Heart, Share2, MessageCircle, Clock, Award, TrendingUp } from 'lucide-react';
 import { showToast } from '../../../components/ui/Toast';
 import api from '../../../services/api';
 

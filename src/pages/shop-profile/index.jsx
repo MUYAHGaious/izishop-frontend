@@ -8,6 +8,10 @@ import Header from '../../components/ui/Header';
 import MobileBottomTab from '../../components/ui/MobileBottomTab';
 import Breadcrumbs from '../../components/ui/Breadcrumbs';
 import ShopHero from './components/ShopHero';
+import ModernShopHero from './components/ModernShopHero';
+import ModernTabNavigation from './components/ModernTabNavigation';
+import ModernProductGrid from './components/ModernProductGrid';
+import ModernReviewsSection from './components/ModernReviewsSection';
 import ShopStats from './components/ShopStats';
 import ShopOwnerInfo from './components/ShopOwnerInfo';
 import ProductGrid from './components/ProductGrid';
@@ -301,68 +305,53 @@ const ShopProfile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    <div className="min-h-screen bg-gray-50">
       <Header />
       
       <main className="pb-20 lg:pb-8">
         {/* Shop Suspension Warning */}
         <ShopSuspensionWarning shop={shopData} isOwner={isOwner} />
         
-        {/* Shop Hero Section */}
-        <ShopHero 
+        {/* Modern Shop Hero Section */}
+        <ModernShopHero 
           shop={shopData} 
           onFollow={handleFollow}
           onContact={() => handleContact('general')}
           isOwner={isOwner}
         />
 
-        <div className="container mx-auto px-6 py-12">
-          <div className="mb-8">
-            <Breadcrumbs items={breadcrumbItems} className="text-slate-600" />
-          </div>
+        {/* Modern Tab Navigation */}
+        <ModernTabNavigation
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          tabs={tabs}
+        />
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
-            {/* Main Content */}
-            <div className="lg:col-span-3">
-              {/* Modern Tab Navigation */}
-              <div className="bg-white/60 backdrop-blur-sm rounded-3xl p-2 border border-slate-200/50 mb-8 overflow-x-auto">
-                <div className="flex gap-2">
-                  {tabs.map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all whitespace-nowrap ${
-                        activeTab === tab.id
-                          ? 'bg-slate-900 text-white shadow-lg' 
-                          : 'text-slate-600 hover:bg-white/80 hover:text-slate-900'
-                      }`}
-                    >
-                      <span>{tab.label}</span>
-                      {tab.count !== undefined && (
-                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                          activeTab === tab.id
-                            ? 'bg-white/20 text-white' 
-                            : 'bg-slate-200 text-slate-700'
-                        }`}>
-                          {tab.count}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
+        <div className="max-w-6xl mx-auto px-6 py-8">
+          <div className="mb-6">
+            <Breadcrumbs items={breadcrumbItems} className="text-gray-600" />
+          </div>
 
               {/* Tab Content */}
               <div className="animate-fade-in">
                 {activeTab === 'products' && (
-                  <ProductGrid products={products} shopId={shopData.id} />
+                  <ModernProductGrid 
+                    products={products} 
+                    onProductClick={(productId) => navigate(`/product-detail-modal?id=${productId}`)}
+                    onAddToCart={(productId) => {
+                      showToast('Product added to cart!', 'success');
+                    }}
+                    onAddToWishlist={(productId) => {
+                      showToast('Product added to wishlist!', 'success');
+                    }}
+                  />
                 )}
                 
                 {activeTab === 'reviews' && (
-                  <ReviewsSection 
-                    reviews={reviews}
-                    overallRating={shopData.rating}
-                    ratingDistribution={ratingDistribution}
+                  <ModernReviewsSection 
+                    reviews={reviews} 
+                    shopRating={shopData.average_rating}
+                    totalReviews={shopData.total_reviews}
                   />
                 )}
                 
@@ -392,14 +381,6 @@ const ShopProfile = () => {
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* Sidebar */}
-            <div className="lg:col-span-1 space-y-6">
-              <ShopStats stats={statsData} />
-              <ShopOwnerInfo owner={shopData.owner || { name: 'Unknown', photo: '/default-avatar.png', email: '', phone: '', memberSince: '', bio: '', certifications: [] }} />
-            </div>
-          </div>
         </div>
       </main>
 

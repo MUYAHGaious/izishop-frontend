@@ -38,7 +38,38 @@ const DeliveryAddressForm = ({ formData, setFormData }) => {
 
       // For now, load from localStorage as fallback
       const storedAddresses = JSON.parse(localStorage.getItem(`userAddresses_${user.id}`) || '[]');
-      setSavedAddresses(storedAddresses);
+
+      // Add some default sample addresses for demo if none exist
+      if (storedAddresses.length === 0 && user) {
+        const sampleAddresses = [
+          {
+            id: 1,
+            label: "Home",
+            fullName: `${user.first_name || 'John'} ${user.last_name || 'Doe'}`,
+            phone: user.phone || "+237 655 123 456",
+            address: "Bastos, Rue 1020",
+            city: "Yaoundé",
+            region: "centre",
+            postalCode: "999",
+            deliveryInstructions: "Ring the bell twice"
+          },
+          {
+            id: 2,
+            label: "Office",
+            fullName: `${user.first_name || 'John'} ${user.last_name || 'Doe'}`,
+            phone: user.phone || "+237 655 123 456",
+            address: "Bonanjo, Boulevard de la Liberté",
+            city: "Douala",
+            region: "littoral",
+            postalCode: "999",
+            deliveryInstructions: "Reception desk, ask for Mr/Ms " + (user.last_name || 'Doe')
+          }
+        ];
+        setSavedAddresses(sampleAddresses);
+        localStorage.setItem(`userAddresses_${user.id}`, JSON.stringify(sampleAddresses));
+      } else {
+        setSavedAddresses(storedAddresses);
+      }
     } catch (error) {
       console.error('Error loading addresses:', error);
     } finally {
@@ -84,9 +115,8 @@ const DeliveryAddressForm = ({ formData, setFormData }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      onNext();
-    }
+    // Form validation is handled by the parent component through validateStep
+    // This prevents form submission but allows the Stepper to handle navigation
   };
 
   const handleInputChange = (field, value) => {
@@ -115,14 +145,15 @@ const DeliveryAddressForm = ({ formData, setFormData }) => {
 
     const addressToSave = {
       id: Date.now(), // Temporary ID
-      label: "New Address",
+      label: `Address ${savedAddresses.length + 1}`,
       fullName: formData.fullName,
       phone: formData.phone,
       address: formData.address,
       city: formData.city,
       region: formData.region,
       postalCode: formData.postalCode,
-      deliveryInstructions: formData.deliveryInstructions
+      deliveryInstructions: formData.deliveryInstructions,
+      isDefault: savedAddresses.length === 0 // Make first address default
     };
 
     try {
@@ -134,158 +165,207 @@ const DeliveryAddressForm = ({ formData, setFormData }) => {
       setSavedAddresses(updatedAddresses);
       localStorage.setItem(`userAddresses_${user.id}`, JSON.stringify(updatedAddresses));
 
-      // Show success message or toast
+      // Show success message
+      alert('Address saved successfully!');
       console.log('Address saved successfully');
     } catch (error) {
       console.error('Error saving address:', error);
+      alert('Failed to save address. Please try again.');
+    }
+  };
+
+  const deleteAddress = async (addressId) => {
+    if (!user?.id) return;
+    if (!window.confirm('Are you sure you want to delete this address?')) return;
+
+    try {
+      // TODO: Replace with actual API call
+      // await api.delete(`/users/${user.id}/addresses/${addressId}`);
+
+      // For now, remove from localStorage
+      const updatedAddresses = savedAddresses.filter(addr => addr.id !== addressId);
+      setSavedAddresses(updatedAddresses);
+      localStorage.setItem(`userAddresses_${user.id}`, JSON.stringify(updatedAddresses));
+
+      console.log('Address deleted successfully');
+    } catch (error) {
+      console.error('Error deleting address:', error);
+      alert('Failed to delete address. Please try again.');
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-lg">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="bg-gradient-to-br from-teal-100 to-teal-200 p-3 rounded-xl">
-              <Icon name="MapPin" size={24} className="text-teal-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900">{t('checkout.deliveryAddress')}</h2>
-          </div>
-          <p className="text-gray-600">{t('checkout.deliveryAddressDesc')}</p>
-          <div className="flex justify-center mt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowAddressBook(!showAddressBook)}
-              iconName="BookOpen"
-              iconPosition="left"
-              className="border-teal-300 text-teal-600 hover:bg-teal-50 hover:border-teal-400"
-            >
-              {t('checkout.addressBook')}
-            </Button>
-          </div>
-        </div>
+    <div>
+      {/* Address Book Button */}
+      <div className="text-center mb-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowAddressBook(!showAddressBook)}
+          iconName="BookOpen"
+          iconPosition="left"
+          className="border-teal-300 text-teal-600 hover:bg-teal-50 hover:border-teal-400 text-sm"
+        >
+          {t('checkout.addressBook')}
+        </Button>
+      </div>
 
-        {/* Address Book */}
-        {showAddressBook && (
-          <div className="mb-8 p-6 bg-gradient-to-r from-teal-50 to-teal-100 rounded-xl border border-teal-200">
-            <h3 className="text-lg font-semibold text-teal-800 mb-4">Saved Addresses</h3>
+      {/* Address Book */}
+      {showAddressBook && (
+        <div className="mb-6 p-4 bg-teal-50 rounded-lg border border-teal-200">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-semibold text-teal-800">Saved Addresses</h3>
+            <button
+              onClick={saveCurrentAddress}
+              className="text-xs bg-teal-600 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700 transition-colors"
+            >
+              Save Current
+            </button>
+          </div>
+
+          {isLoadingAddresses ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-6 h-6 border-2 border-teal-300 border-t-teal-600 rounded-full animate-spin"></div>
+              <span className="ml-2 text-teal-600 text-sm">Loading addresses...</span>
+            </div>
+          ) : savedAddresses.length === 0 ? (
+            <div className="text-center py-6">
+              <Icon name="MapPin" size={24} className="text-gray-400 mx-auto mb-2" />
+              <p className="text-gray-500 text-sm">No saved addresses yet</p>
+              <p className="text-xs text-gray-400">Fill out the form below and click "Save Current" to add an address</p>
+            </div>
+          ) : (
             <div className="space-y-3">
               {savedAddresses.map((address) => (
                 <div
                   key={address.id}
-                  className="p-4 bg-white rounded-xl border border-teal-200 cursor-pointer hover:border-teal-400 hover:shadow-md transition-all duration-300"
-                  onClick={() => selectSavedAddress(address)}
+                  className="p-3 bg-white rounded-lg border border-teal-200 hover:border-teal-400 hover:shadow-sm transition-all duration-200"
                 >
                   <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center space-x-3">
-                        <div className="bg-gradient-to-br from-teal-100 to-teal-200 p-2 rounded-lg">
-                          <Icon name="MapPin" size={16} className="text-teal-600" />
+                    <div
+                      className="flex-1 cursor-pointer"
+                      onClick={() => selectSavedAddress(address)}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <div className="bg-teal-100 p-1.5 rounded-lg">
+                          <Icon name="MapPin" size={14} className="text-teal-600" />
                         </div>
-                        <span className="font-semibold text-gray-900">{address.label}</span>
+                        <span className="font-semibold text-gray-900 text-sm">{address.label}</span>
+                        {address.isDefault && (
+                          <span className="bg-teal-100 text-teal-700 text-xs px-2 py-0.5 rounded-full">Default</span>
+                        )}
                       </div>
-                      <p className="text-sm text-gray-600 mt-2 ml-11">
+                      <p className="text-xs text-gray-600 mt-2 ml-8">
                         {address.fullName} • {address.phone}
                       </p>
-                      <p className="text-sm text-gray-600 ml-11">
+                      <p className="text-xs text-gray-600 ml-8">
                         {address.address}, {address.city}, {address.region}
                       </p>
                     </div>
-                    <Icon name="ChevronRight" size={16} className="text-teal-600" />
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          selectSavedAddress(address);
+                        }}
+                        className="p-1 text-teal-600 hover:bg-teal-100 rounded"
+                        title="Use this address"
+                      >
+                        <Icon name="Check" size={14} />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteAddress(address.id);
+                        }}
+                        className="p-1 text-red-500 hover:bg-red-50 rounded"
+                        title="Delete address"
+                      >
+                        <Icon name="Trash2" size={14} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Full Name"
-              type="text"
-              placeholder="Enter your full name"
-              value={formData.fullName || ''}
-              onChange={(e) => handleInputChange('fullName', e.target.value)}
-              error={errors.fullName}
-              required
-            />
-            
-            <Input
-              label="Phone Number"
-              type="tel"
-              placeholder="+237 6XX XXX XXX or 6XX XXX XXX"
-              value={formData.phone || ''}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              error={errors.phone}
-              required
-            />
-          </div>
-
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
-            label="Complete Address"
+            label="Full Name"
             type="text"
-            placeholder="Street, neighborhood, landmark"
-            value={formData.address || ''}
-            onChange={(e) => handleInputChange('address', e.target.value)}
-            error={errors.address}
+            placeholder="Enter your full name"
+            value={formData.fullName || ''}
+            onChange={(e) => handleInputChange('fullName', e.target.value)}
+            error={errors.fullName}
             required
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input
-              label="City"
-              type="text"
-              placeholder="Yaoundé, Douala..."
-              value={formData.city || ''}
-              onChange={(e) => handleInputChange('city', e.target.value)}
-              error={errors.city}
-              required
-            />
-            
-            <Select
-              label="Region"
-              placeholder="Select a region"
-              options={regions}
-              value={formData.region || ''}
-              onChange={(value) => handleInputChange('region', value)}
-              error={errors.region}
-              required
-            />
-            
-            <Input
-              label="Postal Code"
-              type="text"
-              placeholder="999"
-              value={formData.postalCode || ''}
-              onChange={(e) => handleInputChange('postalCode', e.target.value)}
-              error={errors.postalCode}
-              required
-            />
-          </div>
-
           <Input
-            label="Delivery Instructions (Optional)"
+            label="Phone Number"
+            type="tel"
+            placeholder="+237 6XX XXX XXX"
+            value={formData.phone || ''}
+            onChange={(e) => handleInputChange('phone', e.target.value)}
+            error={errors.phone}
+            required
+          />
+        </div>
+
+        <Input
+          label="Complete Address"
+          type="text"
+          placeholder="Street, neighborhood, landmark"
+          value={formData.address || ''}
+          onChange={(e) => handleInputChange('address', e.target.value)}
+          error={errors.address}
+          required
+        />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Input
+            label="City"
             type="text"
-            placeholder="Additional information for the delivery person"
-            value={formData.deliveryInstructions || ''}
-            onChange={(e) => handleInputChange('deliveryInstructions', e.target.value)}
+            placeholder="Yaoundé, Douala..."
+            value={formData.city || ''}
+            onChange={(e) => handleInputChange('city', e.target.value)}
+            error={errors.city}
+            required
           />
 
-          <div className="flex justify-end pt-6">
-            <Button
-              type="submit"
-              variant="default"
-              iconName="ArrowRight"
-              iconPosition="right"
-              className="min-w-40 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-            >
-              Continue
-            </Button>
-          </div>
-        </form>
-      </div>
+          <Select
+            label="Region"
+            placeholder="Select a region"
+            options={regions}
+            value={formData.region || ''}
+            onChange={(value) => handleInputChange('region', value)}
+            error={errors.region}
+            required
+          />
+
+          <Input
+            label="Postal Code"
+            type="text"
+            placeholder="999"
+            value={formData.postalCode || ''}
+            onChange={(e) => handleInputChange('postalCode', e.target.value)}
+            error={errors.postalCode}
+            required
+          />
+        </div>
+
+        <Input
+          label="Delivery Instructions (Optional)"
+          type="text"
+          placeholder="Additional information for the delivery person"
+          value={formData.deliveryInstructions || ''}
+          onChange={(e) => handleInputChange('deliveryInstructions', e.target.value)}
+        />
+      </form>
     </div>
   );
 };

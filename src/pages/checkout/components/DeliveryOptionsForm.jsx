@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Button from '../../../components/ui/Button';
 import Icon from '../../../components/AppIcon';
 
-const DeliveryOptionsForm = ({ onNext, onBack, formData, setFormData }) => {
+const DeliveryOptionsForm = ({ formData, setFormData }) => {
   const [selectedOption, setSelectedOption] = useState(formData.deliveryOption || '');
 
   const deliveryOptions = [
@@ -61,11 +61,6 @@ const DeliveryOptionsForm = ({ onNext, onBack, formData, setFormData }) => {
     }));
   };
 
-  const handleNext = () => {
-    if (selectedOption) {
-      onNext();
-    }
-  };
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('fr-CM', {
@@ -169,27 +164,6 @@ const DeliveryOptionsForm = ({ onNext, onBack, formData, setFormData }) => {
           </p>
         </div>
 
-        <div className="flex justify-between pt-6">
-          <Button
-            variant="outline"
-            onClick={onBack}
-            iconName="ArrowLeft"
-            iconPosition="left"
-          >
-            Back
-          </Button>
-          
-          <Button
-            variant="default"
-            onClick={handleNext}
-            disabled={!selectedOption}
-            iconName="ArrowRight"
-            iconPosition="right"
-            className="min-w-32"
-          >
-            Continue
-          </Button>
-        </div>
       </div>
     </div>
   );

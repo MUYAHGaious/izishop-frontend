@@ -68,16 +68,18 @@ export default function Stepper({
   };
 
   const handleComplete = () => {
-    console.log('Complete button clicked');
+    console.log('🔘 Complete button clicked');
     console.log('Current step:', currentStep);
     console.log('Total steps:', totalSteps);
+    console.log('Validate step result:', validateStep(currentStep));
     
     // Validate final step before completing
     if (validateStep(currentStep)) {
+      console.log('✅ Final step validation passed, proceeding to complete');
       setDirection(1);
       updateStep(totalSteps + 1);
     } else {
-      console.log('Final step validation failed, cannot complete');
+      console.log('❌ Final step validation failed, cannot complete');
       // You could show an error message here
     }
   };
@@ -148,7 +150,8 @@ export default function Stepper({
               )}
               <button
                 onClick={isLastStep ? handleComplete : handleNext}
-                className="next-button"
+                className={`next-button ${!validateStep(currentStep) ? 'disabled' : ''}`}
+                disabled={!validateStep(currentStep)}
                 {...nextButtonProps}
               >
                 {isLastStep ? "Complete" : nextButtonText}
@@ -186,8 +189,39 @@ function SlideTransition({ children, direction, onHeightReady }) {
   const containerRef = useRef(null);
 
   useLayoutEffect(() => {
-    if (containerRef.current) onHeightReady(containerRef.current.offsetHeight);
+    if (containerRef.current) {
+      onHeightReady(containerRef.current.offsetHeight);
+    }
   }, [children, onHeightReady]);
+
+  // Also watch for content changes and recalculate height
+  useLayoutEffect(() => {
+    const recalculateHeight = () => {
+      if (containerRef.current) {
+        onHeightReady(containerRef.current.offsetHeight);
+      }
+    };
+
+    // Use ResizeObserver to detect content size changes
+    if (containerRef.current) {
+      const resizeObserver = new ResizeObserver(recalculateHeight);
+      resizeObserver.observe(containerRef.current);
+
+      // Also use MutationObserver to detect DOM changes
+      const mutationObserver = new MutationObserver(recalculateHeight);
+      mutationObserver.observe(containerRef.current, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'style']
+      });
+
+      return () => {
+        resizeObserver.disconnect();
+        mutationObserver.disconnect();
+      };
+    }
+  }, [onHeightReady]);
 
   return (
     <motion.div

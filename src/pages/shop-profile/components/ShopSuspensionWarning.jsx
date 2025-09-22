@@ -2,7 +2,7 @@ import React from 'react';
 import Icon from '../../../components/AppIcon';
 
 const ShopSuspensionWarning = ({ shop, isOwner = false }) => {
-  if (!shop || shop.status === 'active') return null;
+  if (!shop || shop.is_active) return null;
 
   return (
     <div className="bg-red-50 border-l-4 border-red-500 p-6 mb-6">

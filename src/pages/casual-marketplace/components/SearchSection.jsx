@@ -22,7 +22,7 @@ const SearchSection = ({ searchParams, setSearchParams, placeholder = "Search it
   return (
     <div className="bg-gradient-to-r from-teal-500 to-blue-600 pt-24 pb-12">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 mt-4">
           <h1 className="text-4xl font-bold text-white mb-2">Casual Marketplace</h1>
           <p className="text-teal-100 text-lg">
             Buy and sell items easily with only 5% transaction fee

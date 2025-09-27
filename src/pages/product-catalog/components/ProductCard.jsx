@@ -138,41 +138,71 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist }) => {
       </div>
 
       {/* Product Info */}
-      <div className="p-2">
-        {/* Enhanced Shop Info Section */}
-        <div className="mb-3 p-2 bg-gray-50 rounded-lg border">
-          {/* Shop Name and Verification */}
-          <div className="flex items-center justify-between mb-1">
+      <div className="p-3">
+        {/* Enhanced Shop Info Section - More Prominent */}
+        <div className="mb-3 p-3 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-200 shadow-sm">
+          {/* DEBUG: Shop Data Display */}
+          <div className="mb-2 p-2 bg-red-100 border border-red-300 rounded text-xs">
+            <div><strong>DEBUG - Shop Data:</strong></div>
+            <div>shopName: {JSON.stringify(product.shopName)}</div>
+            <div>shopId: {JSON.stringify(product.shopId)}</div>
+            <div>shopVerified: {JSON.stringify(product.shopVerified)}</div>
+            <div>shopRating: {JSON.stringify(product.shopRating)}</div>
+          </div>
+
+          {/* Shop Name and Trust Signals */}
+          <div className="flex items-center justify-between mb-2">
             <Link
               to={`/shop-profile?id=${product.shopId}`}
-              className="flex items-center space-x-2 text-sm font-medium text-gray-700 hover:text-primary transition-colors flex-1 group"
+              className="flex items-center space-x-2 text-sm font-semibold text-gray-800 hover:text-teal-600 transition-colors flex-1 group"
             >
-              <Icon name="Store" size={14} className="flex-shrink-0 text-gray-500 group-hover:text-primary transition-colors" />
-              <span className="truncate">{product.shopName || 'IziShopin Store'}</span>
-              {product.shopVerified && (
-                <div className="flex items-center space-x-1 bg-blue-100 px-2 py-0.5 rounded-full">
-                  <Icon name="CheckCircle" size={12} className="text-blue-600 flex-shrink-0" />
-                  <span className="text-xs font-medium text-blue-700">Verified</span>
-                </div>
-              )}
+             <div className="flex items-center space-x-2">
+               <div className="w-6 h-6 bg-teal-100 rounded-full flex items-center justify-center">
+                 <Icon name="Store" size={12} className="text-teal-600" />
+               </div>
+               <span className="truncate font-medium">{product.shopName || 'IziShopin Store'}</span>
+             </div>
+              
+              {/* Trust Badges */}
+              <div className="flex items-center space-x-1">
+               {product.shopVerified && (
+                 <div className="flex items-center space-x-1 bg-green-100 px-2 py-1 rounded-full">
+                   <Icon name="CheckCircle" size={10} className="text-green-600" />
+                   <span className="text-xs font-medium text-green-700">Verified</span>
+                 </div>
+               )}
+               {product.shopRating >= 4.5 && (
+                 <div className="flex items-center space-x-1 bg-yellow-100 px-2 py-1 rounded-full">
+                   <Icon name="Star" size={10} className="text-yellow-600 fill-current" />
+                   <span className="text-xs font-medium text-yellow-700">Top Seller</span>
+                 </div>
+               )}
+              </div>
             </Link>
           </div>
 
-          {/* Shop Rating and Type */}
-          <div className="flex items-center justify-between">
-            {product.shopRating ? (
-              <div className="flex items-center space-x-1">
-                <Icon name="Star" size={12} className="text-amber-400 fill-current" />
-                <span className="text-xs text-gray-600 font-medium">
-                  {product.shopRating.toFixed(1)}
-                </span>
-                <span className="text-xs text-gray-400">shop rating</span>
+          {/* Shop Rating, Location, and Type */}
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center space-x-3">
+              {product.shopRating ? (
+                <div className="flex items-center space-x-1">
+                  <Icon name="Star" size={12} className="text-amber-400 fill-current" />
+                  <span className="text-gray-700 font-medium">
+                    {product.shopRating.toFixed(1)}
+                  </span>
+                </div>
+              ) : (
+                <span className="text-gray-500">New shop</span>
+              )}
+              
+              {/* Shop Location */}
+              <div className="flex items-center space-x-1 text-gray-500">
+                <Icon name="MapPin" size={10} />
+                <span>{product.shopLocation || 'Cameroon'}</span>
               </div>
-            ) : (
-              <span className="text-xs text-gray-400">New shop</span>
-            )}
+            </div>
 
-            {/* Enhanced Seller Type Badge */}
+            {/* Seller Type Badge */}
             {product.sellerType && (
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                 product.sellerType === 'shop_owner'
@@ -181,8 +211,8 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist }) => {
                   ? 'bg-orange-100 text-orange-700 border border-orange-200'
                   : 'bg-gray-100 text-gray-700 border border-gray-200'
               }`}>
-                {product.sellerType === 'shop_owner' ? 'Professional Shop' :
-                 product.sellerType === 'casual_seller' ? 'Individual Seller' : 'Store'}
+                {product.sellerType === 'shop_owner' ? 'Professional' :
+                 product.sellerType === 'casual_seller' ? 'Individual' : 'Store'}
               </span>
             )}
           </div>

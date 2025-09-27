@@ -173,7 +173,26 @@ class ProjectConsoleLogger {
                 immediate: immediate
             };
             
-            const url = 'https://izishop-backend.onrender.com/api/debug/frontend-logs';
+            // Environment-aware URL similar to api.js
+            const getApiBaseUrl = () => {
+                const hostname = window.location.hostname;
+                const port = window.location.port;
+
+                // Check for local development
+                if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.local')) {
+                    return 'http://127.0.0.1:8000';
+                }
+
+                // Check for development ports
+                if (port && ['3000', '4028', '5173', '8080', '3001', '4000', '5000'].includes(port)) {
+                    return 'http://127.0.0.1:8000';
+                }
+
+                // Default to production
+                return 'https://izishop-backend.onrender.com';
+            };
+
+            const url = `${getApiBaseUrl()}/api/debug/frontend-logs`;
             
             if (synchronous) {
                 // Use sendBeacon for page unload (fire-and-forget)

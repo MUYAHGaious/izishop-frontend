@@ -45,27 +45,22 @@ const MobileBottomTab = () => {
     if (item.action === 'search') {
       setSearchClicked(true);
       
-      // Try multiple selectors to find search input
-      const searchInput = document.querySelector('input[type="search"]') || 
-                         document.querySelector('input[placeholder*="Search"]') ||
-                         document.querySelector('input[placeholder*="search"]');
+      // Navigate to product catalog where search is always visible
+      navigate('/product-catalog');
       
+      // Wait for navigation to complete, then focus search input
+      setTimeout(() => {
+        const searchInput = document.querySelector('input[type="search"]') || 
+                           document.querySelector('input[placeholder*="Search"]') ||
+                           document.querySelector('input[placeholder*="search"]') ||
+                           document.querySelector('input[placeholder*="products"]') ||
+                           document.querySelector('input[placeholder*="brands"]');
+        
       if (searchInput) {
         searchInput.focus();
-        searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } else {
-        // If no search input found, navigate to product catalog with search focus
-        navigate('/product-catalog');
-        // Try again after navigation
-        setTimeout(() => {
-          const delayedSearchInput = document.querySelector('input[type="search"]') || 
-                                   document.querySelector('input[placeholder*="Search"]') ||
-                                   document.querySelector('input[placeholder*="search"]');
-          if (delayedSearchInput) {
-            delayedSearchInput.focus();
-          }
-        }, 100);
+          searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
+      }, 200); // Wait for page to load
       
       // Reset visual feedback after 1 second
       setTimeout(() => setSearchClicked(false), 1000);

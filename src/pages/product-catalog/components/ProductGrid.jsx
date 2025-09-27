@@ -1,12 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
+import Image from '../../../components/AppImage';
 import Button from '../../../components/ui/Button';
 import { useWishlist } from '../../../contexts/WishlistContext';
 
 const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const { isInWishlist, toggleWishlist, isLoading: wishlistLoading } = useWishlist();
   const navigate = useNavigate();
 
@@ -48,14 +50,26 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
         <div className="flex p-4 gap-4">
           {/* Product Image */}
           <div className="relative w-32 h-32 flex-shrink-0">
-            {!imageLoaded && (
+            {!imageLoaded && !imageError && (
               <div className="absolute inset-0 bg-gray-200 animate-pulse rounded-lg"></div>
             )}
-            <img
+            <Image
               src={product.image}
               alt={product.name}
-              className={`w-full h-full object-cover rounded-lg transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-              onLoad={() => setImageLoaded(true)}
+              className="w-full h-full object-cover rounded-lg"
+              onLoad={() => {
+                setImageLoaded(true);
+                setImageError(false);
+              }}
+              onError={() => {
+                setImageLoaded(false);
+                setImageError(true);
+              }}
+              fallback={
+                <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
+                  <Icon name="Image" size={48} className="text-gray-400" />
+                </div>
+              }
             />
 
             
@@ -111,10 +125,44 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
               )}
             </div>
 
-            {/* Shop Info */}
-            <div className="flex items-center space-x-2 mb-3">
-              <Icon name="Store" size={14} className="text-gray-400" />
-              <span className="text-sm text-gray-600">{product.shopName}</span>
+            {/* Enhanced Shop Info */}
+            <div className="mb-3 p-2 bg-gray-50 rounded-lg border">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center space-x-2 min-w-0 flex-1">
+                  <div className="w-5 h-5 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Icon name="Store" size={12} className="text-teal-600" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-800 truncate max-w-[200px]" title={product.shopName || 'IziShopin Store'}>
+                    {product.shopName || 'IziShopin Store'}
+                  </span>
+                  {product.shopVerified && (
+                    <div className="flex items-center space-x-1 bg-green-100 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                      <Icon name="CheckCircle" size={8} className="text-green-600" />
+                      <span className="text-xs font-medium text-green-700">Verified</span>
+                    </div>
+                  )}
+                </div>
+                {product.shopRating >= 4.5 && (
+                  <div className="flex items-center space-x-1 bg-yellow-100 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                    <Icon name="Star" size={8} className="text-yellow-600 fill-current" />
+                    <span className="text-xs font-medium text-yellow-700">Top Seller</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center space-x-3 text-xs text-gray-500">
+                {product.shopRating && (
+                  <div className="flex items-center space-x-1">
+                    <Icon name="Star" size={10} className="text-amber-400 fill-current" />
+                    <span>{product.shopRating.toFixed(1)}</span>
+                  </div>
+                )}
+                <div className="flex items-center space-x-1">
+                  <Icon name="MapPin" size={8} />
+                  <span className="truncate max-w-[120px]" title={product.shopLocation || 'Cameroon'}>
+                    {product.shopLocation || 'Cameroon'}
+                  </span>
+                </div>
+              </div>
             </div>
 
 
@@ -154,14 +202,26 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
     <div className="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden transform hover:-translate-y-1">
       {/* Product Image */}
       <div className="relative aspect-square overflow-hidden">
-        {!imageLoaded && (
+        {!imageLoaded && !imageError && (
           <div className="absolute inset-0 bg-gray-200 animate-pulse"></div>
         )}
-        <img
+        <Image
           src={product.image}
           alt={product.name}
-          className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-          onLoad={() => setImageLoaded(true)}
+          className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110"
+          onLoad={() => {
+            setImageLoaded(true);
+            setImageError(false);
+          }}
+          onError={() => {
+            setImageLoaded(false);
+            setImageError(true);
+          }}
+          fallback={
+            <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+              <Icon name="Image" size={64} className="text-gray-400" />
+            </div>
+          }
         />
 
         
@@ -198,7 +258,7 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
       {/* Product Info */}
       <div className="p-4">
         {/* Product Name */}
-        <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 mb-2 leading-tight group-hover:text-teal-600 transition-colors duration-200">
+        <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 mb-2 leading-tight group-hover:text-teal-600 transition-colors duration-200 min-h-[2.5rem]" title={product.name}>
           {product.name}
         </h3>
 
@@ -229,10 +289,44 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
           )}
         </div>
 
-        {/* Shop Info */}
-        <div className="flex items-center space-x-1 mb-3">
-          <Icon name="Store" size={12} className="text-gray-400" />
-          <span className="text-xs text-gray-600 truncate">{product.shopName}</span>
+        {/* Enhanced Shop Info */}
+        <div className="mb-3 p-2 bg-gray-50 rounded-lg border">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center space-x-1.5 min-w-0 flex-1">
+              <div className="w-4 h-4 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Icon name="Store" size={10} className="text-teal-600" />
+              </div>
+              <span className="text-xs font-medium text-gray-800 truncate max-w-[120px]" title={product.shopName || 'IziShopin Store'}>
+                {product.shopName || 'IziShopin Store'}
+              </span>
+              {product.shopVerified && (
+                <div className="flex items-center space-x-1 bg-green-100 px-1 py-0.5 rounded-full flex-shrink-0">
+                  <Icon name="CheckCircle" size={6} className="text-green-600" />
+                  <span className="text-xs font-medium text-green-700">✓</span>
+                </div>
+              )}
+            </div>
+            {product.shopRating >= 4.5 && (
+              <div className="flex items-center space-x-1 bg-yellow-100 px-1 py-0.5 rounded-full flex-shrink-0">
+                <Icon name="Star" size={6} className="text-yellow-600 fill-current" />
+                <span className="text-xs font-medium text-yellow-700">Top</span>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center space-x-2 text-xs text-gray-500">
+            {product.shopRating && (
+              <div className="flex items-center space-x-1">
+                <Icon name="Star" size={8} className="text-amber-400 fill-current" />
+                <span>{product.shopRating.toFixed(1)}</span>
+              </div>
+            )}
+            <div className="flex items-center space-x-1">
+              <Icon name="MapPin" size={6} />
+              <span className="truncate max-w-[80px]" title={product.shopLocation || 'CM'}>
+                {product.shopLocation || 'CM'}
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Clean Badges */}
@@ -305,7 +399,7 @@ const ProductGrid = ({
   // Loading skeleton
   const LoadingSkeleton = () => (
     <div className={`${viewMode === 'grid' 
-      ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6' 
+      ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4'
       : 'space-y-4'
     }`}>
       {[...Array(viewMode === 'grid' ? 20 : 10)].map((_, index) => (
@@ -348,7 +442,7 @@ const ProductGrid = ({
     <div className="p-6">
       {/* Products Grid/List */}
       <div className={`${viewMode === 'grid' 
-        ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6' 
+        ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4'
         : 'space-y-4'
       }`}>
         {products.map((product) => (

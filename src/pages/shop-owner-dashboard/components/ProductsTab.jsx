@@ -25,22 +25,55 @@ const ProductsTab = () => {
         setLoading(true);
         const response = await api.getMyProductsWithTrends(0, 100, false);
         
-        const transformedProducts = response.map(product => ({
-          id: product.id,
-          name: product.name,
-          category: product.category || 'General',
-          price: parseFloat(product.price),
-          stock: product.stock_quantity,
-          status: product.is_active ? 
-            (product.stock_quantity === 0 ? 'out_of_stock' : 
-             product.stock_quantity <= 5 ? 'low_stock' : 'active') : 'inactive',
-          image: product.image_url || "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100&h=100&fit=crop",
-          sales: product.total_sales || 0,
-          rating: product.average_rating || 0,
-          lastUpdated: new Date(product.updated_at || product.created_at).toLocaleDateString(),
-          description: product.description,
-          salesTrend: product.salesTrend || { growth: 0, trend: 'stable', confidence: 60 }
-        }));
+        const transformedProducts = response.map(product => {
+          // Process image URLs the same way as product catalog
+          let productImage = '/assets/images/no_image.png';
+          let imageUrls = [];
+
+          if (product.image_urls) {
+            try {
+              if (typeof product.image_urls === 'string') {
+                try {
+                  imageUrls = JSON.parse(product.image_urls);
+                } catch (parseError) {
+                  // If parsing fails, treat as single URL string
+                  imageUrls = [product.image_urls];
+                }
+              } else if (Array.isArray(product.image_urls)) {
+                imageUrls = product.image_urls;
+              } else {
+                // Handle other formats by converting to array
+                imageUrls = [product.image_urls];
+              }
+
+              if (imageUrls && imageUrls.length > 0) {
+                productImage = imageUrls[0];
+              }
+            } catch (error) {
+              console.warn('Failed to process image URLs for product:', product.id, error);
+            }
+          } else if (product.image_url) {
+            // Fallback to image_url field
+            productImage = product.image_url;
+          }
+
+          return {
+            id: product.id,
+            name: product.name,
+            category: product.category || 'General',
+            price: parseFloat(product.price),
+            stock: product.stock_quantity,
+            status: product.is_active ?
+              (product.stock_quantity === 0 ? 'out_of_stock' :
+               product.stock_quantity <= 5 ? 'low_stock' : 'active') : 'inactive',
+            image: productImage,
+            sales: product.total_sales || 0,
+            rating: product.average_rating || 0,
+            lastUpdated: new Date(product.updated_at || product.created_at).toLocaleDateString(),
+            description: product.description,
+            salesTrend: product.salesTrend || { growth: 0, trend: 'stable', confidence: 60 }
+          };
+        });
         
         setProducts(transformedProducts);
         setFilteredProducts(transformedProducts);

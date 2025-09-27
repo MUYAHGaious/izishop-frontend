@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Camera, Plus, X, MapPin, Star, Package, Users, Calendar, Shield, Phone, Mail, Heart, Share2, MessageCircle, Clock, Award, TrendingUp, ExternalLink } from 'lucide-react';
+import { Camera, Plus, X, MapPin, Star, Package, Users, Calendar, Shield, Phone, Mail, Heart, Share2, MessageCircle, Clock, Award, TrendingUp, ExternalLink, CheckCircle, Zap, Crown, ThumbsUp } from 'lucide-react';
 import { showToast } from '../../../components/ui/Toast';
 import api from '../../../services/api';
 
@@ -37,6 +37,70 @@ const ModernShopHero = ({ shop, onFollow, onContact, isOwner }) => {
   const formatRating = (rating) => {
     return rating ? parseFloat(rating).toFixed(1) : '0.0';
   };
+
+  // Calculate trust indicators based on shop data
+  const getTrustIndicators = () => {
+    const indicators = [];
+
+    // Verified seller
+    if (shop.is_verified) {
+      indicators.push({
+        icon: CheckCircle,
+        label: 'Verified Seller',
+        color: 'text-blue-600',
+        bgColor: 'bg-blue-100',
+        description: 'Identity verified by platform'
+      });
+    }
+
+    // High rating badge
+    if (shop.average_rating >= 4.5) {
+      indicators.push({
+        icon: Award,
+        label: 'Top Rated',
+        color: 'text-yellow-600',
+        bgColor: 'bg-yellow-100',
+        description: '4.5+ star rating'
+      });
+    }
+
+    // Quick responder
+    if (shop.response_time && shop.response_time <= 2) {
+      indicators.push({
+        icon: Zap,
+        label: 'Quick Response',
+        color: 'text-green-600',
+        bgColor: 'bg-green-100',
+        description: 'Responds within 2 hours'
+      });
+    }
+
+    // Premium seller (mock criteria)
+    if (shop.total_sales > 100000 || shop.followers_count > 1000) {
+      indicators.push({
+        icon: Crown,
+        label: 'Premium Seller',
+        color: 'text-purple-600',
+        bgColor: 'bg-purple-100',
+        description: 'High volume trusted seller'
+      });
+    }
+
+    // High satisfaction
+    if (shop.average_rating >= 4.0 && shop.total_reviews >= 50) {
+      indicators.push({
+        icon: ThumbsUp,
+        label: 'High Satisfaction',
+        color: 'text-teal-600',
+        bgColor: 'bg-teal-100',
+        description: '50+ positive reviews'
+      });
+    }
+
+    return indicators;
+  };
+
+  const trustIndicators = getTrustIndicators();
 
   return (
     <div className="relative bg-white">
@@ -98,10 +162,24 @@ const ModernShopHero = ({ shop, onFollow, onContact, isOwner }) => {
                     )}
                   </div>
                   
-                  {/* Verification Badge */}
+                  {/* Primary Verification Badge */}
                   {shop.is_verified && (
                     <div className="absolute -bottom-2 -right-2 bg-blue-500 text-white p-2 rounded-full shadow-lg">
                       <Award size={16} />
+                    </div>
+                  )}
+
+                  {/* Additional Trust Badge */}
+                  {shop.average_rating >= 4.5 && (
+                    <div className="absolute -top-2 -right-2 bg-yellow-500 text-white p-1.5 rounded-full shadow-lg">
+                      <Star size={12} className="fill-current" />
+                    </div>
+                  )}
+
+                  {/* Premium Badge */}
+                  {(shop.total_sales > 100000 || shop.followers_count > 1000) && (
+                    <div className="absolute -top-2 -left-2 bg-purple-500 text-white p-1.5 rounded-full shadow-lg">
+                      <Crown size={12} />
                     </div>
                   )}
                   
@@ -164,20 +242,33 @@ const ModernShopHero = ({ shop, onFollow, onContact, isOwner }) => {
                         </div>
                       </div>
 
-                      {/* Status Indicators */}
-                      <div className="flex items-center gap-3">
+                      {/* Trust Indicators & Status */}
+                      <div className="space-y-3">
+                        {/* Active Status */}
                         {shop.is_active && (
-                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
+                          <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                            Active
-                          </span>
+                            <span className="text-sm text-green-700 font-medium">Currently Active</span>
+                          </div>
                         )}
-                        
-                        {shop.is_verified && (
-                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                            <Shield size={12} />
-                            Verified
-                          </span>
+
+                        {/* Trust Indicators */}
+                        {trustIndicators.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-2">
+                            {trustIndicators.map((indicator, index) => {
+                              const IconComponent = indicator.icon;
+                              return (
+                                <div
+                                  key={index}
+                                  className={`inline-flex items-center gap-1 px-3 py-1 ${indicator.bgColor} ${indicator.color} text-sm font-medium rounded-full`}
+                                  title={indicator.description}
+                                >
+                                  <IconComponent size={12} />
+                                  {indicator.label}
+                                </div>
+                              );
+                            })}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -195,14 +286,6 @@ const ModernShopHero = ({ shop, onFollow, onContact, isOwner }) => {
                         >
                           <Heart size={18} className={isFollowing ? 'fill-current' : ''} />
                           {isFollowing ? 'Following' : 'Follow'}
-                        </button>
-                        
-                        <button
-                          onClick={() => onContact('general')}
-                          className="flex items-center gap-2 px-6 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
-                        >
-                          <MessageCircle size={18} />
-                          Contact
                         </button>
                         
                         <button className="flex items-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-all duration-200">

@@ -320,61 +320,50 @@ const ProductCatalog = () => {
   };
 
   // Transform API product data with enhanced image handling and shop name fetching
-  const transformProduct = async (product) => {
+  const transformProduct = (product) => {
+    // Debug: Log the entire product object to see what we're receiving
+    console.log('🔍 TransformProduct - Raw product data received:', product);
+    console.log('🔍 TransformProduct - Shop fields in product:', {
+      shop_name: product.shop_name,
+      shop_verified: product.shop_verified,
+      shop_rating: product.shop_rating,
+      shop_reviews: product.shop_reviews,
+      shop_location: product.shop_location,
+      seller_id: product.seller_id
+    });
+
     const createdAt = new Date(product.created_at);
     const daysSinceCreated = Math.floor((new Date() - createdAt) / (1000 * 60 * 60 * 24));
     const isNew = daysSinceCreated < 7; // More realistic "new" threshold
 
-    // Enhanced image URL handling
+    // Simple image handling - use first image from image_urls array like product detail page
     let productImage = '/assets/images/no_image.png';
-    let imageUrls = [];
 
-    if (product.image_urls) {
-      try {
-        // Handle JSON string or array
-        if (typeof product.image_urls === 'string') {
-          imageUrls = JSON.parse(product.image_urls);
-        } else if (Array.isArray(product.image_urls)) {
-          imageUrls = product.image_urls;
-        }
-
-        if (imageUrls && imageUrls.length > 0) {
-          productImage = imageUrls[0];
-        }
-      } catch (error) {
-        console.warn('Failed to parse image URLs for product:', product.id, error);
-      }
+    if (product.image_urls && Array.isArray(product.image_urls) && product.image_urls.length > 0) {
+      productImage = product.image_urls[0];
+    } else if (product.image_url) {
+      productImage = product.image_url;
+    } else if (product.image) {
+      productImage = product.image;
     }
 
-    // Fetch shop name if not already included
-    let shopName = product.shopName || "Loading...";
-    let shopVerified = product.shopVerified || false;
-    let shopRating = product.shopRating || 0;
+    // Debug image loading
+    console.log('Product image for', product.name, ':', productImage);
 
-    if (!product.shopName && product.seller_id) {
-      try {
-        const userResponse = await api.request(`/api/users/${product.seller_id}`, {}, false);
-        if (userResponse) {
-          shopName = userResponse.first_name + ' ' + userResponse.last_name;
+    // Use shop data from API response (now included in backend)
+    let shopName = product.shop_name || "Individual Seller";
+    let shopVerified = product.shop_verified || false;
+    let shopRating = product.shop_rating || 0;
+    let shopReviews = product.shop_reviews || 0;
+    let shopLocation = product.shop_location || 'Cameroon';
 
-          // Try to get shop info if user is a shop owner
-          try {
-            const shopResponse = await api.request(`/api/shops/by-owner/${product.seller_id}`, {}, false);
-            if (shopResponse) {
-              shopName = shopResponse.name;
-              shopVerified = shopResponse.verified || false;
-              shopRating = shopResponse.average_rating || 0;
-            }
-          } catch (shopError) {
-            // User might not have a shop, continue with user name
-            console.log('No shop found for user:', product.seller_id);
-          }
-        }
-      } catch (error) {
-        console.warn('Failed to fetch seller info for product:', product.id, error);
-        shopName = "Shop Owner";
-      }
-    }
+    console.log('🏪 Product shop data extracted:', {
+      name: shopName,
+      verified: shopVerified,
+      rating: shopRating,
+      reviews: shopReviews,
+      location: shopLocation
+    });
 
     // Enhanced badge system based on real product data
     const badges = [];
@@ -414,13 +403,13 @@ const ProductCatalog = () => {
     // Sort badges by priority (highest first)
     badges.sort((a, b) => b.priority - a.priority);
 
-    return {
+    const transformedProduct = {
       id: product.id,
       name: product.name,
       price: parseFloat(product.price),
       originalPrice: parseFloat(product.original_price || product.price),
       image: productImage,
-      image_urls: imageUrls,
+      image_urls: product.image_urls || [],
       rating: product.rating || Math.round((Math.random() * 1.5 + 3.5) * 10) / 10,
       reviewCount: product.review_count || Math.floor(Math.random() * 200) + 10,
       stock: product.stock_quantity,
@@ -429,6 +418,8 @@ const ProductCatalog = () => {
       sellerType: product.sellerType || 'shop_owner',
       shopVerified: shopVerified,
       shopRating: shopRating,
+      shopReviews: shopReviews,
+      shopLocation: shopLocation,
       isNew: isNew,
       discount: hasDiscount ? Math.round(((product.original_price - product.price) / product.original_price) * 100) : 0,
       category: product.category || "general",
@@ -439,6 +430,16 @@ const ProductCatalog = () => {
       badges: badges.slice(0, 3), // Show max 3 badges to avoid clutter
       isBestSeller: product.is_bestseller || product.total_sales > 100
     };
+
+    console.log('✅ TransformProduct - Final transformed product:', transformedProduct);
+    console.log('✅ TransformProduct - Final shop fields:', {
+      shopName: transformedProduct.shopName,
+      shopVerified: transformedProduct.shopVerified,
+      shopRating: transformedProduct.shopRating,
+      shopLocation: transformedProduct.shopLocation
+    });
+
+    return transformedProduct;
   };
 
   const loadProducts = useCallback(async (searchQuery = '', category = 'all', sellerTypeFilter = 'shop_owner') => {
@@ -449,20 +450,90 @@ const ProductCatalog = () => {
       // First try to fetch real products from API
       try {
         console.log('Fetching real products from API...');
-        // Add seller type to filters for API call
-        const extendedFilters = { ...filters, sellerType: sellerTypeFilter };
-        const response = await api.getAllProducts(0, 100, true, searchQuery, category, extendedFilters);
+        // Don't pass sellerType filter as backend doesn't support it
+        const response = await api.getAllProducts(0, 100, true, searchQuery, category, filters);
         console.log('Real API response received:', response);
-        
-        if (Array.isArray(response) && response.length > 0) {
-          console.log(`Successfully loaded ${response.length} real products from API`);
-          const transformedProducts = await Promise.all(response.map(transformProduct));
+
+        // Normalize various possible API response shapes into an array
+        const extractProducts = (resp) => {
+          if (!resp) return [];
+          if (Array.isArray(resp)) return resp;
+
+          const directKeys = ['products', 'items', 'results', 'list', 'data'];
+          for (const k of directKeys) {
+            const v = resp[k];
+            if (Array.isArray(v)) return v;
+          }
+
+          // Check common nested containers
+          const containers = ['data', 'result', 'payload', 'content', 'response'];
+          for (const c of containers) {
+            const node = resp[c];
+            if (node) {
+              for (const k of directKeys) {
+                const v = node[k];
+                if (Array.isArray(v)) return v;
+              }
+              if (Array.isArray(node)) return node;
+            }
+          }
+
+          // Fallback: scan shallow properties for first array of objects with likely product fields
+          const looksLikeProductArray = (arr) => Array.isArray(arr) && arr.length && typeof arr[0] === 'object' && ('id' in arr[0] || 'name' in arr[0] || 'price' in arr[0]);
+          for (const [k, v] of Object.entries(resp)) {
+            if (looksLikeProductArray(v)) return v;
+          }
+          for (const c of containers) {
+            const node = resp[c];
+            if (node && typeof node === 'object') {
+              for (const [k, v] of Object.entries(node)) {
+                if (looksLikeProductArray(v)) return v;
+              }
+            }
+          }
+
+          return [];
+        };
+        const productsArray = extractProducts(response);
+        const totalCount = (response?.total)
+          ?? (response?.count)
+          ?? (response?.data?.total)
+          ?? (response?.data?.count)
+          ?? (response?.pagination?.total)
+          ?? (response?.meta?.total)
+          ?? productsArray.length;
+
+        if (productsArray.length > 0) {
+          console.log(`Successfully loaded ${productsArray.length} real products from API`);
+          const transformedProducts = productsArray.map(transformProduct);
           setProducts(transformedProducts);
-          setResultsCount(transformedProducts.length);
+          setResultsCount(totalCount);
           updateCategoryCounts(transformedProducts);
           return; // Successfully loaded real data, exit early
-        } else if (Array.isArray(response) && response.length === 0) {
-          console.log('API returned empty array - no products found');
+        } else if ((Array.isArray(response) && response.length === 0) || productsArray.length === 0) {
+          console.log('API returned empty or unrecognized array - retrying without active_only filter');
+
+          // Retry once without active_only restriction in case backend filters everything out
+          const retryResp = await api.getAllProducts(0, 100, false, searchQuery, category, filters);
+          const retryArray = extractProducts(retryResp);
+          const retryTotal = (retryResp?.total)
+            ?? (retryResp?.count)
+            ?? (retryResp?.data?.total)
+            ?? (retryResp?.data?.count)
+            ?? (retryResp?.pagination?.total)
+            ?? (retryResp?.meta?.total)
+            ?? retryArray.length;
+
+          if (retryArray.length > 0) {
+            console.log(`Retry succeeded with ${retryArray.length} products`);
+            const transformedRetry = retryArray.map(transformProduct);
+            setProducts(transformedRetry);
+            setResultsCount(retryTotal);
+            updateCategoryCounts(transformedRetry);
+            return;
+          }
+
+          console.log('Second attempt also empty - no products found');
           setProducts([]);
           setResultsCount(0);
           updateCategoryCounts([]);
@@ -478,7 +549,7 @@ const ProductCatalog = () => {
         
         // Only use mock data as a demonstration fallback
         const mockResponse = generateMockProducts(searchQuery, sellerTypeFilter);
-        const transformedMockProducts = await Promise.all(mockResponse.map(transformProduct));
+        const transformedMockProducts = mockResponse.map(transformProduct);
         setProducts(transformedMockProducts);
         setResultsCount(transformedMockProducts.length);
         updateCategoryCounts(transformedMockProducts);
@@ -703,6 +774,12 @@ const ProductCatalog = () => {
     setResultsCount(sortedVisibleProducts.length);
   }, [sortedVisibleProducts]);
 
+  // Load products on initial mount
+  useEffect(() => {
+    console.log('Initial mount - loading products...');
+    loadProducts('', 'all', 'shop_owner');
+  }, []); // Empty dependency array means this runs only once on mount
+
   // Remove filter
   const handleRemoveFilter = useCallback((filterType, value) => {
     if (filterType === 'priceRange') {
@@ -741,22 +818,57 @@ const ProductCatalog = () => {
       const response = await api.getAllProducts(
         skip,
         20,
-        true,
+        false,
         searchQuery,
         selectedCategory !== 'all' ? selectedCategory : null,
         filters
       );
-      
-      if (response.length === 0) {
+      // Normalize response shape
+      const extractProducts = (resp) => {
+        if (!resp) return [];
+        if (Array.isArray(resp)) return resp;
+        const directKeys = ['products', 'items', 'results', 'list', 'data'];
+        for (const k of directKeys) {
+          const v = resp[k];
+          if (Array.isArray(v)) return v;
+        }
+        const containers = ['data', 'result', 'payload', 'content', 'response'];
+        for (const c of containers) {
+          const node = resp[c];
+          if (node) {
+            for (const k of directKeys) {
+              const v = node[k];
+              if (Array.isArray(v)) return v;
+            }
+            if (Array.isArray(node)) return node;
+          }
+        }
+        const looksLikeProductArray = (arr) => Array.isArray(arr) && arr.length && typeof arr[0] === 'object' && ('id' in arr[0] || 'name' in arr[0] || 'price' in arr[0]);
+        for (const [k, v] of Object.entries(resp)) {
+          if (looksLikeProductArray(v)) return v;
+        }
+        for (const c of containers) {
+          const node = resp[c];
+          if (node && typeof node === 'object') {
+            for (const [k, v] of Object.entries(node)) {
+              if (looksLikeProductArray(v)) return v;
+            }
+          }
+        }
+        return [];
+      };
+      const pageItems = extractProducts(response);
+
+      if (pageItems.length === 0) {
         setHasMore(false);
         return;
       }
-      
-      const transformedProducts = response.map(transformProduct);
+
+      const transformedProducts = pageItems.map(transformProduct);
       setProducts(prev => [...prev, ...transformedProducts]);
       setCurrentPage(prev => prev + 1);
       
-      if (response.length < 20) {
+      if (pageItems.length < 20) {
         setHasMore(false);
       }
       

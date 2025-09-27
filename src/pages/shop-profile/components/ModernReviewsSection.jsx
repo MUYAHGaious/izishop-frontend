@@ -123,10 +123,10 @@ const ModernReviewsSection = ({ reviews, shopRating, totalReviews }) => {
               <div className="flex items-start gap-4">
                 {/* User Avatar */}
                 <div className="w-12 h-12 bg-gradient-to-br from-teal-100 to-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  {review.user?.profile_photo ? (
+                  {review.user_avatar ? (
                     <img
-                      src={review.user.profile_photo}
-                      alt={review.user.first_name}
+                      src={review.user_avatar}
+                      alt={review.user_name || 'User'}
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : (
@@ -138,7 +138,7 @@ const ModernReviewsSection = ({ reviews, shopRating, totalReviews }) => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-2">
                     <h4 className="font-semibold text-gray-900">
-                      {review.user?.first_name} {review.user?.last_name}
+                      {review.user_name || 'Anonymous User'}
                     </h4>
                     <div className="flex items-center gap-1">
                       {renderStars(review.rating)}
@@ -162,7 +162,7 @@ const ModernReviewsSection = ({ reviews, shopRating, totalReviews }) => {
                     </button>
                     <button className="flex items-center gap-1 text-gray-500 hover:text-red-600 transition-colors">
                       <ThumbsDown size={16} />
-                      <span className="text-sm">Not helpful ({review.not_helpful_count || 0})</span>
+                      <span className="text-sm">Not helpful (0)</span>
                     </button>
                   </div>
                 </div>

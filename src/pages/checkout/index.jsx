@@ -53,7 +53,7 @@ const Checkout = () => {
     paymentMethod: '',
     paymentDetails: {}
   });
-  
+
   const [validationErrors, setValidationErrors] = useState({});
 
   // Load saved data from localStorage on component mount

@@ -115,14 +115,22 @@ const ShopCard = ({ shop, onVisitShop, onFollowShop, onQuickPreview }) => {
             </span>
           )}
         </div>
-      </div>
+              </div>
 
       {/* Shop Content - Mobile First */}
       <div className="p-4">
-        {/* Shop Name */}
-        <h3 className="text-base font-bold text-gray-900 mb-2 group-active:text-teal-600 transition-colors line-clamp-1">
-          {shop.name}
-        </h3>
+        {/* Shop Name - Most Prominent */}
+        <div className="mb-3">
+          <h3 className="text-xl font-bold text-gray-900 mb-1 group-active:text-teal-600 transition-colors line-clamp-1">
+            {shop.name}
+          </h3>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Store size={14} className="text-teal-500" />
+            <span className="font-medium">Shop</span>
+            <span>•</span>
+            <span>{shop.product_count || 0} products</span>
+          </div>
+        </div>
 
         {/* Rating */}
         <div className="flex items-center gap-2 mb-3">
@@ -132,7 +140,7 @@ const ShopCard = ({ shop, onVisitShop, onFollowShop, onQuickPreview }) => {
           <span className="text-sm font-semibold text-gray-900">
             {formatRating(shop.average_rating)} ({shop.total_reviews || 0})
           </span>
-        </div>
+      </div>
 
         {/* Description */}
         <p className="text-sm text-gray-600 mb-3 line-clamp-2 leading-relaxed">
@@ -148,12 +156,12 @@ const ShopCard = ({ shop, onVisitShop, onFollowShop, onQuickPreview }) => {
           
           <div className="flex items-center gap-4 text-sm text-gray-600">
             <div className="flex items-center gap-1">
-              <ShoppingBag size={14} className="text-gray-400" />
-              <span>{shop.product_count || 0} products</span>
-            </div>
-            <div className="flex items-center gap-1">
               <Users size={14} className="text-gray-400" />
               <span>{shop.followers_count || 0} followers</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock size={14} className="text-gray-400" />
+              <span>Active {formatJoinDate(shop.updated_at)}</span>
             </div>
           </div>
         </div>
@@ -182,7 +190,7 @@ const ShopCard = ({ shop, onVisitShop, onFollowShop, onQuickPreview }) => {
           <button
             onClick={handleFollow}
             className={`px-4 py-3 rounded-xl font-semibold transition-all duration-200 border active:scale-95 ${
-              isFollowing
+              isFollowing 
                 ? 'bg-red-500 active:bg-red-600 text-white border-red-500'
                 : 'bg-white active:bg-gray-50 text-gray-700 border-gray-200'
             }`}
@@ -191,13 +199,9 @@ const ShopCard = ({ shop, onVisitShop, onFollowShop, onQuickPreview }) => {
           </button>
         </div>
 
-        {/* Activity Info - Mobile First */}
+        {/* Category Info - Mobile First */}
         <div className="mt-4 pt-4 border-t border-gray-100">
           <div className="flex items-center justify-between text-xs text-gray-500">
-            <div className="flex items-center gap-1">
-              <Clock size={12} />
-              <span className="truncate">Active {formatJoinDate(shop.updated_at)}</span>
-            </div>
             <span className="bg-gray-100 px-2 py-1 rounded-full text-xs">
               {getShopCategory()}
             </span>

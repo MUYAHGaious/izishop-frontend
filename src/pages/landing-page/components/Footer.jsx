@@ -59,10 +59,26 @@ const Footer = () => {
   ];
 
   const paymentMethods = [
-    { name: 'MTN MoMo', logo: 'Smartphone', color: 'text-accent' },
-    { name: 'Orange Money', logo: 'Smartphone', color: 'text-warning' },
-    { name: 'Visa', logo: 'CreditCard', color: 'text-primary' },
-    { name: 'Mastercard', logo: 'CreditCard', color: 'text-secondary' }
+    { 
+      name: 'MTN Mobile Money', 
+      logo: '/assets/brands/69-691715_mtn-mm-logo-generic-mtn-mobile-money-logo.svg',
+      type: 'svg'
+    },
+    { 
+      name: 'Orange Money', 
+      logo: '/assets/brands/Orange_Money-Logo.wine.svg',
+      type: 'svg'
+    },
+    { 
+      name: 'Visa', 
+      logo: '/assets/brands/visa-logo.svg',
+      type: 'svg'
+    },
+    { 
+      name: 'Mastercard', 
+      logo: '/assets/brands/mastercard-logo.svg',
+      type: 'svg'
+    }
   ];
 
   const legalLinks = [
@@ -172,7 +188,15 @@ const Footer = () => {
                     key={method.name}
                     className="flex items-center space-x-2 px-3 py-2 bg-background/10 rounded-lg"
                   >
-                    <Icon name={method.logo} size={16} className={method.color} />
+                    {method.type === 'svg' ? (
+                      <img 
+                        src={method.logo} 
+                        alt={method.name}
+                        className={`object-contain ${method.name === 'Orange Money' ? 'w-12 h-12' : 'w-6 h-6'}`}
+                      />
+                    ) : (
+                      <Icon name={method.logo} size={16} className={method.color} />
+                    )}
                     <span className="text-sm text-background/80">{method.name}</span>
                   </div>
                 ))}

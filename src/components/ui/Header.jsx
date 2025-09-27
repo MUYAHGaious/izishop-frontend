@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../AppIcon';
+import Image from '../AppImage';
 import Button from './Button';
 import Input from './Input';
 import NotificationBell from './NotificationBell';
@@ -115,24 +116,24 @@ const Header = () => {
           <Link to="/" className="flex items-center space-x-3 flex-shrink-0 group">
             <Icon name="Package" size={24} className="text-teal-600 group-hover:text-teal-700 transition-colors duration-200" />
             <span className="text-xl font-semibold text-gray-900 tracking-tight">IziShopin</span>
-          </Link>
+        </Link>
 
           {/* Desktop Search - Stripe/Linear inspired */}
           <div className="hidden md:flex flex-1 max-w-md mx-8">
             <div className="relative w-full">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Icon name="Search" size={16} className="text-gray-400" />
-              </div>
-              <input
-                type="search"
+            </div>
+            <input
+              type="search"
                 placeholder="Search products, shops, brands..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
                 className="w-full pl-12 pr-4 py-3 bg-gray-50/80 backdrop-blur-sm border border-gray-200/50 rounded-xl text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500/50 transition-all duration-200 shadow-sm"
-              />
-            </div>
+            />
           </div>
+        </div>
 
           {/* Desktop Actions - Linear/Notion inspired */}
           <div className="hidden md:flex items-center space-x-2">
@@ -142,12 +143,12 @@ const Header = () => {
               className="p-2.5 text-gray-600 hover:text-red-500 transition-colors duration-200 relative group"
             >
               <Icon name="Heart" size={20} className="group-hover:scale-110 transition-transform duration-200" />
-              {wishlistCount > 0 && (
+            {wishlistCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center">
                   {wishlistCount > 99 ? '99+' : wishlistCount}
-                </span>
-              )}
-            </Link>
+              </span>
+            )}
+          </Link>
 
             {/* Notifications */}
             {isAuthenticated() && (
@@ -156,12 +157,12 @@ const Header = () => {
                 className="p-2.5 text-gray-600 hover:text-amber-600 transition-colors duration-200 relative group"
               >
                 <Icon name="Bell" size={20} className="group-hover:scale-110 transition-transform duration-200" />
-                {unreadCount > 0 && (
+            {unreadCount > 0 && (
                   <span className={`absolute -top-1 -right-1 bg-amber-500 text-white text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center ${notificationAnimating ? 'animate-pulse' : ''}`}>
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
-              </Link>
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </Link>
             )}
 
             {/* Cart */}
@@ -170,12 +171,12 @@ const Header = () => {
               className="p-2.5 text-gray-600 hover:text-teal-600 transition-colors duration-200 relative group"
             >
               <Icon name="ShoppingCart" size={20} className="group-hover:scale-110 transition-transform duration-200" />
-              {cartCount > 0 && (
+            {cartCount > 0 && (
                 <span className={`absolute -top-1 -right-1 bg-teal-500 text-white text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center ${cartAnimating ? 'animate-pulse' : ''}`}>
-                  {cartCount > 99 ? '99+' : cartCount}
-                </span>
-              )}
-            </Link>
+                {cartCount > 99 ? '99+' : cartCount}
+              </span>
+            )}
+          </Link>
 
             {/* User Profile */}
             {isAuthenticated() ? (
@@ -185,10 +186,15 @@ const Header = () => {
                   className="w-9 h-9 rounded-lg bg-gradient-to-br from-gray-100/80 to-gray-200/80 backdrop-blur-sm hover:from-gray-200/90 hover:to-gray-300/90 flex items-center justify-center overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200/50"
                 >
                   {userProfileImage ? (
-                    <img 
-                      src={userProfileImage} 
-                      alt="Profile" 
+                    <Image
+                      src={userProfileImage}
+                      alt="Profile"
                       className="w-full h-full rounded-lg object-cover"
+                      fallback={
+                        <span className="text-sm font-medium text-gray-700">
+                          {user?.first_name?.[0]?.toUpperCase() || 'U'}
+                        </span>
+                      }
                     />
                   ) : (
                     <span className="text-sm font-medium text-gray-700">
@@ -196,7 +202,7 @@ const Header = () => {
                     </span>
                   )}
                 </button>
-                
+              
                 {/* Professional Dropdown */}
                 {isMenuOpen && (
                   <div className="absolute right-0 mt-2 w-64 bg-white/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-xl z-50 overflow-hidden">
@@ -205,10 +211,15 @@ const Header = () => {
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center overflow-hidden shadow-sm">
                           {userProfileImage ? (
-                            <img 
-                              src={userProfileImage} 
-                              alt="Profile" 
+                            <Image
+                              src={userProfileImage}
+                              alt="Profile"
                               className="w-full h-full rounded-lg object-cover"
+                              fallback={
+                                <span className="text-sm font-medium text-white">
+                                  {user?.first_name?.[0]?.toUpperCase() || 'U'}
+                                </span>
+                              }
                             />
                           ) : (
                             <span className="text-sm font-medium text-white">
@@ -228,11 +239,11 @@ const Header = () => {
                           </span>
                         </div>
                       </div>
-                    </div>
-                    
+                  </div>
+                  
                     {/* Menu Items */}
                     <div className="py-2">
-                      <button
+                    <button
                         onClick={() => {
                           setIsMenuOpen(false);
                           navigate('/user-profile');
@@ -240,12 +251,12 @@ const Header = () => {
                         className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50/80 backdrop-blur-sm transition-colors duration-150"
                       >
                         <Icon name="User" size={16} className="mr-3 text-gray-400" />
-                        My Profile
-                      </button>
-                      
-                      {(user?.role === 'SHOP_OWNER' || user?.role === 'shop_owner') && (
-                        <>
-                          <button
+                      My Profile
+                    </button>
+                    
+                    {(user?.role === 'SHOP_OWNER' || user?.role === 'shop_owner') && (
+                      <>
+                        <button
                             onClick={() => {
                               setIsMenuOpen(false);
                               navigate('/shop-owner-dashboard');
@@ -253,9 +264,9 @@ const Header = () => {
                             className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50/80 backdrop-blur-sm transition-colors duration-150"
                           >
                             <Icon name="LayoutDashboard" size={16} className="mr-3 text-gray-400" />
-                            Shop Dashboard
-                          </button>
-                          <button
+                          Shop Dashboard
+                        </button>
+                        <button
                             onClick={() => {
                               setIsMenuOpen(false);
                               navigate('/add-product');
@@ -263,11 +274,11 @@ const Header = () => {
                             className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50/80 backdrop-blur-sm transition-colors duration-150"
                           >
                             <Icon name="Plus" size={16} className="mr-3 text-gray-400" />
-                            Add Product
-                          </button>
-                        </>
-                      )}
-                      
+                          Add Product
+                        </button>
+                      </>
+                    )}
+                    
                       <button
                         onClick={() => {
                           setIsMenuOpen(false);
@@ -276,12 +287,12 @@ const Header = () => {
                         className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50/80 backdrop-blur-sm transition-colors duration-150"
                       >
                         <Icon name="Package" size={16} className="mr-3 text-gray-400" />
-                        My Orders
-                      </button>
-                      
+                      My Orders
+                    </button>
+                    
                       <div className="border-t border-gray-100 my-2"></div>
-                      
-                      <button
+                    
+                    <button
                         onClick={() => {
                           setIsMenuOpen(false);
                           navigate('/settings');
@@ -289,48 +300,48 @@ const Header = () => {
                         className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50/80 backdrop-blur-sm transition-colors duration-150"
                       >
                         <Icon name="Settings" size={16} className="mr-3 text-gray-400" />
-                        Settings
-                      </button>
-                      
-                      <button
-                        onClick={() => {
+                      Settings
+                    </button>
+                    
+                    <button
+                      onClick={() => {
                           setIsMenuOpen(false);
-                          localStorage.removeItem('authToken');
-                          localStorage.removeItem('user');
-                          navigate('/authentication-login-register');
-                        }}
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('user');
+                        navigate('/authentication-login-register');
+                      }}
                         className="flex items-center w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50/80 backdrop-blur-sm transition-colors duration-150"
-                      >
+                    >
                         <Icon name="LogOut" size={16} className="mr-3 text-red-400" />
-                        Sign Out
-                      </button>
-                    </div>
+                      Sign Out
+                    </button>
                   </div>
+                </div>
                 )}
               </div>
-            ) : (
-              <Button 
-                variant="default" 
-                size="sm"
-                onClick={() => navigate('/authentication-login-register')}
+          ) : (
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={() => navigate('/authentication-login-register')}
                 className="ml-2 bg-teal-600 hover:bg-teal-700 text-white border-0 shadow-sm px-4 py-2 text-sm font-medium"
-              >
+            >
                 Sign In
-              </Button>
-            )}
-          </div>
+            </Button>
+          )}
+        </div>
 
           {/* Mobile Actions */}
           <div className="flex md:hidden items-center space-x-2">
             {/* Mobile Search Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {/* Mobile search toggle */}}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {/* Mobile search toggle */}}
               className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <Icon name="Search" size={18} />
-            </Button>
+          >
+            <Icon name="Search" size={18} />
+          </Button>
 
             {/* Mobile Cart */}
             <Link 
@@ -346,14 +357,14 @@ const Header = () => {
             </Link>
 
             {/* Mobile Menu Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleMenu}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleMenu}
               className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <Icon name={isMenuOpen ? "X" : "Menu"} size={18} />
-            </Button>
+          >
+            <Icon name={isMenuOpen ? "X" : "Menu"} size={18} />
+          </Button>
           </div>
         </div>
       </div>
@@ -467,8 +478,8 @@ const Header = () => {
                 >
                   <div className="flex items-center space-x-3">
                     <Icon name="Bell" size={18} className="text-gray-500" />
-                    <span>Notifications</span>
-                  </div>
+                  <span>Notifications</span>
+                </div>
                   {unreadCount > 0 && (
                     <span className="bg-amber-500 text-white text-xs font-medium rounded-full px-2 py-1 shadow-sm">
                       {unreadCount > 99 ? '99+' : unreadCount}
@@ -502,10 +513,15 @@ const Header = () => {
                     <div className="flex items-center space-x-3">
                       <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center overflow-hidden shadow-sm">
                         {userProfileImage ? (
-                          <img 
-                            src={userProfileImage} 
-                            alt="Profile" 
+                          <Image
+                            src={userProfileImage}
+                            alt="Profile"
                             className="w-full h-full rounded-lg object-cover"
+                            fallback={
+                              <span className="text-sm font-medium text-white">
+                                {user?.first_name?.[0]?.toUpperCase() || 'U'}
+                              </span>
+                            }
                           />
                         ) : (
                           <span className="text-sm font-medium text-white">

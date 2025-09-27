@@ -59,8 +59,8 @@ const ShopHero = ({ shop, onFollow, onContact, isOwner }) => {
           <div className="flex items-center justify-center gap-8 text-slate-600 mb-8">
             <div className="flex items-center gap-2">
               <Star className="w-5 h-5 text-yellow-500 fill-current" />
-              <span className="font-semibold">{shop.rating || "5.0"}</span>
-              <span className="text-sm">({shop.total_reviews || "48"} reviews)</span>
+              <span className="font-semibold">{shop.rating || 0}</span>
+              <span className="text-sm">({shop.total_reviews || 0} reviews)</span>
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4" />
@@ -147,7 +147,7 @@ const ShopHero = ({ shop, onFollow, onContact, isOwner }) => {
                     <div className="flex items-center justify-center gap-2 text-lime-400 font-semibold">
                       <Star className="w-4 h-4 fill-current" />
                       <span>5.0</span>
-                      <span className="text-slate-400">({shop.total_reviews || "48"} reviews)</span>
+                      <span className="text-slate-400">({shop.total_reviews || 0} reviews)</span>
                     </div>
                   </div>
                 </div>

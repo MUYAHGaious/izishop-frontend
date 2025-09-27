@@ -17,8 +17,10 @@ import ShopOwnerInfo from './components/ShopOwnerInfo';
 import ProductGrid from './components/ProductGrid';
 import ReviewsSection from './components/ReviewsSection';
 import AboutSection from './components/AboutSection';
+import ProductCollections from './components/ProductCollections';
 import FloatingContact from './components/FloatingContact';
 import ShopSuspensionWarning from './components/ShopSuspensionWarning';
+import ShopAnalytics from './components/ShopAnalytics';
 import { showToast } from '../../components/ui/Toast';
 
 const ShopProfile = () => {
@@ -129,7 +131,16 @@ const ShopProfile = () => {
       console.log('Loading products for shop:', shopId);
       const response = await api.getShopProducts(shopId);
       console.log('Products loaded for shop:', response);
-      setProducts(response.products || response || []);
+      // Handle both old and new response formats
+      if (response.data && response.data.products) {
+        setProducts(response.data.products);
+      } else if (response.products) {
+        setProducts(response.products);
+      } else if (Array.isArray(response)) {
+        setProducts(response);
+      } else {
+        setProducts([]);
+      }
     } catch (error) {
       console.error('Error loading products:', error);
       setProducts([]);
@@ -141,7 +152,17 @@ const ShopProfile = () => {
       console.log('Loading reviews for shop:', shopId);
       const response = await api.getShopReviews(shopId);
       console.log('Reviews loaded for shop:', response);
-      setReviews(response.reviews || response || []);
+      
+      // Handle both old and new response formats
+      if (response.data && response.data.reviews) {
+        setReviews(response.data.reviews);
+      } else if (response.reviews) {
+        setReviews(response.reviews);
+      } else if (Array.isArray(response)) {
+        setReviews(response);
+      } else {
+        setReviews([]);
+      }
     } catch (error) {
       console.error('Error loading reviews:', error);
       setReviews([]);
@@ -279,13 +300,17 @@ const ShopProfile = () => {
 
   const tabs = [
     { id: 'products', label: 'Products', count: products.length },
+    { id: 'collections', label: 'Collections' },
     { id: 'reviews', label: 'Reviews', count: reviews.length },
     { id: 'about', label: 'About' }
   ];
 
-  // Add management tab for shop owners
+  // Add management and analytics tabs for shop owners
   if (isOwner) {
-    tabs.push({ id: 'manage', label: 'Manage Shop' });
+    tabs.push(
+      { id: 'analytics', label: 'Analytics' },
+      { id: 'manage', label: 'Manage Shop' }
+    );
   }
 
   const statsData = {
@@ -330,7 +355,7 @@ const ShopProfile = () => {
         <div className="max-w-6xl mx-auto px-6 py-8">
           <div className="mb-6">
             <Breadcrumbs items={breadcrumbItems} className="text-gray-600" />
-          </div>
+              </div>
 
               {/* Tab Content */}
               <div className="animate-fade-in">
@@ -347,16 +372,37 @@ const ShopProfile = () => {
                   />
                 )}
                 
+                {activeTab === 'collections' && (
+                  <ProductCollections
+                    products={products}
+                    onProductClick={(productId) => navigate(`/product-detail-modal?id=${productId}`)}
+                    onAddToCart={(productId) => {
+                      showToast('Product added to cart!', 'success');
+                    }}
+                    onAddToWishlist={(productId) => {
+                      showToast('Product added to wishlist!', 'success');
+                    }}
+                  />
+                )}
+                
                 {activeTab === 'reviews' && (
-                  <ModernReviewsSection 
-                    reviews={reviews} 
+                  <ModernReviewsSection
+                    reviews={reviews}
                     shopRating={shopData.average_rating}
                     totalReviews={shopData.total_reviews}
                   />
                 )}
                 
-                {activeTab === 'about' && (
+                {activeTab === 'about' && shopData && (
                   <AboutSection shop={shopData} />
+                )}
+
+                {activeTab === 'analytics' && isOwner && (
+                  <ShopAnalytics
+                    shop={shopData}
+                    products={products}
+                    reviews={reviews}
+                  />
                 )}
                 
                 {activeTab === 'manage' && isOwner && (
@@ -380,7 +426,7 @@ const ShopProfile = () => {
                     </div>
                   </div>
                 )}
-              </div>
+          </div>
         </div>
       </main>
 

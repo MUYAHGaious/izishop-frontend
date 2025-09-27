@@ -207,9 +207,9 @@ const ProductGrid = ({ products, shopId }) => {
                 <div className="flex items-center gap-2 mb-3">
                   <div className="flex items-center gap-1">
                     <Icon name="Star" size={16} className="text-yellow-500 fill-current" />
-                    <span className="text-sm font-semibold text-slate-700">{product.rating || "5.0"}</span>
+                    <span className="text-sm font-semibold text-slate-700">{product.rating || 0}</span>
                   </div>
-                  <span className="text-sm text-slate-500">({product.reviewCount || "48"} reviews)</span>
+                  <span className="text-sm text-slate-500">({product.reviewCount || 0} reviews)</span>
                 </div>
               </div>
 
@@ -227,7 +227,7 @@ const ProductGrid = ({ products, shopId }) => {
                 
                 <div className="flex items-center gap-1 bg-slate-100 px-3 py-1 rounded-full">
                   <Icon name="Package" size={14} className="text-slate-600" />
-                  <span className="text-sm font-medium text-slate-700">{product.stock || "24"}</span>
+                  <span className="text-sm font-medium text-slate-700">{product.stock || 0}</span>
                 </div>
               </div>
             </div>

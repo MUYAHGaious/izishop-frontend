@@ -54,14 +54,29 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
               <div className="absolute inset-0 bg-gray-200 animate-pulse rounded-lg"></div>
             )}
             <Image
-              src={product.image}
+              src={product.image_url || product.image_urls?.[0] || product.image || '/assets/images/no_image.png'}
               alt={product.name}
               className="w-full h-full object-cover rounded-lg"
-              onLoad={() => {
+              retryCount={3}
+              retryDelay={500}
+              cacheBypass={true}
+              onLoad={(loadDetails) => {
+                console.log('🖼️ ProductGrid list image loaded:', {
+                  productId: product.id,
+                  productName: product.name,
+                  src: product.image_url || product.image_urls?.[0] || product.image,
+                  loadDetails
+                });
                 setImageLoaded(true);
                 setImageError(false);
               }}
-              onError={() => {
+              onError={(errorDetails) => {
+                console.log('🖼️ ProductGrid list image error:', {
+                  productId: product.id,
+                  productName: product.name,
+                  attempted_src: product.image_url || product.image_urls?.[0] || product.image,
+                  errorDetails
+                });
                 setImageLoaded(false);
                 setImageError(true);
               }}
@@ -206,14 +221,29 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, viewMode }) => {
           <div className="absolute inset-0 bg-gray-200 animate-pulse"></div>
         )}
         <Image
-          src={product.image}
+          src={product.image_url || product.image_urls?.[0] || product.image || '/assets/images/no_image.png'}
           alt={product.name}
           className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110"
-          onLoad={() => {
+          retryCount={3}
+          retryDelay={500}
+          cacheBypass={true}
+          onLoad={(loadDetails) => {
+            console.log('🖼️ ProductGrid grid image loaded:', {
+              productId: product.id,
+              productName: product.name,
+              src: product.image_url || product.image_urls?.[0] || product.image,
+              loadDetails
+            });
             setImageLoaded(true);
             setImageError(false);
           }}
-          onError={() => {
+          onError={(errorDetails) => {
+            console.log('🖼️ ProductGrid grid image error:', {
+              productId: product.id,
+              productName: product.name,
+              attempted_src: product.image_url || product.image_urls?.[0] || product.image,
+              errorDetails
+            });
             setImageLoaded(false);
             setImageError(true);
           }}

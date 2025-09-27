@@ -83,9 +83,28 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist }) => {
       <div className="relative aspect-square overflow-hidden bg-muted">
         <Link to={`/product-detail-modal?id=${product.id}`}>
           <Image
-            src={product.image_urls?.[0] || product.image || '/assets/images/no_image.png'}
+            src={product.image_url || product.image_urls?.[0] || product.image || '/assets/images/no_image.png'}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            retryCount={3}
+            retryDelay={500}
+            cacheBypass={true}
+            onError={(errorDetails) => {
+              console.log('🖼️ ProductCard image error:', {
+                productId: product.id,
+                productName: product.name,
+                attempted_src: product.image_url || product.image_urls?.[0] || product.image,
+                errorDetails
+              });
+            }}
+            onLoad={(loadDetails) => {
+              console.log('🖼️ ProductCard image loaded:', {
+                productId: product.id,
+                productName: product.name,
+                src: product.image_url || product.image_urls?.[0] || product.image,
+                loadDetails
+              });
+            }}
           />
         </Link>
         

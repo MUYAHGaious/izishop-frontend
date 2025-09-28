@@ -19,6 +19,7 @@ import AdminDashboard from "./pages/admin-dashboard";
 import AdminLogin from "./pages/admin-login";
 import ShopsListing from "./pages/shops-listing";
 import ChatInterfaceModal from "./pages/chat-interface-modal";
+import MessagesPage from "./pages/messages";
 import NotificationCenterModal from "./pages/notification-center-modal";
 import NotificationsPage from "./pages/notifications";
 import LandingPage from "./pages/landing-page";
@@ -184,13 +185,22 @@ const AppRoutes = () => {
         } 
       />
       
-      <Route 
-        path="/user-settings" 
+      <Route
+        path="/user-settings"
         element={
           <AuthenticatedRouteGuard>
             <UserSettings />
           </AuthenticatedRouteGuard>
-        } 
+        }
+      />
+
+      <Route
+        path="/messages"
+        element={
+          <AuthenticatedRouteGuard>
+            <MessagesPage />
+          </AuthenticatedRouteGuard>
+        }
       />
       <Route 
         path="/shop-owner-dashboard" 

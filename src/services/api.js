@@ -993,6 +993,21 @@ class ApiService {
     });
   }
 
+  // Enhanced order status update with history tracking
+  async updateOrderStatusEnhanced(orderId, statusData) {
+    return await this.request(`/api/orders/${orderId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify(statusData)
+    });
+  }
+
+  // Get order status history
+  async getOrderStatusHistory(orderId) {
+    return await this.request(`/api/orders/${orderId}/history`, {
+      method: 'GET'
+    });
+  }
+
   // Notification methods
   async getNotifications(params = {}) {
     const queryParams = new URLSearchParams();
@@ -2087,6 +2102,90 @@ class ApiService {
     return this.request('/api/orders/create', {
       method: 'POST',
       body: JSON.stringify(orderData)
+    });
+  }
+
+  // Chat system methods
+  async getChatConversations() {
+    return this.request('/api/chat/conversations', {
+      method: 'GET'
+    });
+  }
+
+  async createChatConversation(conversationData) {
+    return this.request('/api/chat/conversations', {
+      method: 'POST',
+      body: JSON.stringify(conversationData)
+    });
+  }
+
+  async getChatMessages(conversationId, skip = 0, limit = 50) {
+    return this.request(`/api/chat/conversations/${conversationId}/messages?skip=${skip}&limit=${limit}`, {
+      method: 'GET'
+    });
+  }
+
+  async sendChatMessage(conversationId, messageData) {
+    // This will be handled via WebSocket, but keeping for backup
+    return this.request(`/api/chat/conversations/${conversationId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify(messageData)
+    });
+  }
+
+  async markMessagesAsRead(conversationId, messageId = null) {
+    return this.request(`/api/chat/conversations/${conversationId}/read`, {
+      method: 'POST',
+      body: JSON.stringify({ message_id: messageId })
+    });
+  }
+
+  // User discovery and contact management
+  async searchUsers(query, limit = 20) {
+    return this.request(`/api/chat/users/search?query=${encodeURIComponent(query)}&limit=${limit}`, {
+      method: 'GET'
+    });
+  }
+
+  async sendContactRequest(userId, message = null) {
+    return this.request('/api/chat/contacts/request', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId, message })
+    });
+  }
+
+  async acceptContactRequest(contactId) {
+    return this.request(`/api/chat/contacts/${contactId}/accept`, {
+      method: 'POST'
+    });
+  }
+
+  async getContacts() {
+    return this.request('/api/chat/contacts', {
+      method: 'GET'
+    });
+  }
+
+  // Direct messaging and group chats
+  async createDirectConversation(recipientId, initialMessage) {
+    return this.request('/api/chat/conversations/direct', {
+      method: 'POST',
+      body: JSON.stringify({
+        recipient_id: recipientId,
+        initial_message: initialMessage
+      })
+    });
+  }
+
+  async createGroupConversation(groupName, participantIds, description = null, initialMessage = null) {
+    return this.request('/api/chat/conversations/group', {
+      method: 'POST',
+      body: JSON.stringify({
+        group_name: groupName,
+        participant_ids: participantIds,
+        group_description: description,
+        initial_message: initialMessage
+      })
     });
   }
 }

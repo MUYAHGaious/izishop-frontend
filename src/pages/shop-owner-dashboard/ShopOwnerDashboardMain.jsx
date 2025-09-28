@@ -62,12 +62,18 @@ const ShopOwnerDashboardMain = () => {
       
       // Fetch shop statistics
       const statsResponse = await api.get('/api/analytics/user-stats');
+      console.log('Raw stats response:', statsResponse);
+
+      // Extract data from the response structure
+      const statsData = statsResponse.data?.data?.overview || {};
+      console.log('Extracted stats data:', statsData);
+
       setStats({
-        totalProducts: statsResponse.products_listed || 0,
-        totalOrders: statsResponse.orders_received || 0,
-        totalRevenue: statsResponse.revenue_generated || 0,
-        pendingOrders: statsResponse.pending_orders || 0,
-        lowStockItems: statsResponse.low_stock_items || 0
+        totalProducts: statsData.total_products || 0,
+        totalOrders: statsData.total_orders || 0,
+        totalRevenue: statsData.total_revenue || 0,
+        pendingOrders: statsData.pending_orders || 0,
+        lowStockItems: statsData.low_stock_items || 0
       });
       
     } catch (error) {

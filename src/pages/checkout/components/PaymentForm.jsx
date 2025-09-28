@@ -8,6 +8,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import tranzakService from '../../../services/tranzakService';
 import { showToast } from '../../../components/ui/Toast';
+import api from '../../../services/api';
 
 
 const PaymentForm = forwardRef(({ formData, setFormData }, ref) => {
@@ -230,9 +231,29 @@ const PaymentForm = forwardRef(({ formData, setFormData }, ref) => {
       if (paymentResult.status === 'success') {
         showToast(t('payment.success'), 'success');
 
-        // Save order to backend (TODO: implement actual API call)
-        // TODO: Save order to backend
-        // await api.post('/orders', orderData);
+        // Save order to backend
+        try {
+          const orderData = {
+            items: (cartItems || []).map(item => ({
+              product_id: item.productId || item.id,
+              quantity: item.quantity
+            })),
+            shipping_address: `${formData.address}, ${formData.city}, ${formData.region} ${formData.postalCode}`,
+            payment_method: selectedPaymentMethod,
+            payment_reference: paymentResult.reference || paymentResult.transaction_id,
+            total_amount: total,
+            delivery_instructions: formData.deliveryInstructions || orderNotes
+          };
+
+          console.log('🔍 Creating order with data:', orderData);
+          const orderResponse = await api.createOrder(orderData);
+          console.log('✅ Order created successfully:', orderResponse);
+
+        } catch (orderError) {
+          console.error('❌ Failed to save order to backend:', orderError);
+          // Still proceed with success flow, but log the error
+          showToast('Payment successful, but order saving failed. Please contact support.', 'warning');
+        }
 
         // Clear cart and checkout data after successful payment
         clearCart();

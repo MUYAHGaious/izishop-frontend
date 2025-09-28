@@ -18,7 +18,6 @@ import ProductGrid from './components/ProductGrid';
 import ReviewsSection from './components/ReviewsSection';
 import AboutSection from './components/AboutSection';
 import ProductCollections from './components/ProductCollections';
-import FloatingContact from './components/FloatingContact';
 import ShopSuspensionWarning from './components/ShopSuspensionWarning';
 import ShopAnalytics from './components/ShopAnalytics';
 import { showToast } from '../../components/ui/Toast';
@@ -430,7 +429,6 @@ const ShopProfile = () => {
         </div>
       </main>
 
-      <FloatingContact shop={shopData} onContact={handleContact} />
       <MobileBottomTab />
     </div>
   );

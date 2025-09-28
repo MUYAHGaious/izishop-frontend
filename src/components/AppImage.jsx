@@ -26,8 +26,23 @@ function Image({
       hasError,
       isLoading,
       attempts,
-      currentSrc
+      currentSrc,
+      isBase64: src?.startsWith('data:')
     });
+
+    // Additional debug for empty src
+    if (!src || src === '') {
+      console.warn('⚠️ AppImage received empty src:', { src, alt });
+    }
+
+    // Check if this is a base64 data URL
+    if (src && src.startsWith('data:')) {
+      console.log('📊 Base64 data URL detected, setting loaded immediately');
+      setIsLoading(false);
+      setHasError(false);
+      setCurrentSrc(src);
+      return;
+    }
 
     // Reset state when src changes
     if (src !== currentSrc) {
@@ -98,10 +113,20 @@ function Image({
       naturalWidth: e.target?.naturalWidth || 0,
       naturalHeight: e.target?.naturalHeight || 0,
       attempts: attempts + 1,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      complete: e.target?.complete || false,
+      isBase64: currentSrc?.startsWith('data:')
     };
 
     console.log('✅ Image loaded successfully:', loadDetails);
+    console.log('🔍 Image element state:', {
+      src: e.target?.src,
+      complete: e.target?.complete,
+      naturalWidth: e.target?.naturalWidth,
+      naturalHeight: e.target?.naturalHeight,
+      isBase64: currentSrc?.startsWith('data:')
+    });
+
     setIsLoading(false);
     setHasError(false);
 
@@ -141,32 +166,30 @@ function Image({
     );
   }
 
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className={`${className} bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center`}>
-        <div className="text-gray-400 text-center">
-          <div className="animate-spin w-6 h-6 mx-auto mb-2">
-            ⟳
-          </div>
-          <div className="text-xs opacity-60">Loading...</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <img
-      ref={imgRef}
-      src={currentSrc}
-      alt={alt}
-      className={className}
-      onError={handleError}
-      onLoad={handleLoad}
-      // CORS and cache control headers
-      crossOrigin="anonymous"
-      {...props}
-    />
+    <div className={`relative ${className}`}>
+      <img
+        ref={imgRef}
+        src={currentSrc}
+        alt={alt}
+        className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+        onError={handleError}
+        onLoad={handleLoad}
+        {...props}
+      />
+
+      {/* Show loading overlay */}
+      {isLoading && (
+        <div className={`absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center`}>
+          <div className="text-gray-400 text-center">
+            <div className="animate-spin w-6 h-6 mx-auto mb-2">
+              ⟳
+            </div>
+            <div className="text-xs opacity-60">Loading...</div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

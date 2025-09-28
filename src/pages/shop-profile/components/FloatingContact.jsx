@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
-import ChatModal from '../../../components/ui/ChatModal';
+import ChatInterfaceModal from '../../chat-interface-modal';
 import { MessageCircle, Phone, Mail, Clock, MapPin, Star, Zap, X, Plus } from 'lucide-react';
 
-const FloatingContact = ({ shop, onContact }) => {
+const FloatingContact = ({ shop = null, onContact }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -25,8 +25,8 @@ const FloatingContact = ({ shop, onContact }) => {
 
   const contactOptions = [
     {
-      label: 'Start Chat',
-      sublabel: 'Usually replies instantly',
+      label: 'Messages',
+      sublabel: 'Chat with shops & support',
       icon: MessageCircle,
       action: () => {
         setIsExpanded(false);
@@ -36,40 +36,65 @@ const FloatingContact = ({ shop, onContact }) => {
       color: 'bg-teal-500 hover:bg-teal-600',
       available: true
     },
-    {
-      label: 'Call Now',
-      sublabel: shop?.phone || 'Phone available',
-      icon: Phone,
-      action: () => {
-        setIsExpanded(false);
-        window.open(`tel:${shop?.phone || '+237600000000'}`);
+    ...(shop ? [
+      {
+        label: 'Call Shop',
+        sublabel: shop?.phone || 'Phone available',
+        icon: Phone,
+        action: () => {
+          setIsExpanded(false);
+          window.open(`tel:${shop?.phone || '+237600000000'}`);
+        },
+        color: 'bg-green-500 hover:bg-green-600',
+        available: !!shop?.phone
       },
-      color: 'bg-green-500 hover:bg-green-600',
-      available: !!shop?.phone
-    },
-    {
-      label: 'Send Email',
-      sublabel: shop?.email || 'Email support',
-      icon: Mail,
-      action: () => {
-        setIsExpanded(false);
-        window.open(`mailto:${shop?.email || 'shop@example.com'}`);
+      {
+        label: 'Email Shop',
+        sublabel: shop?.email || 'Email support',
+        icon: Mail,
+        action: () => {
+          setIsExpanded(false);
+          window.open(`mailto:${shop?.email || 'support@izishop.com'}`);
+        },
+        color: 'bg-blue-500 hover:bg-blue-600',
+        available: !!shop?.email
       },
-      color: 'bg-blue-500 hover:bg-blue-600',
-      available: !!shop?.email
-    },
-    {
-      label: 'WhatsApp',
-      sublabel: 'Quick messaging',
-      icon: MessageCircle,
-      action: () => {
-        setIsExpanded(false);
-        const message = encodeURIComponent(`Hi! I'm interested in your products at ${shop?.name}.`);
-        window.open(`https://wa.me/${(shop?.phone || '+237600000000').replace(/\D/g, '')}?text=${message}`);
+      {
+        label: 'WhatsApp',
+        sublabel: 'Quick messaging',
+        icon: MessageCircle,
+        action: () => {
+          setIsExpanded(false);
+          const message = encodeURIComponent(`Hi! I'm interested in your products at ${shop?.name}.`);
+          window.open(`https://wa.me/${(shop?.phone || '+237600000000').replace(/\D/g, '')}?text=${message}`);
+        },
+        color: 'bg-green-400 hover:bg-green-500',
+        available: !!shop?.phone
+      }
+    ] : [
+      {
+        label: 'Customer Support',
+        sublabel: 'Get help & support',
+        icon: Phone,
+        action: () => {
+          setIsExpanded(false);
+          window.open('tel:+237600000000');
+        },
+        color: 'bg-green-500 hover:bg-green-600',
+        available: true
       },
-      color: 'bg-green-400 hover:bg-green-500',
-      available: !!shop?.phone
-    }
+      {
+        label: 'Support Email',
+        sublabel: 'Email our team',
+        icon: Mail,
+        action: () => {
+          setIsExpanded(false);
+          window.open('mailto:support@izishop.com');
+        },
+        color: 'bg-blue-500 hover:bg-blue-600',
+        available: true
+      }
+    ])
   ].filter(option => option.available);
 
   const toggleExpanded = () => {
@@ -126,14 +151,16 @@ const FloatingContact = ({ shop, onContact }) => {
             );
           })}
 
-          {/* Shop Info Card */}
+          {/* Info Card */}
           <div className="bg-white text-gray-900 px-4 py-3 rounded-xl shadow-lg border border-gray-100 mt-2">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">
                 <Star size={14} className="text-teal-600" />
               </div>
               <div>
-                <div className="text-sm font-semibold">{shop?.name}</div>
+                <div className="text-sm font-semibold">
+                  {shop?.name || 'IziShop Messenger'}
+                </div>
                 <div className="text-xs text-gray-500 flex items-center gap-1">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                   Online • Last seen {lastSeen}
@@ -143,11 +170,11 @@ const FloatingContact = ({ shop, onContact }) => {
             <div className="flex items-center gap-4 text-xs text-gray-600">
               <div className="flex items-center gap-1">
                 <Clock size={12} />
-                Avg. response: 2 min
+                Avg. response: {shop ? '2 min' : 'Instant'}
               </div>
               <div className="flex items-center gap-1">
                 <Star size={12} />
-                {(shop?.average_rating || 4.5).toFixed(1)} rating
+                {shop ? (shop?.average_rating || 4.5).toFixed(1) : '4.8'} rating
               </div>
             </div>
           </div>
@@ -217,7 +244,7 @@ const FloatingContact = ({ shop, onContact }) => {
       </div>
 
       {/* Enhanced Chat Modal */}
-      <ChatModal
+      <ChatInterfaceModal
         isOpen={isChatOpen}
         onClose={() => {
           setIsChatOpen(false);

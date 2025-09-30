@@ -213,7 +213,7 @@ const Settings = () => {
     try {
       const paymentPayload = {
         paymentMethod: selectedPaymentMethod,
-        amount: 29.99,
+        amount: 20000,
         currency: 'XAF'
       };
 
@@ -444,7 +444,7 @@ const Settings = () => {
                   <Icon name="CheckCircle" size={16} className="mr-2" />
                       Active Subscription
                     </span>
-                <span className="text-xl sm:text-2xl font-bold">${user?.subscription?.monthly_fee || '29.99'}/month</span>
+                <span className="text-xl sm:text-2xl font-bold">{user?.subscription?.monthly_fee || '20,000'} XAF/month</span>
                   </div>
                 )}
               </div>
@@ -518,7 +518,7 @@ const Settings = () => {
                   <p className="text-gray-600">Professional selling platform</p>
                   </div>
                 </div>
-              <div className="text-3xl font-bold text-gray-900 mb-2">$29.99<span className="text-lg text-gray-500">/month</span></div>
+              <div className="text-3xl font-bold text-gray-900 mb-2">20,000 XAF<span className="text-lg text-gray-500">/month</span></div>
               <p className="text-sm text-gray-600">7-day free trial included</p>
               </div>
 

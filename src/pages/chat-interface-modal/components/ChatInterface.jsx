@@ -44,10 +44,30 @@ const ChatInterface = ({
             <div
               className={`max-w-xs px-3 py-2 rounded-2xl ${
                 message.sender === 'user' ?'bg-primary text-primary-foreground'
-                  : message.sender === 'system' ?'bg-muted text-text-secondary text-center' :'bg-muted text-text-primary'
+                  : message.sender === 'system' ?'bg-muted text-text-secondary text-center'
+                  : message.sender === 'support' ? 'bg-blue-50 text-blue-900 border border-blue-200'
+                  : 'bg-muted text-text-primary'
               }`}
             >
-              <p className="text-sm">{message.text}</p>
+              {/* WhatsApp-style quoted message for error context */}
+              {message.isQuotedError && message.quotedContent && (
+                <div className="mb-2 p-2 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
+                  <div className="flex items-center gap-1 mb-1">
+                    <Icon name="AlertTriangle" size={12} className="text-red-600" />
+                    <span className="text-xs font-medium text-red-600">Error Report</span>
+                  </div>
+                  <p className="text-xs text-red-700 italic">"{message.quotedContent.content}"</p>
+                  <div className="text-xs text-red-500 mt-1 space-y-0.5">
+                    <div>📅 {message.quotedContent.timestamp}</div>
+                    <div>📄 {message.quotedContent.page}</div>
+                    {message.quotedContent.orderId && (
+                      <div>🛒 Order: {message.quotedContent.orderId}</div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <p className="text-sm whitespace-pre-line">{message.text}</p>
               <div className={`flex items-center gap-1 mt-1 ${
                 message.sender === 'user' ? 'justify-end' : 'justify-start'
               }`}>
@@ -55,11 +75,14 @@ const ChatInterface = ({
                   {formatTime(message.timestamp)}
                 </span>
                 {message.sender === 'user' && (
-                  <Icon 
-                    name={message.status === 'sending' ? 'Clock' : 'Check'} 
-                    size={12} 
+                  <Icon
+                    name={message.status === 'sending' ? 'Clock' : 'Check'}
+                    size={12}
                     className="opacity-70"
                   />
+                )}
+                {message.sender === 'support' && (
+                  <Icon name="Headphones" size={12} className="opacity-70 text-blue-600" />
                 )}
               </div>
             </div>

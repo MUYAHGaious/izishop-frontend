@@ -5,7 +5,7 @@ import Icon from '../../../components/AppIcon';
 import { useCart } from '../../../contexts/CartContext';
 
 const OrderReviewForm = ({ formData, setFormData }) => {
-  const { cartItems, updateQuantity, removeFromCart } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, hasMultipleVendors } = useCart();
   
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -13,6 +13,7 @@ const OrderReviewForm = ({ formData, setFormData }) => {
   const taxRate = 0.1925; // 19.25% TVA Cameroun
   const taxes = subtotal * taxRate;
   const total = subtotal + deliveryCost + taxes;
+  const isMultiVendor = hasMultipleVendors();
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('fr-CM', {
@@ -35,6 +36,18 @@ const OrderReviewForm = ({ formData, setFormData }) => {
         </div>
         <p className="text-sm md:text-base text-gray-600 px-4 sm:px-0">Please review your items and delivery details before proceeding to payment</p>
       </div>
+
+      {/* Multi-vendor notice */}
+      {isMultiVendor && (
+        <div className="mb-6 p-3 bg-teal-50 border border-teal-200 rounded-lg">
+          <div className="flex items-center gap-2">
+            <Icon name="Info" size={16} className="text-teal-600" />
+            <p className="text-sm text-teal-700">
+              <strong>Multi-vendor order:</strong> Your order contains items from different vendors. Each vendor will ship their items separately.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-4 md:space-y-6">
         {/* Cart Items Section */}
@@ -68,9 +81,9 @@ const OrderReviewForm = ({ formData, setFormData }) => {
                       <h4 className="font-medium text-gray-900 mb-1 text-sm md:text-base truncate">{item.name}</h4>
                       <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-600 mb-2 md:mb-3">
                         {item.shopName && (
-                          <span className="flex items-center space-x-1">
-                            <Icon name="Store" size={12} md:size={14} />
-                            <span className="truncate">{item.shopName}</span>
+                          <span className="flex items-center space-x-1 bg-teal-50 px-2 py-1 rounded-md border border-teal-200">
+                            <Icon name="Store" size={12} md:size={14} className="text-teal-600" />
+                            <span className="truncate text-teal-700 font-medium">{item.shopName}</span>
                           </span>
                         )}
                         <span className="font-medium text-gray-900">

@@ -85,3 +85,65 @@ body {
 .hover\:scale-105:hover {
   transform: scale(1.05);
 }
+
+/* Industry-Standard Notification Animations */
+@keyframes progressShrink {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+.animate-progress-shrink {
+  animation: progressShrink 5s linear forwards;
+}
+
+/* Modern Slide-in Animation */
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-100%) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Notification Bounce Effect */
+@keyframes notificationBounce {
+  0% {
+    transform: translateY(-100%) scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(8px) scale(1.05);
+  }
+  70% {
+    transform: translateY(-4px) scale(0.95);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-notification-enter {
+  animation: notificationBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Subtle Pulse for Icons */
+@keyframes subtlePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.animate-subtle-pulse {
+  animation: subtlePulse 2s ease-in-out infinite;
+}

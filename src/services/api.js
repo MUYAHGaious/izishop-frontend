@@ -1657,6 +1657,44 @@ class ApiService {
     }
   }
 
+  // Order Cancellation API Functions
+  async getOrderCancellationPolicy(orderId) {
+    try {
+      return await this.request(`/api/orders/${orderId}/cancellation-policy`, {
+        method: 'GET'
+      });
+    } catch (error) {
+      console.error('Failed to get cancellation policy:', error);
+      throw error;
+    }
+  }
+
+  async cancelOrder(orderId, cancellationData) {
+    try {
+      return await this.request(`/api/orders/${orderId}/cancel`, {
+        method: 'POST',
+        body: JSON.stringify(cancellationData)
+      });
+    } catch (error) {
+      console.error('Failed to cancel order:', error);
+      throw error;
+    }
+  }
+
+  async getCancellationHistory(limit = 10) {
+    try {
+      const queryParams = new URLSearchParams();
+      if (limit) queryParams.append('limit', limit);
+
+      return await this.request(`/api/customer/orders/cancellation-history?${queryParams}`, {
+        method: 'GET'
+      });
+    } catch (error) {
+      console.error('Failed to get cancellation history:', error);
+      throw error;
+    }
+  }
+
   async getCustomerWishlist(filters = {}) {
     try {
       const queryParams = new URLSearchParams();
@@ -2102,6 +2140,35 @@ class ApiService {
     return this.request('/api/orders/create', {
       method: 'POST',
       body: JSON.stringify(orderData)
+    });
+  }
+
+  async createMultiVendorOrder(orderData) {
+    return this.request('/api/orders/create-multi-vendor', {
+      method: 'POST',
+      body: JSON.stringify(orderData)
+    });
+  }
+
+  async createOrderOptimized(orderData) {
+    // Use the working order creation endpoint instead of the broken orders-v2
+    return this.request('/api/orders/create', {
+      method: 'POST',
+      body: JSON.stringify(orderData)
+    });
+  }
+
+  async getShopOwnerOrdersOptimized(params = {}) {
+    const queryParams = new URLSearchParams(params).toString();
+    return this.request(`/api/orders-v2/shop-owner/orders${queryParams ? `?${queryParams}` : ''}`, {
+      method: 'GET'
+    });
+  }
+
+  async getCustomerOrdersOptimized(params = {}) {
+    const queryParams = new URLSearchParams(params).toString();
+    return this.request(`/api/orders-v2/customer/orders${queryParams ? `?${queryParams}` : ''}`, {
+      method: 'GET'
     });
   }
 

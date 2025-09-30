@@ -19,10 +19,11 @@ import {
   Star,
   MessageSquare,
   Archive,
-  Bell
+  Bell,
+  AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../../components/ui/Header';
 import MobileBottomTab from '../../components/ui/MobileBottomTab';
 import api from '../../services/api';
@@ -30,6 +31,7 @@ import api from '../../services/api';
 const MessagesPage = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentView, setCurrentView] = useState('conversations');
   const [conversations, setConversations] = useState([]);
   const [activeConversation, setActiveConversation] = useState(null);
@@ -42,6 +44,7 @@ const MessagesPage = () => {
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [loading, setLoading] = useState(false);
   const [selectedConversationType, setSelectedConversationType] = useState('all');
+  const [errorContext, setErrorContext] = useState(null);
 
   const messagesEndRef = useRef(null);
   const wsRef = useRef(null);
@@ -68,6 +71,52 @@ const MessagesPage = () => {
       }
     };
   }, [user]);
+
+  // Handle error context from Contact Support navigation (WhatsApp-style reply)
+  useEffect(() => {
+    console.log('🔍 MessagesPage: Checking URL for error context...');
+    const urlParams = new URLSearchParams(location.search);
+    const isSupport = urlParams.get('support') === 'true';
+    const isError = urlParams.get('error') === 'true';
+
+    console.log('🔍 URL params:', { isSupport, isError, isAuthenticated: isAuthenticated(), hasUser: !!user });
+
+    if (isSupport && isError) {
+      console.log('✅ URL conditions met, checking localStorage for error context...');
+
+      // Get error context from localStorage
+      const storedErrorContext = localStorage.getItem('supportErrorContext');
+      console.log('🔍 Stored error context:', storedErrorContext);
+
+      if (storedErrorContext) {
+        try {
+          const parsedErrorContext = JSON.parse(storedErrorContext);
+          console.log('✅ Parsed error context:', parsedErrorContext);
+          setErrorContext(parsedErrorContext);
+
+          // Clear the error context from localStorage
+          localStorage.removeItem('supportErrorContext');
+
+          // Clear URL parameters first
+          navigate('/messages', { replace: true });
+
+          // Create support conversation after a short delay to ensure state is ready
+          setTimeout(() => {
+            console.log('🚀 Creating support conversation with error context...');
+            createSupportConversationWithError(parsedErrorContext);
+          }, 500);
+
+        } catch (error) {
+          console.error('❌ Failed to parse error context:', error);
+          localStorage.removeItem('supportErrorContext');
+        }
+      } else {
+        console.log('⚠️ No error context found in localStorage');
+      }
+    } else {
+      console.log('❌ URL conditions not met for error context handling');
+    }
+  }, [location.search, navigate]);
 
   const initializeWebSocket = () => {
     if (!user) return;
@@ -139,6 +188,8 @@ const MessagesPage = () => {
       setConversations(response || []);
     } catch (error) {
       console.error('Failed to load conversations:', error);
+      // Set empty conversations array so the page still works
+      setConversations([]);
     } finally {
       setLoading(false);
     }
@@ -180,6 +231,115 @@ const MessagesPage = () => {
       await loadMessages(response.id);
     } catch (error) {
       console.error('Failed to start direct message:', error);
+    }
+  };
+
+  // Create support conversation with error context (WhatsApp-style quoted error)
+  const createSupportConversationWithError = async (errorContext) => {
+    console.log('🚀 createSupportConversationWithError called with:', errorContext);
+
+    try {
+      // Check if support conversation already exists
+      let supportConversation = conversations.find(conv =>
+        conv.type === 'customer_support' && conv.title?.includes('IziShop Customer Support')
+      );
+
+      console.log('🔍 Existing support conversation:', supportConversation);
+
+      if (!supportConversation) {
+        console.log('📝 Creating new support conversation...');
+
+        // Try to create via API first, but don't fail if it doesn't work
+        try {
+          const response = await api.post('/chat/conversations/support', {
+            initial_message: errorContext.prefilledMessage,
+            error_context: errorContext
+          });
+          console.log('✅ API response for support conversation:', response);
+        } catch (apiError) {
+          console.log('⚠️ API call failed, continuing with local conversation:', apiError.message);
+        }
+
+        supportConversation = {
+          id: `support-${Date.now()}`,
+          title: 'IziShop Customer Support',
+          type: 'customer_support',
+          last_message: {
+            content: 'Hello! I\'m here to help you with your issue.',
+            created_at: new Date().toISOString(),
+            is_bot_message: true
+          },
+          last_message_at: new Date().toISOString(),
+          unread_count: 0,
+          participants: [
+            { id: 'support-bot', name: 'IziShop Support', is_online: true }
+          ]
+        };
+
+        console.log('📝 Created support conversation:', supportConversation);
+        setConversations(prev => [supportConversation, ...prev]);
+      }
+
+      // Create messages with error context (WhatsApp-style)
+      const supportWelcomeMessage = {
+        id: `msg-${Date.now()}`,
+        content: `Hello ${user?.first_name || 'Customer'}! I'm here to help you. I can see you're having an issue - let me assist you right away.`,
+        sender_id: 'support-bot',
+        created_at: new Date().toISOString(),
+        status: 'delivered',
+        is_bot_message: true
+      };
+
+      const userErrorMessage = {
+        id: `msg-${Date.now() + 1}`,
+        content: errorContext.prefilledMessage,
+        sender_id: user?.id,
+        created_at: new Date().toISOString(),
+        status: 'delivered',
+        error_context: errorContext
+      };
+
+      const supportResponseMessage = {
+        id: `msg-${Date.now() + 2}`,
+        content: `I can see the issue you're experiencing${errorContext.orderId ? ` with order #${errorContext.orderId}` : ' with order management'}. Let me check this for you and provide a solution. This type of ${errorContext.errorType?.replace('_', ' ')} can usually be resolved quickly.`,
+        sender_id: 'support-bot',
+        created_at: new Date(Date.now() + 1000).toISOString(),
+        status: 'delivered',
+        is_bot_message: true
+      };
+
+      // Set messages and activate conversation
+      console.log('💬 Setting messages:', [supportWelcomeMessage, userErrorMessage, supportResponseMessage]);
+      setMessages([supportWelcomeMessage, userErrorMessage, supportResponseMessage]);
+      setActiveConversation(supportConversation);
+      setCurrentView('chat');
+
+      // Auto-switch to support filter
+      setSelectedConversationType('support');
+
+      console.log('✅ Support conversation with error context created successfully!');
+
+    } catch (error) {
+      console.error('❌ Failed to create support conversation:', error);
+      // Fallback: create a basic support conversation
+      const fallbackConversation = {
+        id: `support-fallback-${Date.now()}`,
+        title: 'IziShop Customer Support',
+        type: 'customer_support',
+        last_message: {
+          content: errorContext.prefilledMessage,
+          created_at: new Date().toISOString()
+        },
+        last_message_at: new Date().toISOString(),
+        unread_count: 0,
+        participants: [
+          { id: 'support-bot', name: 'IziShop Support', is_online: true }
+        ]
+      };
+
+      setConversations(prev => [fallbackConversation, ...prev]);
+      setActiveConversation(fallbackConversation);
+      setCurrentView('chat');
     }
   };
 
@@ -276,19 +436,19 @@ const MessagesPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50" data-testid="messages-page">
       <Header />
 
-      <main className="pt-16 lg:pt-20 pb-20 lg:pb-8">
+      <main className="pt-24 lg:pt-28 pb-20 lg:pb-8">
         <div className="flex h-[calc(100vh-4rem)] lg:h-[calc(100vh-5rem)]">
 
           {/* Sidebar */}
-          <div className={`w-full lg:w-80 bg-white border-r border-gray-200 flex flex-col ${
+          <div className={`w-full lg:w-80 bg-white/95 backdrop-blur-xl border-r border-gray-200/50 flex flex-col ${
             currentView === 'chat' && activeConversation ? 'hidden lg:flex' : 'flex'
           }`}>
 
             {/* Sidebar Header */}
-            <div className="p-6 border-b border-gray-200">
+            <div className="p-6 border-b border-gray-200/50 bg-white/80 backdrop-blur-sm">
               <h1 className="text-xl font-semibold text-gray-900 mb-4">Messages</h1>
 
               {/* Search */}
@@ -307,13 +467,13 @@ const MessagesPage = () => {
                   onFocus={() => {
                     if (searchQuery) setCurrentView('search');
                   }}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50/80 backdrop-blur-sm border border-gray-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500/50 transition-all duration-200 placeholder-gray-500 shadow-sm"
                 />
               </div>
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex border-b border-gray-200">
+            <div className="flex border-b border-gray-200/50 bg-white/80 backdrop-blur-sm">
               {[
                 { id: 'conversations', label: 'Chats', icon: MessageCircle },
                 { id: 'contacts', label: 'Contacts', icon: Users },
@@ -330,9 +490,9 @@ const MessagesPage = () => {
                         searchUsers(searchQuery);
                       }
                     }}
-                    className={`flex-1 py-3 px-2 text-sm font-medium border-b-2 transition-colors ${
+                    className={`flex-1 py-3 px-2 text-sm font-medium border-b-2 transition-all duration-200 ${
                       currentView === tab.id
-                        ? 'border-primary text-primary'
+                        ? 'border-teal-600 text-teal-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                     }`}
                   >
@@ -350,7 +510,7 @@ const MessagesPage = () => {
               {currentView === 'conversations' && (
                 <>
                   {/* Conversation Filters */}
-                  <div className="p-4 border-b border-gray-200">
+                  <div className="p-4 border-b border-gray-200/50">
                     <div className="flex space-x-2">
                       {[
                         { id: 'all', label: 'All' },
@@ -361,10 +521,10 @@ const MessagesPage = () => {
                         <button
                           key={filter.id}
                           onClick={() => setSelectedConversationType(filter.id)}
-                          className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                          className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
                             selectedConversationType === filter.id
-                              ? 'bg-primary text-white'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              ? 'bg-teal-600 text-white shadow-sm'
+                              : 'bg-gray-100/80 backdrop-blur-sm text-gray-600 hover:bg-gray-200/80'
                           }`}
                         >
                           {filter.label}
@@ -374,10 +534,10 @@ const MessagesPage = () => {
                   </div>
 
                   {/* New Chat Button */}
-                  <div className="p-4 border-b border-gray-200">
+                  <div className="p-4 border-b border-gray-200/50">
                     <button
                       onClick={() => setCurrentView('search')}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-teal-600 hover:bg-teal-50/80 backdrop-blur-sm rounded-xl transition-all duration-200 border border-teal-200/50"
                     >
                       <Plus size={18} />
                       <span className="font-medium">New Chat</span>
@@ -388,7 +548,7 @@ const MessagesPage = () => {
                   <div className="space-y-1 p-2">
                     {loading ? (
                       <div className="flex items-center justify-center py-12">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
                       </div>
                     ) : filteredConversations.length === 0 ? (
                       <div className="text-center py-12 text-gray-500">
@@ -506,7 +666,7 @@ const MessagesPage = () => {
                 />
 
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
+                <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/80 backdrop-blur-sm">
                   {messages.map((message) => (
                     <MessageBubble
                       key={message.id}
@@ -532,7 +692,10 @@ const MessagesPage = () => {
                 />
               </>
             ) : (
-              <WelcomeScreen onNewChat={() => setCurrentView('search')} />
+              <WelcomeScreen
+                onNewChat={() => setCurrentView('search')}
+                onTestErrorContext={createSupportConversationWithError}
+              />
             )}
           </div>
         </div>
@@ -550,8 +713,8 @@ const ConversationItem = ({ conversation, onSelect, isActive, onlineUsers }) => 
   return (
     <div
       onClick={() => onSelect(conversation)}
-      className={`flex items-center p-3 hover:bg-gray-50 cursor-pointer rounded-lg transition-colors ${
-        isActive ? 'bg-primary/10 border-l-4 border-primary' : ''
+      className={`flex items-center p-3 hover:bg-gray-50/80 backdrop-blur-sm cursor-pointer rounded-xl transition-all duration-200 ${
+        isActive ? 'bg-teal-50/80 backdrop-blur-sm border border-teal-200/50' : ''
       }`}
     >
       <div className="relative mr-3">
@@ -559,7 +722,7 @@ const ConversationItem = ({ conversation, onSelect, isActive, onlineUsers }) => 
           {conversation.type === 'group_chat' ? (
             <Users size={20} className="text-gray-600" />
           ) : conversation.type === 'customer_support' ? (
-            <Bot size={20} className="text-primary" />
+            <Bot size={20} className="text-teal-600" />
           ) : (
             <User size={20} className="text-gray-600" />
           )}
@@ -584,12 +747,12 @@ const ConversationItem = ({ conversation, onSelect, isActive, onlineUsers }) => 
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-600 truncate">
             {conversation.last_message?.is_bot_message && (
-              <Bot size={12} className="inline mr-1 text-primary" />
+              <Bot size={12} className="inline mr-1 text-teal-600" />
             )}
             {conversation.last_message?.content || 'No messages yet'}
           </p>
           {conversation.unread_count > 0 && (
-            <span className="ml-2 px-2 py-1 bg-primary text-white text-xs rounded-full min-w-[20px] text-center">
+            <span className="ml-2 px-2 py-1 bg-teal-600 text-white text-xs rounded-full min-w-[20px] text-center shadow-sm">
               {conversation.unread_count > 99 ? '99+' : conversation.unread_count}
             </span>
           )}
@@ -600,7 +763,7 @@ const ConversationItem = ({ conversation, onSelect, isActive, onlineUsers }) => 
 };
 
 const ContactItem = ({ contact, onStartChat }) => (
-  <div className="flex items-center p-3 hover:bg-gray-50 rounded-lg transition-colors">
+  <div className="flex items-center p-3 hover:bg-gray-50/80 backdrop-blur-sm rounded-xl transition-all duration-200">
     <div className="relative mr-3">
       <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
         <User size={16} className="text-gray-600" />
@@ -617,7 +780,7 @@ const ContactItem = ({ contact, onStartChat }) => (
     </div>
     <button
       onClick={() => onStartChat()}
-      className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
+      className="p-2 text-teal-600 hover:bg-teal-50/80 backdrop-blur-sm rounded-xl transition-all duration-200"
     >
       <MessageSquare size={18} />
     </button>
@@ -625,7 +788,7 @@ const ContactItem = ({ contact, onStartChat }) => (
 );
 
 const SearchResultItem = ({ user, onStartChat }) => (
-  <div className="flex items-center p-3 hover:bg-gray-50 rounded-lg transition-colors">
+  <div className="flex items-center p-3 hover:bg-gray-50/80 backdrop-blur-sm rounded-xl transition-all duration-200">
     <div className="relative mr-3">
       <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
         <User size={16} className="text-gray-600" />
@@ -648,7 +811,7 @@ const SearchResultItem = ({ user, onStartChat }) => (
     </div>
     <button
       onClick={() => onStartChat()}
-      className="px-3 py-1.5 text-sm bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
+      className="px-3 py-1.5 text-sm bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition-all duration-200 shadow-sm"
     >
       Message
     </button>
@@ -659,11 +822,11 @@ const ChatHeader = ({ conversation, onBack, onlineUsers }) => {
   const isOnline = conversation.participants?.some(p => onlineUsers.has(p.id));
 
   return (
-    <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+    <div className="flex items-center justify-between p-4 border-b border-gray-200/50 bg-white/80 backdrop-blur-sm">
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
-          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg lg:hidden"
+          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 backdrop-blur-sm rounded-xl transition-all duration-200 lg:hidden"
         >
           <ArrowLeft size={20} />
         </button>
@@ -671,7 +834,7 @@ const ChatHeader = ({ conversation, onBack, onlineUsers }) => {
           {conversation.type === 'group_chat' ? (
             <Users size={20} className="text-gray-600" />
           ) : conversation.type === 'customer_support' ? (
-            <Bot size={20} className="text-primary" />
+            <Bot size={20} className="text-teal-600" />
           ) : (
             <User size={20} className="text-gray-600" />
           )}
@@ -692,10 +855,10 @@ const ChatHeader = ({ conversation, onBack, onlineUsers }) => {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+        <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 backdrop-blur-sm rounded-xl transition-all duration-200">
           <Phone size={18} />
         </button>
-        <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+        <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 backdrop-blur-sm rounded-xl transition-all duration-200">
           <MoreVertical size={18} />
         </button>
       </div>
@@ -718,7 +881,7 @@ const MessageBubble = ({ message, isOwnMessage }) => {
       case 'delivered':
         return <Check size={12} className="text-gray-500" />;
       case 'read':
-        return <CheckCheck size={12} className="text-primary" />;
+        return <CheckCheck size={12} className="text-teal-600" />;
       default:
         return null;
     }
@@ -729,7 +892,7 @@ const MessageBubble = ({ message, isOwnMessage }) => {
       {!isOwnMessage && (
         <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
           {message.is_bot_message ? (
-            <Bot size={16} className="text-primary" />
+            <Bot size={16} className="text-teal-600" />
           ) : (
             <User size={16} className="text-gray-600" />
           )}
@@ -740,13 +903,31 @@ const MessageBubble = ({ message, isOwnMessage }) => {
         <div
           className={`px-4 py-2 rounded-xl ${
             isOwnMessage
-              ? 'bg-primary text-white rounded-br-md'
+              ? 'bg-teal-600 text-white rounded-br-md'
               : message.is_bot_message
-              ? 'bg-primary/10 text-primary border border-primary/20 rounded-bl-md'
-              : 'bg-white border border-gray-200 text-gray-900 rounded-bl-md'
+              ? 'bg-teal-50/80 backdrop-blur-sm text-teal-700 border border-teal-200/50 rounded-bl-md'
+              : 'bg-white/80 backdrop-blur-sm border border-gray-200/50 text-gray-900 rounded-bl-md'
           } shadow-sm`}
         >
-          <p className="text-sm">{message.content}</p>
+          {/* WhatsApp-style quoted error context */}
+          {message.error_context && (
+            <div className="mb-3 p-2 bg-red-50/80 backdrop-blur-sm border-l-4 border-red-400 rounded-r-lg">
+              <div className="flex items-center gap-1 mb-1">
+                <AlertTriangle size={12} className="text-red-600" />
+                <span className="text-xs font-medium text-red-600">Error Report</span>
+              </div>
+              <p className="text-xs text-red-700 italic">"{message.error_context.originalError}"</p>
+              <div className="text-xs text-red-500 mt-1 space-y-0.5">
+                <div>📅 {message.error_context.timestamp}</div>
+                <div>📄 {message.error_context.currentPage}</div>
+                {message.error_context.orderId && (
+                  <div>🛒 Order: {message.error_context.orderId}</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <p className="text-sm whitespace-pre-line">{message.content}</p>
         </div>
 
         <div className={`flex items-center gap-1 mt-1 text-xs text-gray-500 ${
@@ -765,7 +946,7 @@ const TypingIndicator = () => (
     <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
       <User size={16} className="text-gray-600" />
     </div>
-    <div className="bg-white border border-gray-200 rounded-xl rounded-bl-md px-4 py-2 shadow-sm">
+    <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-xl rounded-bl-md px-4 py-2 shadow-sm">
       <div className="flex items-center gap-1">
         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
@@ -776,9 +957,9 @@ const TypingIndicator = () => (
 );
 
 const MessageInput = ({ value, onChange, onSend, onTyping, disabled }) => (
-  <div className="p-4 border-t border-gray-200 bg-white">
+  <div className="p-4 border-t border-gray-200/50 bg-white/80 backdrop-blur-sm">
     <div className="flex items-center gap-3">
-      <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+      <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 backdrop-blur-sm rounded-xl transition-all duration-200">
         <Paperclip size={18} />
       </button>
       <div className="flex-1 relative">
@@ -792,16 +973,16 @@ const MessageInput = ({ value, onChange, onSend, onTyping, disabled }) => (
           onKeyDown={(e) => e.key === 'Enter' && onSend()}
           placeholder="Type a message..."
           disabled={disabled}
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-4 py-3 bg-gray-50/80 backdrop-blur-sm border border-gray-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500/50 transition-all duration-200 placeholder-gray-500 shadow-sm"
         />
       </div>
-      <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+      <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 backdrop-blur-sm rounded-xl transition-all duration-200">
         <Smile size={18} />
       </button>
       <button
         onClick={onSend}
         disabled={!value.trim() || disabled}
-        className="p-3 bg-primary text-white rounded-xl hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="p-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
       >
         <Send size={18} />
       </button>
@@ -809,20 +990,64 @@ const MessageInput = ({ value, onChange, onSend, onTyping, disabled }) => (
   </div>
 );
 
-const WelcomeScreen = ({ onNewChat }) => (
-  <div className="flex-1 flex items-center justify-center bg-gray-50">
-    <div className="text-center">
-      <MessageCircle size={64} className="mx-auto mb-4 text-gray-400" />
-      <h2 className="text-2xl font-semibold text-gray-900 mb-2">Welcome to IziShop Messenger</h2>
-      <p className="text-gray-600 mb-6">Connect with shops, customers, and get support instantly</p>
-      <button
-        onClick={onNewChat}
-        className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
-      >
-        Start New Chat
-      </button>
+const WelcomeScreen = ({ onNewChat, onTestErrorContext }) => {
+  // Test function to simulate Contact Support error context
+  const testErrorContext = () => {
+    console.log('🧪 Testing error context creation...');
+    const testContext = {
+      type: 'error_report',
+      originalError: 'Test error: Cannot cancel order - testing support integration',
+      errorType: 'order_cancellation_failed',
+      timestamp: new Date().toLocaleString(),
+      orderId: 'TEST-ORDER-123',
+      userAgent: navigator.userAgent,
+      currentPage: 'My Orders',
+      prefilledMessage: `Hi Support Team,
+
+I encountered an issue while trying to manage my order:
+
+📋 Error Details:
+"Test error: Cannot cancel order - testing support integration"
+
+🕒 When: ${new Date().toLocaleString()}
+📄 Page: My Orders
+🛒 Order ID: TEST-ORDER-123
+
+Could you please help me resolve this issue?`
+    };
+
+    if (onTestErrorContext) {
+      console.log('📝 Calling onTestErrorContext with:', testContext);
+      onTestErrorContext(testContext);
+    } else {
+      console.log('⚠️ onTestErrorContext function not available');
+      alert('Test: onTestErrorContext function not available. Check console for details.');
+    }
+  };
+
+  return (
+    <div className="flex-1 flex items-center justify-center bg-gray-50/80 backdrop-blur-sm">
+      <div className="text-center">
+        <MessageCircle size={64} className="mx-auto mb-4 text-gray-400" />
+        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Welcome to IziShop Messenger</h2>
+        <p className="text-gray-600 mb-6">Connect with shops, customers, and get support instantly</p>
+        <div className="space-y-3">
+          <button
+            onClick={onNewChat}
+            className="block px-6 py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition-all duration-200 shadow-sm"
+          >
+            Start New Chat
+          </button>
+          <button
+            onClick={testErrorContext}
+            className="block px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-200 shadow-sm text-sm"
+          >
+            🧪 Test Contact Support (Debug)
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default MessagesPage;

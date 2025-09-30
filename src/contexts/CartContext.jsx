@@ -281,6 +281,90 @@ export const CartProvider = ({ children }) => {
     return item ? item.quantity : 0;
   };
 
+  // Group cart items by vendor/shop
+  const groupItemsByVendor = () => {
+    const vendorGroups = {};
+    
+    cartItems.forEach(item => {
+      const vendorId = item.shopId || 'unknown';
+      const vendorName = item.shopName || 'Unknown Shop';
+      
+      if (!vendorGroups[vendorId]) {
+        vendorGroups[vendorId] = {
+          vendorId,
+          vendorName,
+          items: [],
+          subtotal: 0,
+          itemCount: 0,
+          shippingOptions: [],
+          estimatedDelivery: item.deliveryEstimate || '2-3 days',
+          freeDelivery: item.freeDelivery || false
+        };
+      }
+      
+      vendorGroups[vendorId].items.push(item);
+      vendorGroups[vendorId].subtotal += item.price * item.quantity;
+      vendorGroups[vendorId].itemCount += item.quantity;
+    });
+    
+    return Object.values(vendorGroups);
+  };
+
+  // Check if cart has items from multiple vendors
+  const hasMultipleVendors = () => {
+    const uniqueVendors = new Set(cartItems.map(item => item.shopId));
+    return uniqueVendors.size > 1;
+  };
+
+  // Get shipping options for vendor
+  const getVendorShippingOptions = (vendorId) => {
+    const vendorItems = cartItems.filter(item => item.shopId === vendorId);
+    if (vendorItems.length === 0) return [];
+    
+    // Default shipping options (can be enhanced with real vendor data)
+    const baseOptions = [
+      {
+        id: 'standard',
+        name: 'Standard Delivery',
+        price: 2500,
+        estimatedDays: '2-3 days',
+        description: 'Regular delivery service'
+      },
+      {
+        id: 'express',
+        name: 'Express Delivery',
+        price: 5000,
+        estimatedDays: '1-2 days',
+        description: 'Faster delivery service'
+      },
+      {
+        id: 'same-day',
+        name: 'Same Day Delivery',
+        price: 8000,
+        estimatedDays: 'Same day',
+        description: 'Same day delivery (if available)'
+      }
+    ];
+    
+    // Check if vendor offers free delivery
+    const hasFreeDelivery = vendorItems.some(item => item.freeDelivery);
+    
+    if (hasFreeDelivery) {
+      return [
+        {
+          id: 'free',
+          name: 'Free Delivery',
+          price: 0,
+          estimatedDays: '2-3 days',
+          description: 'Free delivery on this order'
+        },
+        ...baseOptions
+      ];
+    }
+    
+    return baseOptions;
+  };
+
   const value = {
     // State
     cartItems,
@@ -299,7 +383,12 @@ export const CartProvider = ({ children }) => {
     // Utilities
     getCartTotals,
     isInCart,
-    getItemQuantity
+    getItemQuantity,
+    
+    // Multi-vendor functionality
+    groupItemsByVendor,
+    hasMultipleVendors,
+    getVendorShippingOptions
   };
 
   // Don't render children until initialized to prevent context errors

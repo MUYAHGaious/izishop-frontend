@@ -170,25 +170,25 @@ const ChatModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl h-[80vh] bg-white rounded-xl shadow-xl flex overflow-hidden">
+      <div className="w-full max-w-4xl h-[80vh] bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-white/20 flex overflow-hidden">
 
         {/* Sidebar */}
-        <div className="w-80 bg-gray-50 border-r flex flex-col">
+        <div className="w-80 bg-gray-50/80 backdrop-blur-sm border-r border-gray-200/50 flex flex-col">
           {/* Header */}
-          <div className="p-4 border-b bg-white">
+          <div className="p-4 border-b border-gray-200/50 bg-white/80 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Messages</h2>
               <div className="flex items-center gap-2">
                 <button
                   onClick={goToFullChatPage}
-                  className="p-2 text-gray-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                  className="p-2 text-gray-500 hover:text-teal-600 hover:bg-teal-50/80 backdrop-blur-sm rounded-xl transition-all duration-200 border border-teal-200/50"
                   title="Open full chat page"
                 >
                   <ExternalLink size={18} />
                 </button>
                 <button
                   onClick={onClose}
-                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 backdrop-blur-sm rounded-xl transition-all duration-200"
                 >
                   <X size={18} />
                 </button>
@@ -208,13 +208,13 @@ const ChatModal = ({ isOpen, onClose }) => {
                     searchUsers(e.target.value);
                   }
                 }}
-                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                className="w-full pl-9 pr-4 py-2 bg-gray-50/80 backdrop-blur-sm border border-gray-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500/50 transition-all duration-200 text-sm placeholder-gray-500 shadow-sm"
               />
             </div>
           </div>
 
           {/* Navigation */}
-          <div className="flex border-b bg-white">
+          <div className="flex border-b border-gray-200/50 bg-white/80 backdrop-blur-sm">
             {[
               { id: 'conversations', label: 'Chats', icon: MessageCircle },
               { id: 'contacts', label: 'Contacts', icon: Users },
@@ -230,9 +230,9 @@ const ChatModal = ({ isOpen, onClose }) => {
                       searchUsers(searchQuery);
                     }
                   }}
-                  className={`flex-1 py-3 px-2 text-xs font-medium border-b-2 transition-colors ${
+                  className={`flex-1 py-3 px-2 text-xs font-medium border-b-2 transition-all duration-200 ${
                     currentView === tab.id
-                      ? 'border-primary text-primary'
+                      ? 'border-teal-600 text-teal-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
                 >
@@ -249,7 +249,7 @@ const ChatModal = ({ isOpen, onClose }) => {
               <div className="p-2 space-y-1">
                 {loading ? (
                   <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-600"></div>
                   </div>
                 ) : conversations.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
@@ -257,7 +257,7 @@ const ChatModal = ({ isOpen, onClose }) => {
                     <p className="text-sm">No conversations yet</p>
                     <button
                       onClick={() => setCurrentView('search')}
-                      className="text-xs text-primary hover:underline mt-1"
+                      className="text-xs text-teal-600 hover:underline mt-1"
                     >
                       Start a new chat
                     </button>
@@ -301,7 +301,7 @@ const ChatModal = ({ isOpen, onClose }) => {
               <div className="p-2">
                 <button
                   onClick={() => setCurrentView('search')}
-                  className="w-full flex items-center gap-2 p-3 text-primary hover:bg-primary/10 rounded-lg transition-colors mb-2"
+                  className="w-full flex items-center gap-2 p-3 text-teal-600 hover:bg-teal-50/80 backdrop-blur-sm rounded-xl transition-all duration-200 mb-2 border border-teal-200/50"
                 >
                   <Plus size={16} />
                   <span className="text-sm font-medium">New Chat</span>
@@ -338,11 +338,11 @@ const ChatModal = ({ isOpen, onClose }) => {
           {currentView === 'chat' && activeConversation ? (
             <>
               {/* Chat Header */}
-              <div className="flex items-center justify-between p-4 border-b bg-white">
+              <div className="flex items-center justify-between p-4 border-b border-gray-200/50 bg-white/80 backdrop-blur-sm">
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setCurrentView('conversations')}
-                    className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg lg:hidden"
+                    className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 backdrop-blur-sm rounded-xl transition-all duration-200 lg:hidden"
                   >
                     <ArrowLeft size={16} />
                   </button>
@@ -355,17 +355,17 @@ const ChatModal = ({ isOpen, onClose }) => {
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
-                  <button className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+                  <button className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 backdrop-blur-sm rounded-xl transition-all duration-200">
                     <Phone size={16} />
                   </button>
-                  <button className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+                  <button className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 backdrop-blur-sm rounded-xl transition-all duration-200">
                     <MoreVertical size={16} />
                   </button>
                 </div>
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/80 backdrop-blur-sm">
                 {messages.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <MessageCircle size={32} className="mx-auto mb-2 opacity-30" />
@@ -384,9 +384,9 @@ const ChatModal = ({ isOpen, onClose }) => {
               </div>
 
               {/* Message Input */}
-              <div className="p-4 border-t bg-white">
+              <div className="p-4 border-t border-gray-200/50 bg-white/80 backdrop-blur-sm">
                 <div className="flex items-center gap-2">
-                  <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+                  <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 backdrop-blur-sm rounded-xl transition-all duration-200">
                     <Paperclip size={16} />
                   </button>
                   <div className="flex-1">
@@ -396,16 +396,16 @@ const ChatModal = ({ isOpen, onClose }) => {
                       onChange={(e) => setNewMessage(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
                       placeholder="Type a message..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                      className="w-full px-3 py-2 bg-gray-50/80 backdrop-blur-sm border border-gray-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500/50 transition-all duration-200 text-sm placeholder-gray-500 shadow-sm"
                     />
                   </div>
-                  <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+                  <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 backdrop-blur-sm rounded-xl transition-all duration-200">
                     <Smile size={16} />
                   </button>
                   <button
                     onClick={sendMessage}
                     disabled={!newMessage.trim()}
-                    className="p-2 bg-primary text-white rounded-lg hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 bg-teal-600 text-white rounded-xl hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
                   >
                     <Send size={16} />
                   </button>
@@ -425,8 +425,8 @@ const ChatModal = ({ isOpen, onClose }) => {
 const ConversationItem = ({ conversation, isActive, onClick }) => (
   <div
     onClick={onClick}
-    className={`flex items-center p-2 hover:bg-gray-100 cursor-pointer rounded-lg transition-colors ${
-      isActive ? 'bg-primary/10 border-l-2 border-primary' : ''
+    className={`flex items-center p-2 hover:bg-gray-100/80 backdrop-blur-sm cursor-pointer rounded-xl transition-all duration-200 ${
+      isActive ? 'bg-teal-50/80 backdrop-blur-sm border border-teal-200/50' : ''
     }`}
   >
     <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-2">
@@ -447,7 +447,7 @@ const ConversationItem = ({ conversation, isActive, onClick }) => (
       </p>
     </div>
     {conversation.unread_count > 0 && (
-      <span className="ml-1 px-1.5 py-0.5 bg-primary text-white text-xs rounded-full min-w-[16px] text-center">
+      <span className="ml-1 px-1.5 py-0.5 bg-teal-600 text-white text-xs rounded-full min-w-[16px] text-center shadow-sm">
         {conversation.unread_count > 9 ? '9+' : conversation.unread_count}
       </span>
     )}
@@ -455,7 +455,7 @@ const ConversationItem = ({ conversation, isActive, onClick }) => (
 );
 
 const ContactItem = ({ contact, onStartChat }) => (
-  <div className="flex items-center p-2 hover:bg-gray-100 rounded-lg">
+  <div className="flex items-center p-2 hover:bg-gray-100/80 backdrop-blur-sm rounded-xl transition-all duration-200">
     <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-2">
       <User size={14} className="text-gray-600" />
     </div>
@@ -467,7 +467,7 @@ const ContactItem = ({ contact, onStartChat }) => (
     </div>
     <button
       onClick={onStartChat}
-      className="p-1.5 text-primary hover:bg-primary/10 rounded-lg"
+      className="p-1.5 text-teal-600 hover:bg-teal-50/80 backdrop-blur-sm rounded-xl transition-all duration-200"
     >
       <MessageSquare size={14} />
     </button>
@@ -475,7 +475,7 @@ const ContactItem = ({ contact, onStartChat }) => (
 );
 
 const SearchResultItem = ({ user, onStartChat }) => (
-  <div className="flex items-center p-2 hover:bg-gray-100 rounded-lg">
+  <div className="flex items-center p-2 hover:bg-gray-100/80 backdrop-blur-sm rounded-xl transition-all duration-200">
     <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-2">
       <User size={14} className="text-gray-600" />
     </div>
@@ -485,7 +485,7 @@ const SearchResultItem = ({ user, onStartChat }) => (
     </div>
     <button
       onClick={onStartChat}
-      className="px-2 py-1 text-xs bg-primary text-white rounded hover:bg-primary-hover transition-colors"
+      className="px-2 py-1 text-xs bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-all duration-200 shadow-sm"
     >
       Message
     </button>
@@ -514,10 +514,10 @@ const MessageBubble = ({ message, isOwnMessage }) => {
         <div
           className={`px-3 py-2 rounded-lg text-sm ${
             isOwnMessage
-              ? 'bg-primary text-white rounded-br-sm'
+              ? 'bg-teal-600 text-white rounded-br-sm'
               : message.is_bot_message
-              ? 'bg-primary/10 text-primary border border-primary/20 rounded-bl-sm'
-              : 'bg-white border border-gray-200 text-gray-900 rounded-bl-sm'
+              ? 'bg-teal-50/80 backdrop-blur-sm text-teal-700 border border-teal-200/50 rounded-bl-sm'
+              : 'bg-white/80 backdrop-blur-sm border border-gray-200/50 text-gray-900 rounded-bl-sm'
           } shadow-sm`}
         >
           {message.content}
@@ -527,7 +527,7 @@ const MessageBubble = ({ message, isOwnMessage }) => {
         }`}>
           <span>{formatTime(message.created_at)}</span>
           {isOwnMessage && (
-            message.status === 'read' ? <CheckCheck size={10} className="text-primary" /> :
+            message.status === 'read' ? <CheckCheck size={10} className="text-teal-600" /> :
             message.status === 'delivered' ? <Check size={10} /> :
             <Clock size={10} className="text-gray-400" />
           )}
@@ -538,7 +538,7 @@ const MessageBubble = ({ message, isOwnMessage }) => {
 };
 
 const WelcomeScreen = ({ onNewChat, onOpenFullPage }) => (
-  <div className="flex-1 flex items-center justify-center bg-gray-50">
+  <div className="flex-1 flex items-center justify-center bg-gray-50/80 backdrop-blur-sm">
     <div className="text-center">
       <MessageCircle size={48} className="mx-auto mb-4 text-gray-400" />
       <h3 className="text-lg font-semibold text-gray-900 mb-2">Welcome to IziShop Messenger</h3>
@@ -546,13 +546,13 @@ const WelcomeScreen = ({ onNewChat, onOpenFullPage }) => (
       <div className="space-y-2">
         <button
           onClick={onNewChat}
-          className="block w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-sm"
+          className="block w-full px-4 py-2 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition-all duration-200 text-sm shadow-sm"
         >
           Start New Chat
         </button>
         <button
           onClick={onOpenFullPage}
-          className="block w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+          className="block w-full px-4 py-2 border border-gray-200/50 text-gray-700 rounded-xl hover:bg-gray-50/80 backdrop-blur-sm transition-all duration-200 text-sm"
         >
           Open Full Chat Page
         </button>

@@ -4,6 +4,7 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import ChatInterfaceModal from '../../chat-interface-modal';
+import ChatModal from '../../../components/chat/ChatModal';
 import api from '../../../services/api';
 import { showToast } from '../../../components/ui/Toast';
 
@@ -20,6 +21,7 @@ const OrdersTab = () => {
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [contactingCustomer, setContactingCustomer] = useState(null);
+  const [showChatModal, setShowChatModal] = useState(false);
 
   // Load orders from API
   useEffect(() => {
@@ -210,10 +212,10 @@ const OrdersTab = () => {
     }
   };
 
-  // Handle contacting customer
+  // Handle contacting customer - now opens chat modal directly
   const handleContactCustomer = (order) => {
     setContactingCustomer(order);
-    setShowContactModal(true);
+    setShowChatModal(true);
   };
 
   const statusOptions = [
@@ -615,6 +617,17 @@ const OrdersTab = () => {
           order={contactingCustomer}
           onClose={() => {
             setShowContactModal(false);
+            setContactingCustomer(null);
+          }}
+        />
+      )}
+
+      {/* Chat Modal - Direct chat with customer */}
+      {showChatModal && (
+        <ChatModal
+          isOpen={showChatModal}
+          onClose={() => {
+            setShowChatModal(false);
             setContactingCustomer(null);
           }}
         />

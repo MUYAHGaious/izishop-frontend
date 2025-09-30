@@ -14,21 +14,29 @@ class ProjectConsoleLogger {
     }
     
     init() {
+        // DISABLED: Temporary disable aggressive logging to fix file system overload
+        console.log('📝 Project Console Logger - DISABLED to prevent file system overload');
+        this.isActive = false;
+        return;
+
+        // Original logging code commented out
+        /*
         console.log('📝 Project Console Logger Started - Saving to backend/debug-logs/');
         this.isActive = true;
-        
+
         this.logSessionStart();
         this.interceptAllConsoleMethods();
         this.setupAutoSave();
         this.setupShutdownHandlers();
-        
+
         // Force immediate save to capture startup logs
         setTimeout(() => {
             this.sendLogsToBackend(true);
         }, 3000);
-        
+
         console.log('✅ Console logging active - Files saved to backend/debug-logs/ every 10 seconds!');
         console.log('🚨 CAPTURING EVERYTHING - All console activity organized in project folder!');
+        */
     }
     
     generateSessionId() {

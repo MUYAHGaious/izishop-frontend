@@ -246,8 +246,19 @@ const PaymentForm = forwardRef(({ formData, setFormData }, ref) => {
           };
 
           console.log('🔍 Creating order with data:', orderData);
-          const orderResponse = await api.createOrder(orderData);
+
+          // Use optimized order creation endpoint that handles both single and multi-vendor orders
+          console.log('🚀 Using optimized order creation endpoint');
+          const orderResponse = await api.createOrderOptimized(orderData);
+
           console.log('✅ Order created successfully:', orderResponse);
+
+          // Show appropriate success message based on order type
+          if (orderResponse.order_type === 'multi_vendor') {
+            showToast(`Order created successfully! Your order contains items from ${orderResponse.vendor_count} different vendors. Each vendor will ship their items separately.`, 'success');
+          } else {
+            showToast(`Order created successfully! You'll receive updates on your order status.`, 'success');
+          }
 
         } catch (orderError) {
           console.error('❌ Failed to save order to backend:', orderError);
@@ -287,8 +298,37 @@ const PaymentForm = forwardRef(({ formData, setFormData }, ref) => {
           errorMessage = 'Development mode: Payment simulated successfully!';
           
         // Simulate successful payment in development
-        setTimeout(() => {
+        setTimeout(async () => {
           showToast('Payment completed successfully! (Development Mode)', 'success');
+          
+          // Also simulate order creation in development mode
+          try {
+            const orderData = {
+              items: (cartItems || []).map(item => ({
+                product_id: item.productId || item.id,
+                quantity: item.quantity
+              })),
+              shipping_address: `${formData.address}, ${formData.city}, ${formData.region} ${formData.postalCode}`,
+              payment_method: selectedPaymentMethod,
+              payment_reference: `DEV_${Date.now()}`,
+              total_amount: total,
+              delivery_instructions: formData.deliveryInstructions || orderNotes
+            };
+
+            // Use optimized order creation for development mode too
+            console.log('🚀 Development mode: Using optimized order creation');
+            const orderResponse = await api.createOrderOptimized(orderData);
+
+            if (orderResponse.order_type === 'multi_vendor') {
+              showToast(`Development mode: Multi-vendor order created with ${orderResponse.vendor_count} vendors!`, 'info');
+            } else {
+              showToast(`Development mode: Single-vendor order created successfully!`, 'info');
+            }
+          } catch (devOrderError) {
+            console.error('Development mode order creation failed:', devOrderError);
+            showToast(`Development mode order creation failed: ${devOrderError.message || 'Unknown error'}`, 'error');
+          }
+          
           clearCart();
           localStorage.removeItem('checkoutData');
           localStorage.removeItem('checkoutFormData');

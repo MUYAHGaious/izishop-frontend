@@ -8,17 +8,38 @@ import BlurText from '../../components/ui/BlurText';
 import ShinyText from '../../components/ui/ShinyText';
 import LogoLoop from '../../components/ui/LogoLoop';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useCart } from '../../contexts/CartContext';
+import { useWishlist } from '../../contexts/WishlistContext';
 
 import CardSwap, { Card } from '../../components/ui/CardSwap';
 import GlassIcons from '../../components/ui/GlassIcons';
 import ScrollStack, { ScrollStackItem } from '../../components/ui/ScrollStack';
 import Footer from './components/Footer';
+import ProductCard from '../product-catalog/components/ProductCard';
 
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { addToCart } = useCart();
+  const { toggleWishlist } = useWishlist();
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  const handleAddToCart = async (product) => {
+    try {
+      await addToCart(product, 1);
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+    }
+  };
+
+  const handleToggleWishlist = async (productId, isInWishlist) => {
+    try {
+      await toggleWishlist({ id: productId });
+    } catch (error) {
+      console.error('Failed to toggle wishlist:', error);
+    }
+  };
 
   useEffect(() => {
     // Scroll to top on page load
@@ -261,43 +282,35 @@ const LandingPage = () => {
               <div className="container mx-auto">
                 <div className="flex items-center justify-between mb-8">
                   <h2 className="text-2xl font-bold text-gray-900">{t('landing.newArrivals')}</h2>
-                  <button className="text-teal-600 hover:text-teal-700 font-medium">
+                  <button
+                    onClick={() => navigate('/product-catalog')}
+                    className="text-teal-600 hover:text-teal-700 font-medium"
+                  >
                     See all
                   </button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {newArrivals.map((product) => (
-                    <div
+                    <ProductCard
                       key={product.id}
-                      className="group cursor-pointer"
-                      onClick={() => navigate(`/product-detail/${product.id}`)}
-                    >
-                      {/* Product Image - Exact match to reference */}
-                      <div className="relative aspect-[3/4] bg-gray-100 rounded-lg mb-3 overflow-hidden">
-                        {product.image ? (
-                        <img 
-                          src={product.image} 
-                          alt={product.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Icon name="Package" size={48} className="text-gray-400" />
-                        </div>
-                        )}
-                      </div>
-
-                      {/* Product Info - Exact match to reference */}
-                      <div>
-                        <div className="flex items-center gap-1 mb-1">
-                          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                          <span className="text-xs text-gray-500 uppercase">{product.category}</span>
-                        </div>
-                        <h3 className="text-sm font-medium text-gray-900 mb-1 line-clamp-2">{product.name}</h3>
-                        <p className="text-lg font-bold text-gray-900">{formatCurrency(product.price)}</p>
-                      </div>
-                    </div>
+                      product={{
+                        ...product,
+                        image_url: product.image,
+                        rating: product.rating || 4.5,
+                        reviewCount: product.reviewCount || 0,
+                        stock: product.stock || 10,
+                        shopName: product.shopName || 'IziShopin Store',
+                        shopId: product.shopId || 'default',
+                        shopVerified: product.shopVerified || false,
+                        shopRating: product.shopRating || 4.5,
+                        shopLocation: product.shopLocation || 'Cameroon',
+                        sellerType: product.sellerType || 'shop_owner',
+                        isNew: true
+                      }}
+                      onAddToCart={handleAddToCart}
+                      onToggleWishlist={handleToggleWishlist}
+                    />
                   ))}
                 </div>
               </div>

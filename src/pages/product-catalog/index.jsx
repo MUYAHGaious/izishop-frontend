@@ -414,7 +414,7 @@ const ProductCatalog = () => {
       reviewCount: product.review_count || Math.floor(Math.random() * 200) + 10,
       stock: product.stock_quantity,
       shopName: shopName,
-      shopId: product.seller_id,
+      shopId: product.shop_id || product.seller_id, // Use shop_id if available, fallback to seller_id
       sellerType: product.sellerType || 'shop_owner',
       shopVerified: shopVerified,
       shopRating: shopRating,

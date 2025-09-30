@@ -127,9 +127,9 @@ const OrderSuccess = () => {
 
   const handleViewOrders = () => {
     if (user) {
-      navigate('/profile/orders');
+      navigate('/my-orders');
     } else {
-      navigate('/login');
+      navigate('/authentication-login-register');
     }
   };
 

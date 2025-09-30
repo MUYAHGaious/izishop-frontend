@@ -145,35 +145,70 @@ const ChatInterfaceModal = ({ isOpen, onClose, shop, currentProduct, orderContex
 
       // For customer service with order context
       if (customerService && orderContext) {
-        const convId = `order-${orderContext.id}`;
+        const convId = `support-${orderContext.id}`;
         const existingConv = conversations.find(conv => conv.id === convId);
 
         if (!existingConv) {
-          const customerConversation = {
+          const supportConversation = {
             id: convId,
-            name: `Customer: ${orderContext.customer?.name}`,
-            avatar: orderContext.customer?.avatar || '/assets/images/default-avatar.png',
-            lastMessage: `Customer service chat for order #${orderContext.id}`,
+            name: 'IziShop Customer Support',
+            avatar: '/assets/images/support-avatar.png',
+            lastMessage: orderContext.errorReport ? 'Error report received' : `Support chat for order #${orderContext.id}`,
             timestamp: new Date(),
             unread: 0,
             online: true,
-            type: 'customer'
+            type: 'support'
           };
 
+          const initialMessages = [];
+
+          // Add welcome message from support
           const welcomeMessage = {
             id: 1,
-            text: `Hello ${orderContext.customer?.name || 'Customer'}! I'm here to help with your order #${orderContext.id}. How can I assist you today?`,
-            sender: 'shop',
+            text: `Hello ${orderContext.customer?.name || 'Customer'}! I'm here to help you. I can see you're having an issue - let me assist you right away.`,
+            sender: 'support',
             timestamp: new Date(),
             status: 'delivered'
           };
+          initialMessages.push(welcomeMessage);
 
-          setConversations(prev => [customerConversation, ...prev]);
+          // If there's an error context, create a quoted error message (WhatsApp style)
+          if (orderContext.errorReport) {
+            const quotedErrorMessage = {
+              id: 2,
+              text: orderContext.initialMessage || `I encountered an issue with my order cancellation:\n\n"${orderContext.errorReport.originalError}"\n\nCould you please help me resolve this?`,
+              sender: 'user',
+              timestamp: new Date(),
+              status: 'delivered',
+              isQuotedError: true,
+              quotedContent: {
+                type: 'error',
+                content: orderContext.errorReport.originalError,
+                timestamp: orderContext.errorReport.timestamp,
+                page: orderContext.errorReport.currentPage,
+                orderId: orderContext.errorReport.orderId
+              }
+            };
+            initialMessages.push(quotedErrorMessage);
+
+            // Auto-response from support acknowledging the error
+            const supportResponse = {
+              id: 3,
+              text: `I can see the issue you're experiencing with${orderContext.errorReport.orderId ? ` order #${orderContext.errorReport.orderId}` : ' order cancellation'}. Let me check this for you and provide a solution. This type of ${orderContext.errorReport.errorType.replace('_', ' ')} can usually be resolved quickly.`,
+              sender: 'support',
+              timestamp: new Date(Date.now() + 1000),
+              status: 'delivered'
+            };
+            initialMessages.push(supportResponse);
+          }
+
+          setConversations(prev => [supportConversation, ...prev]);
           setAllMessages(prev => ({
             ...prev,
-            [customerConversation.id]: [welcomeMessage]
+            [supportConversation.id]: initialMessages
           }));
-          setActiveConversation(customerConversation);
+          setActiveConversation(supportConversation);
+          setMessages(initialMessages);
           setCurrentView('chat');
         }
       }

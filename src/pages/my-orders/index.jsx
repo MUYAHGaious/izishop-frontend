@@ -41,6 +41,12 @@ const MyOrders = () => {
   const [notification, setNotification] = useState(null);
   const [showNotification, setShowNotification] = useState(false);
 
+  // Clear any leftover support chat flags when component mounts
+  useEffect(() => {
+    sessionStorage.removeItem('supportErrorContext');
+    sessionStorage.removeItem('createSupportChat');
+    sessionStorage.removeItem('supportChatCreated');
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -81,13 +87,11 @@ const MyOrders = () => {
     setTimeout(() => setNotification(null), 500);
   };
 
-  // Function to navigate to messages page with error context (WhatsApp-style reply)
+  // Function to navigate to messages page with error context
   const navigateToSupportWithContext = (errorMessage, errorType, orderId = null) => {
-    console.log('🚀 navigateToSupportWithContext called with:', { errorMessage, errorType, orderId });
-
     const timestamp = new Date().toLocaleString();
 
-    // Create error context to pass via URL params and localStorage
+    // Create error context
     const errorContext = {
       type: 'error_report',
       originalError: errorMessage,
@@ -96,7 +100,6 @@ const MyOrders = () => {
       orderId: orderId,
       userAgent: navigator.userAgent,
       currentPage: 'My Orders',
-      // Pre-filled message like WhatsApp reply
       prefilledMessage: `Hi Support Team,
 
 I encountered an issue while trying to manage my order:
@@ -110,16 +113,13 @@ I encountered an issue while trying to manage my order:
 Could you please help me resolve this issue?`
     };
 
-    console.log('📝 Error context to store:', errorContext);
+    // Store in sessionStorage (more reliable than localStorage)
+    sessionStorage.setItem('supportErrorContext', JSON.stringify(errorContext));
+    sessionStorage.setItem('createSupportChat', 'true');
 
-    // Store error context in localStorage so messages page can access it
-    localStorage.setItem('supportErrorContext', JSON.stringify(errorContext));
-
-    console.log('💾 Stored in localStorage:', localStorage.getItem('supportErrorContext'));
-
-    // Navigate to messages page with error flag
-    console.log('🔗 Navigating to /messages?support=true&error=true');
-    navigate('/messages?support=true&error=true');
+    // Use location.replace to do a CLEAN navigation without React Router interference
+    // This forces a fresh page load which will create the chat properly
+    window.location.replace('/messages?support=true&error=true');
   };
 
   const fetchOrders = async () => {
@@ -395,6 +395,8 @@ Could you please help me resolve this issue?`
       const policy = await api.getOrderCancellationPolicy(order.id);
 
       if (!policy.can_cancel) {
+        // Store the order ID so Contact Support button can reference it
+        setCancellingOrderId(order.id);
         showNotificationMessage(
           policy.reason.replace('Cannot cancel order: ', ''),
           'warning'
@@ -517,17 +519,17 @@ Could you please help me resolve this issue?`
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-teal-50">
         <Header />
 
-        <div className="pt-24 pb-12">
-          <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="pt-24 pb-8">
+          <div className="max-w-7xl mx-auto px-6 py-4">
             {/* Professional Header Section */}
-            <div className="mb-12">
+            <div className="mb-6">
               {/* Title and Actions */}
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
-                <div className="mb-6 lg:mb-0">
-                  <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4">
+                <div className="mb-4 lg:mb-0">
+                  <h1 className="text-3xl font-bold text-gray-900 mb-1">
                     My Orders
                   </h1>
-                  <p className="text-lg text-gray-600">
+                  <p className="text-base text-gray-600">
                     Track and manage your orders • {orders.length} total orders
                   </p>
                 </div>
@@ -555,8 +557,8 @@ Could you please help me resolve this issue?`
               </div>
 
               {/* Search and Sort Bar - Professional Layout */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200 p-6">
-                <div className="flex flex-col lg:flex-row gap-6">
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200 p-3">
+                <div className="flex flex-col lg:flex-row gap-3">
                   {/* Search Input - Enhanced */}
                   <div className="flex-1 relative">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -571,7 +573,7 @@ Could you please help me resolve this issue?`
                         placeholder="Search by order number, shop name, or product..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-teal-500 placeholder-gray-400 bg-white text-gray-900 marketplace-transition hover:border-gray-300"
+                        className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-teal-500 placeholder-gray-400 bg-white text-gray-900 marketplace-transition hover:border-gray-300"
                       />
                       {searchQuery && (
                         <button
@@ -680,7 +682,7 @@ Could you please help me resolve this issue?`
 
             {/* Results Summary */}
             {searchQuery && (
-              <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="mb-1 bg-blue-50 border border-blue-200 rounded-lg p-2">
                 <p className="text-blue-800 font-medium">
                   <Icon name="Search" size={18} className="inline mr-2" />
                   Found {filteredAndSortedOrders.length} orders matching "{searchQuery}"
@@ -689,7 +691,7 @@ Could you please help me resolve this issue?`
             )}
 
             {/* Status Tabs - Professional Design */}
-            <div className="mb-8">
+            <div className="mb-1">
               <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200 p-2">
                 <div className="flex overflow-x-auto">
                   <div className="flex space-x-2 min-w-full">
@@ -720,24 +722,24 @@ Could you please help me resolve this issue?`
 
             {/* Orders List - Enhanced Professional Design */}
             {filteredAndSortedOrders.length > 0 ? (
-              <div className="space-y-6">
+              <div className="space-y-3">
                 {filteredAndSortedOrders.map((order) => (
                   <div key={order.id} className="bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200 overflow-hidden hover:bg-white hover:border-gray-300">
                     {/* Order Header - Enhanced Layout */}
-                    <div className="p-6 border-b border-gray-100">
+                    <div className="p-4 border-b border-gray-100">
                       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                        <div className="mb-4 lg:mb-0">
-                          <h3 className="text-xl font-bold text-gray-900 mb-2">
+                        <div className="mb-3 lg:mb-0">
+                          <h3 className="text-lg font-bold text-gray-900 mb-1">
                             Order #{order.order_number || order.id}
                           </h3>
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                            <p className="text-gray-600 flex items-center">
-                              <Icon name="Calendar" size={16} className="mr-2 text-gray-400" />
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                            <p className="text-gray-600 flex items-center text-sm">
+                              <Icon name="Calendar" size={14} className="mr-2 text-gray-400" />
                               {formatDate(order.created_at || order.order_date)}
                             </p>
                             {order.shop_name && (
-                              <p className="text-gray-600 flex items-center">
-                                <Icon name="Store" size={16} className="mr-2 text-gray-400" />
+                              <p className="text-gray-600 flex items-center text-sm">
+                                <Icon name="Store" size={14} className="mr-2 text-gray-400" />
                                 {order.shop_name}
                               </p>
                             )}
@@ -756,27 +758,27 @@ Could you please help me resolve this issue?`
                     </div>
 
                     {/* Order Items - Enhanced Layout */}
-                    <div className="p-6">
+                    <div className="p-4">
                       {/* Progress Bar */}
-                      <div className="relative mb-6">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-gray-700">Order Progress</span>
-                          <span className="text-sm text-gray-500">{getProgressPercentage(order.status)}% Complete</span>
+                      <div className="relative mb-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-medium text-gray-700">Order Progress</span>
+                          <span className="text-xs text-gray-500">{getProgressPercentage(order.status)}% Complete</span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-gray-200 rounded-full h-1.5">
                           <div
-                            className="bg-gradient-to-r from-teal-500 to-emerald-500 h-2 rounded-full transition-all duration-500"
+                            className="bg-gradient-to-r from-teal-500 to-emerald-500 h-1.5 rounded-full transition-all duration-500"
                             style={{ width: `${getProgressPercentage(order.status)}%` }}
                           />
                         </div>
                       </div>
 
-                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Order Items</h4>
-                      <div className="space-y-4">
+                      <h4 className="text-base font-semibold text-gray-900 mb-2">Order Items</h4>
+                      <div className="space-y-2">
                         {order.items && order.items.length > 0 ? (
                           order.items.map((item, index) => (
-                            <div key={item.id || index} className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-                              <div className="w-16 h-16 lg:w-20 lg:h-20 flex-shrink-0 overflow-hidden rounded-lg bg-gray-200">
+                            <div key={item.id || index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                              <div className="w-12 h-12 lg:w-14 lg:h-14 flex-shrink-0 overflow-hidden rounded-lg bg-gray-200">
                                 {item.product_image ? (
                                   <img
                                     src={item.product_image}
@@ -789,21 +791,21 @@ Could you please help me resolve this issue?`
                                   />
                                 ) : null}
                                 <div className="w-full h-full flex items-center justify-center" style={{ display: item.product_image ? 'none' : 'flex' }}>
-                                  <Icon name="Package" size={24} className="text-gray-400" />
+                                  <Icon name="Package" size={16} className="text-gray-400" />
                                 </div>
                               </div>
 
                               <div className="flex-1 min-w-0">
-                                <h5 className="font-semibold text-gray-900 text-base lg:text-lg mb-2">
+                                <h5 className="font-semibold text-gray-900 text-sm lg:text-base mb-1">
                                   {item.product_name || 'Product'}
                                 </h5>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                                   <div>
-                                    <span className="text-gray-500">Quantity:</span>
+                                    <span className="text-gray-500">Qty:</span>
                                     <span className="ml-1 font-medium text-gray-900">{item.quantity || 1}</span>
                                   </div>
                                   <div>
-                                    <span className="text-gray-500">Unit Price:</span>
+                                    <span className="text-gray-500">Price:</span>
                                     <span className="ml-1 font-medium text-gray-900">
                                       {formatCurrency(item.unit_price || item.price || 0)}
                                     </span>
@@ -828,22 +830,22 @@ Could you please help me resolve this issue?`
                     </div>
 
                     {/* Order Actions and Tracking */}
-                    <div className="p-6 bg-gray-50/50 border-t border-gray-100">
+                    <div className="p-4 bg-gray-50/50 border-t border-gray-100">
                       {order.tracking_number && (
-                        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                          <p className="text-sm text-blue-800 font-medium mb-1">Tracking Number</p>
-                          <p className="text-blue-600 font-mono">{order.tracking_number}</p>
+                        <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-xs text-blue-800 font-medium mb-1">Tracking Number</p>
+                          <p className="text-blue-600 font-mono text-sm">{order.tracking_number}</p>
                         </div>
                       )}
 
-                      <div className="flex flex-wrap gap-3">
+                      <div className="flex flex-wrap gap-2">
                         {/* Primary Action - View Details */}
                         <Button
                           variant="default"
-                          size="md"
+                          size="sm"
                           iconName="Eye"
                           iconPosition="left"
-                          className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2"
+                          className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 text-sm"
                           onClick={() => handleViewOrderDetails(order)}
                         >
                           View Details

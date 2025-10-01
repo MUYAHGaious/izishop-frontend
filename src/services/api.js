@@ -1626,10 +1626,10 @@ class ApiService {
       const queryParams = new URLSearchParams();
       if (filters.status) queryParams.append('status', filters.status);
       if (filters.limit) queryParams.append('limit', filters.limit);
-      if (filters.offset) queryParams.append('offset', filters.offset);
+      if (filters.page) queryParams.append('page', filters.page);
       if (filters.date_from) queryParams.append('date_from', filters.date_from);
       if (filters.date_to) queryParams.append('date_to', filters.date_to);
-      
+
       const endpoint = queryParams.toString() ? `/api/customer/orders?${queryParams}` : '/api/customer/orders';
       return await this.request(endpoint, {
         method: 'GET'

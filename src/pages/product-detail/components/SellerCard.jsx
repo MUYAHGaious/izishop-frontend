@@ -1,12 +1,10 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Image from '../../../components/AppImage';
-import ChatInterfaceModal from '../../chat-interface-modal';
 
-const SellerCard = ({ seller }) => {
-  const [isChatOpen, setIsChatOpen] = useState(false);
+const SellerCard = ({ seller, product }) => {
   const navigate = useNavigate();
 
   const formatResponseTime = (minutes) => {
@@ -45,7 +43,57 @@ const SellerCard = ({ seller }) => {
   };
 
   const handleContactSeller = () => {
-    setIsChatOpen(true);
+    // Validate seller data
+    if (!seller || (!seller.owner_id && !seller.id)) {
+      console.error('❌ Cannot contact seller: missing seller information');
+      alert('Unable to contact seller. Please try again later.');
+      return;
+    }
+
+    const timestamp = new Date().toLocaleString();
+
+    // CRITICAL FIX: The seller_id in the product IS the owner_id (user who owns the shop)!
+    // Don't use shop ID - that's the shop entity ID, not the user ID
+    const sellerId = product?.seller_id;  // This is the ACTUAL user to message!
+
+    console.log('📞 Contacting seller (USING PRODUCT.SELLER_ID):', {
+      sellerName: seller?.name || seller?.shop_name,
+      sellerId: sellerId,
+      productSellerId: product?.seller_id,
+      shopId: seller?.id || seller?.shop_id,
+      shopOwnerId: seller?.shop_owner_id
+    });
+
+    // Create product context
+    const productContext = {
+      type: 'product_inquiry',
+      product: {
+        id: product?.id,
+        name: product?.name,
+        price: product?.price,
+        image: product?.images?.[0] || product?.image_urls?.[0],
+        seller_id: sellerId,
+        seller_name: seller?.name || seller?.shop_name,
+        shop_id: seller?.id || seller?.shop_id // Keep shop ID for reference
+      },
+      timestamp: timestamp,
+      currentPage: 'Product Details',
+      prefilledMessage: `Hi ${seller?.name || 'Seller'},
+
+I'm interested in this product:
+
+📦 Product: ${product?.name || 'Product'}
+💰 Price: ${product?.price ? `${product.currency || 'XAF'} ${product.price.toLocaleString()}` : 'N/A'}
+
+I'd like to know more details about it.`
+    };
+
+    // Store in sessionStorage
+    sessionStorage.setItem('productContext', JSON.stringify(productContext));
+    sessionStorage.setItem('createSellerChat', 'true');
+
+    // Navigate to messages page with seller chat - use owner_id for user conversation
+    window.location.replace(`/messages?seller=${sellerId}&product=${product?.id}`);
   };
 
   const handleViewShop = () => {
@@ -161,15 +209,33 @@ const SellerCard = ({ seller }) => {
             <span>{seller.location}</span>
           </div>
         )}
-        
+
+        {seller.email && (
+          <div className="flex items-center space-x-2 text-gray-500">
+            <Icon name="Mail" size={14} className="text-teal-600" />
+            <a href={`mailto:${seller.email}`} className="hover:text-teal-600 transition-colors">
+              {seller.email}
+            </a>
+          </div>
+        )}
+
+        {seller.phone && (
+          <div className="flex items-center space-x-2 text-gray-500">
+            <Icon name="Phone" size={14} className="text-teal-600" />
+            <a href={`tel:${seller.phone}`} className="hover:text-teal-600 transition-colors">
+              {seller.phone}
+            </a>
+          </div>
+        )}
+
         {seller.joinedDate && (
           <div className="flex items-center space-x-2 text-gray-500">
             <Icon name="Calendar" size={14} className="text-teal-600" />
             <span>Joined {seller.joinedDate}</span>
           </div>
         )}
-        
-        {seller.lastSeen && (
+
+        {seller.lastSeen && !seller.isOnline && (
           <div className="flex items-center space-x-2 text-gray-500">
             <Icon name="Clock" size={14} className="text-teal-600" />
             <span>Last seen {seller.lastSeen}</span>
@@ -266,15 +332,6 @@ const SellerCard = ({ seller }) => {
         </div>
       </div>
 
-      {/* Chat Interface Modal */}
-      {isChatOpen && (
-        <ChatInterfaceModal
-          isOpen={isChatOpen}
-          onClose={() => setIsChatOpen(false)}
-          shop={seller}
-          currentProduct={null}
-        />
-      )}
     </div>
   );
 };

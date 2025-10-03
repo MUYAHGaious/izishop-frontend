@@ -318,6 +318,13 @@ class AuthService {
       throw new Error('No refresh token available');
     }
 
+    // Rate limiting: prevent refresh spam (min 5 seconds between attempts)
+    const now = Date.now();
+    if (this.lastRefreshAttempt && (now - this.lastRefreshAttempt) < 5000) {
+      console.log('AuthService: Refresh attempt blocked - too soon since last attempt');
+      return this.accessToken; // Return current token
+    }
+
     if (this.isRefreshing) {
       // Return promise that resolves when current refresh completes
       return new Promise((resolve, reject) => {
@@ -327,6 +334,7 @@ class AuthService {
 
     try {
       this.isRefreshing = true;
+      this.lastRefreshAttempt = now;
       
       const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
         method: 'POST',

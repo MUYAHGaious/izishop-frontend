@@ -275,6 +275,105 @@ class ChatStorage {
   }
 
   /**
+   * Delete a conversation and all its messages
+   */
+  async deleteConversation(conversationId) {
+    try {
+      const db = await this.ensureDB();
+
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([CONVERSATIONS_STORE, MESSAGES_STORE], 'readwrite');
+
+        // Delete conversation
+        const conversationStore = transaction.objectStore(CONVERSATIONS_STORE);
+        conversationStore.delete(conversationId);
+
+        // Delete all messages for this conversation
+        const messageStore = transaction.objectStore(MESSAGES_STORE);
+        const index = messageStore.index('conversationId');
+        const request = index.openCursor(IDBKeyRange.only(conversationId));
+
+        request.onsuccess = (event) => {
+          const cursor = event.target.result;
+          if (cursor) {
+            cursor.delete();
+            cursor.continue();
+          }
+        };
+
+        transaction.oncomplete = () => {
+          console.log(`🗑️ Conversation and messages deleted: ${conversationId}`);
+          resolve();
+        };
+
+        transaction.onerror = () => {
+          console.error('Failed to delete conversation:', transaction.error);
+          reject(transaction.error);
+        };
+      });
+    } catch (error) {
+      console.error('deleteConversation error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete support chat (customer support conversation)
+   */
+  async deleteSupportChat() {
+    try {
+      const db = await this.ensureDB();
+
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([CONVERSATIONS_STORE, MESSAGES_STORE], 'readwrite');
+        const conversationStore = transaction.objectStore(CONVERSATIONS_STORE);
+
+        // Find and delete support chat
+        const request = conversationStore.openCursor();
+
+        request.onsuccess = (event) => {
+          const cursor = event.target.result;
+          if (cursor) {
+            if (cursor.value.type === 'customer_support') {
+              const conversationId = cursor.value.id;
+
+              // Delete the conversation
+              cursor.delete();
+
+              // Delete all messages for this conversation
+              const messageStore = transaction.objectStore(MESSAGES_STORE);
+              const index = messageStore.index('conversationId');
+              const msgRequest = index.openCursor(IDBKeyRange.only(conversationId));
+
+              msgRequest.onsuccess = (e) => {
+                const msgCursor = e.target.result;
+                if (msgCursor) {
+                  msgCursor.delete();
+                  msgCursor.continue();
+                }
+              };
+            }
+            cursor.continue();
+          }
+        };
+
+        transaction.oncomplete = () => {
+          console.log('🗑️ Support chat deleted');
+          resolve();
+        };
+
+        transaction.onerror = () => {
+          console.error('Failed to delete support chat:', transaction.error);
+          reject(transaction.error);
+        };
+      });
+    } catch (error) {
+      console.error('deleteSupportChat error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Update a message (for editing)
    */
   async updateMessage(messageId, updates) {

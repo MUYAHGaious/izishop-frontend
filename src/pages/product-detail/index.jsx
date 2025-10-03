@@ -10,6 +10,9 @@ import ProductDescription from './components/ProductDescription';
 import ReviewsSection from './components/ReviewsSection';
 import RelatedProducts from './components/RelatedProducts';
 import StickyPurchaseBar from './components/StickyPurchaseBar';
+import ShippingInfo from './components/ShippingInfo';
+import PoliciesSection from './components/PoliciesSection';
+import FAQSection from './components/FAQSection';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
@@ -78,14 +81,23 @@ const ProductDetail = () => {
               phone: sellerShop.phone
             };
           } else {
-            // Fallback if no shop found - use minimal real data
+            // No shop found - get seller's product count
+            console.log('No shop found for seller_id:', productData.seller_id);
+
+            // No shop - use seller_name from backend if available
+            const sellerName = productData.seller_name || 'Individual Seller';
+
+            console.log(`No shop found, using seller_name: ${sellerName}`);
+
+            // Since we don't have an efficient way to get product count without loading all products,
+            // we'll skip the count for now. The backend should add this to the product response.
             mappedProduct.shop = {
               id: productData.seller_id,
-              name: 'Individual Seller',
+              name: sellerName,
               avatar: null,
               rating: null,
               reviewCount: 0,
-              productCount: 0,
+              productCount: 0, // Backend should provide this
               responseRate: null,
               responseTime: null,
               isVerified: false,
@@ -380,26 +392,44 @@ const ProductDetail = () => {
                     />
                   </div>
                   <div className="bg-white rounded-2xl p-6">
-                    <SellerCard seller={product.shop} />
+                    <SellerCard seller={product.shop} product={product} />
                   </div>
                 </div>
             </div>
 
-            {/* Product Description */}
-            <div className="bg-white rounded-2xl p-6">
-              <ProductDescription product={product} />
+            {/* Two Column Layout for Description and Shipping */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Product Description */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <ProductDescription product={product} />
+              </div>
+
+              {/* Shipping Information */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <ShippingInfo product={product} />
+              </div>
+            </div>
+
+            {/* Policies Section */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <PoliciesSection product={product} />
             </div>
 
             {/* Reviews Section */}
-            <div className="bg-white rounded-2xl p-6">
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
               <ReviewsSection product={product} reviews={reviews} />
             </div>
 
+            {/* FAQ Section */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <FAQSection product={product} />
+            </div>
+
             {/* Related Products */}
-            <div className="bg-white rounded-2xl p-6">
-              <RelatedProducts 
-                currentProductId={product.id} 
-                category={product.category} 
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <RelatedProducts
+                currentProductId={product.id}
+                category={product.category}
                 relatedProducts={relatedProducts}
               />
             </div>

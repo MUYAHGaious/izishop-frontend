@@ -3,19 +3,38 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Icon from '../../../components/AppIcon';
 
-const ChatInterface = ({ 
-  messages, 
-  newMessage, 
-  setNewMessage, 
-  onSendMessage, 
-  isTyping, 
-  quickMessages, 
-  messagesEndRef 
+const ChatInterface = ({
+  messages,
+  newMessage,
+  setNewMessage,
+  onSendMessage,
+  isTyping,
+  quickMessages,
+  messagesEndRef,
+  // Media props
+  selectedMedia,
+  mediaPreview,
+  fileInputRef,
+  onMediaSelect,
+  onCancelMedia,
+  onSendMedia,
+  // Voice props
+  isRecording,
+  recordingDuration,
+  audioBlob,
+  onStartRecording,
+  onStopRecording,
+  onCancelRecording,
+  onSendVoice
 }) => {
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      onSendMessage();
+      if (selectedMedia) {
+        onSendMedia();
+      } else {
+        onSendMessage();
+      }
     }
   };
 
@@ -24,10 +43,16 @@ const ChatInterface = ({
   };
 
   const formatTime = (timestamp) => {
-    return new Date(timestamp).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return new Date(timestamp).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
     });
+  };
+
+  const formatDuration = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -43,8 +68,8 @@ const ChatInterface = ({
           >
             <div
               className={`max-w-xs px-3 py-2 rounded-2xl ${
-                message.sender === 'user' ?'bg-primary text-primary-foreground'
-                  : message.sender === 'system' ?'bg-muted text-text-secondary text-center'
+                message.sender === 'user' ? 'bg-primary text-primary-foreground'
+                  : message.sender === 'system' ? 'bg-muted text-text-secondary text-center'
                   : message.sender === 'support' ? 'bg-blue-50 text-blue-900 border border-blue-200'
                   : 'bg-muted text-text-primary'
               }`}
@@ -67,7 +92,48 @@ const ChatInterface = ({
                 </div>
               )}
 
-              <p className="text-sm whitespace-pre-line">{message.text}</p>
+              {/* Media (Image/Video) */}
+              {message.media && (
+                <div className="mb-2">
+                  {message.media.type === 'image' ? (
+                    <img
+                      src={message.media.url}
+                      alt={message.media.name}
+                      className="rounded-lg max-w-full max-h-64 object-cover"
+                      onError={(e) => {
+                        e.target.src = '/assets/images/no_image.png';
+                      }}
+                    />
+                  ) : (
+                    <video
+                      src={message.media.url}
+                      controls
+                      className="rounded-lg max-w-full max-h-64"
+                    />
+                  )}
+                  <p className="text-xs opacity-70 mt-1">{message.media.name}</p>
+                </div>
+              )}
+
+              {/* Voice Message */}
+              {message.voice && (
+                <div className="flex items-center gap-2 min-w-[200px]">
+                  <Icon name="Mic" size={16} className="opacity-70" />
+                  <audio
+                    src={message.voice.url}
+                    controls
+                    className="flex-1"
+                    style={{ height: '32px' }}
+                  />
+                  <span className="text-xs opacity-70">{formatDuration(message.voice.duration)}</span>
+                </div>
+              )}
+
+              {/* Text Message */}
+              {message.text && (
+                <p className="text-sm whitespace-pre-line">{message.text}</p>
+              )}
+
               <div className={`flex items-center gap-1 mt-1 ${
                 message.sender === 'user' ? 'justify-end' : 'justify-start'
               }`}>
@@ -88,7 +154,7 @@ const ChatInterface = ({
             </div>
           </div>
         ))}
-        
+
         {/* Typing Indicator */}
         {isTyping && (
           <div className="flex justify-start">
@@ -101,7 +167,7 @@ const ChatInterface = ({
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -119,32 +185,146 @@ const ChatInterface = ({
           ))}
         </div>
 
+        {/* Media Preview */}
+        {selectedMedia && (
+          <div className="mb-3 p-3 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl border border-teal-200">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                {selectedMedia.type.startsWith('image/') ? (
+                  <img
+                    src={mediaPreview}
+                    alt="Preview"
+                    className="w-16 h-16 rounded-lg object-cover"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center">
+                    <Icon name="Video" size={24} className="text-gray-600" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{selectedMedia.name}</p>
+                <p className="text-xs text-gray-500">{(selectedMedia.size / 1024 / 1024).toFixed(2)} MB</p>
+              </div>
+              <button
+                onClick={onCancelMedia}
+                className="flex-shrink-0 p-1 hover:bg-red-100 rounded-full transition-colors"
+              >
+                <Icon name="X" size={16} className="text-red-600" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Voice Recording Preview */}
+        {audioBlob && (
+          <div className="mb-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200">
+            <div className="flex items-center gap-3">
+              <Icon name="Mic" size={20} className="text-purple-600" />
+              <audio
+                src={URL.createObjectURL(audioBlob)}
+                controls
+                className="flex-1"
+                style={{ height: '32px' }}
+              />
+              <span className="text-sm text-purple-600 font-medium">{formatDuration(recordingDuration)}</span>
+              <button
+                onClick={onCancelRecording}
+                className="flex-shrink-0 p-1 hover:bg-red-100 rounded-full transition-colors"
+              >
+                <Icon name="X" size={16} className="text-red-600" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Recording UI */}
+        {isRecording && (
+          <div className="mb-3 p-3 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl border border-red-200">
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+              <span className="text-sm text-red-600 font-medium">Recording...</span>
+              <span className="flex-1 text-center text-sm text-red-600 font-mono">{formatDuration(recordingDuration)}</span>
+              <button
+                onClick={onStopRecording}
+                className="px-3 py-1 bg-red-600 text-white text-xs rounded-full hover:bg-red-700 transition-colors"
+              >
+                Stop
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Message Input */}
         <div className="flex gap-2">
-          <div className="flex-1 relative">
-            <Input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type a message..."
-              className="pr-10"
-            />
+          {!isRecording && !audioBlob && (
+            <>
+              {/* Attach Button */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*"
+                onChange={onMediaSelect}
+                className="hidden"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isRecording}
+              >
+                <Icon name="Paperclip" size={18} />
+              </Button>
+            </>
+          )}
+
+          {/* Message Input or Send Media */}
+          {selectedMedia ? (
             <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+              onClick={onSendMedia}
+              className="flex-1"
             >
-              <Icon name="Paperclip" size={16} />
+              <Icon name="Send" size={16} className="mr-2" />
+              Send Media
             </Button>
-          </div>
-          
-          <Button
-            onClick={onSendMessage}
-            disabled={!newMessage.trim()}
-            size="icon"
-          >
-            <Icon name="Send" size={16} />
-          </Button>
+          ) : audioBlob ? (
+            <Button
+              onClick={onSendVoice}
+              className="flex-1"
+            >
+              <Icon name="Send" size={16} className="mr-2" />
+              Send Voice
+            </Button>
+          ) : !isRecording ? (
+            <>
+              <div className="flex-1 relative">
+                <Input
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type a message..."
+                />
+              </div>
+
+              {/* Send or Mic Button */}
+              {newMessage.trim() ? (
+                <Button
+                  onClick={onSendMessage}
+                  size="icon"
+                >
+                  <Icon name="Send" size={16} />
+                </Button>
+              ) : (
+                <Button
+                  onClick={onStartRecording}
+                  size="icon"
+                  variant="ghost"
+                >
+                  <Icon name="Mic" size={18} />
+                </Button>
+              )}
+            </>
+          ) : null}
         </div>
       </div>
     </div>

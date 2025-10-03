@@ -1,114 +1,477 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import Button from '../../components/ui/Button';
-
 import Icon from '../../components/AppIcon';
 import ContactOptions from './components/ContactOptions';
 import ChatInterface from './components/ChatInterface';
 import EmailForm from './components/EmailForm';
+import chatStorage from '../../utils/chatStorage';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ChatInterfaceModal = ({ isOpen, onClose, shop, currentProduct, orderContext, customerService }) => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('chat');
-  const [currentView, setCurrentView] = useState('conversations'); // 'conversations' or 'chat'
+  const [currentView, setCurrentView] = useState('conversations'); // 'conversations', 'chat', or 'archived'
   const [activeConversation, setActiveConversation] = useState(null);
   const [conversations, setConversations] = useState([]);
+  const [archivedConversations, setArchivedConversations] = useState([]);
   const [allMessages, setAllMessages] = useState({}); // Messages for all conversations
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [ownerOnline, setOwnerOnline] = useState(shop?.isOnline || false);
-  const [attachments, setAttachments] = useState([]);
-  const [showEmojis, setShowEmojis] = useState(false);
-  const [replyingTo, setReplyingTo] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Media state
+  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [mediaPreview, setMediaPreview] = useState(null);
+
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [audioBlob, setAudioBlob] = useState(null);
+
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const recordingIntervalRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Media handling
+  const handleMediaSelect = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const validVideoTypes = ['video/mp4', 'video/webm', 'video/ogg'];
+    const validTypes = [...validImageTypes, ...validVideoTypes];
+
+    if (!validTypes.includes(file.type)) {
+      alert('❌ Please select a valid image (JPEG, PNG, GIF, WebP) or video (MP4, WebM, OGG) file.');
+      return;
+    }
+
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (file.size > maxSize) {
+      alert('❌ File size must be less than 50MB');
+      return;
+    }
+
+    setSelectedMedia(file);
+    const previewUrl = URL.createObjectURL(file);
+    setMediaPreview(previewUrl);
+  };
+
+  const cancelMediaSelection = () => {
+    if (mediaPreview) {
+      URL.revokeObjectURL(mediaPreview);
+    }
+    setSelectedMedia(null);
+    setMediaPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const sendMediaMessage = async () => {
+    if (!selectedMedia || !activeConversation) return;
+
+    const messageId = `msg-${Date.now()}`;
+    const messageMediaUrl = URL.createObjectURL(selectedMedia);
+
+    const mediaMessage = {
+      id: messageId,
+      text: newMessage.trim() || '',
+      sender: 'user',
+      timestamp: new Date(),
+      status: 'sending',
+      media: {
+        type: selectedMedia.type.startsWith('image/') ? 'image' : 'video',
+        name: selectedMedia.name,
+        size: selectedMedia.size,
+        mimeType: selectedMedia.type,
+        blob: selectedMedia,
+        url: messageMediaUrl
+      }
+    };
+
+    setMessages(prev => [...prev, mediaMessage]);
+    setNewMessage('');
+    cancelMediaSelection();
+
+    // Save to IndexedDB
+    if (activeConversation) {
+      setAllMessages(prev => ({
+        ...prev,
+        [activeConversation.id]: [...(prev[activeConversation.id] || []), mediaMessage]
+      }));
+
+      try {
+        await chatStorage.saveMessages(activeConversation.id, [{
+          id: messageId,
+          content: mediaMessage.text,
+          sender_id: user.id,
+          created_at: mediaMessage.timestamp.toISOString(),
+          status: 'sending',
+          media: mediaMessage.media
+        }]);
+      } catch (error) {
+        console.error('Error saving media message:', error);
+      }
+    }
+
+    setTimeout(() => {
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === messageId ? { ...msg, status: 'delivered' } : msg
+        )
+      );
+    }, 500);
+  };
+
+  // Voice recording
+  const startVoiceRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      let mimeType = 'audio/webm;codecs=opus';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'audio/mp4';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          mimeType = 'audio/webm';
+          if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = '';
+          }
+        }
+      }
+
+      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType || 'audio/webm' });
+        setAudioBlob(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start(100);
+      setIsRecording(true);
+      setRecordingDuration(0);
+
+      recordingIntervalRef.current = setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
+
+    } catch (error) {
+      if (error.name === 'NotAllowedError') {
+        alert('❌ Microphone permission denied');
+      } else if (error.name === 'NotFoundError') {
+        alert('❌ No microphone found');
+      } else {
+        alert('❌ Error accessing microphone');
+      }
+    }
+  };
+
+  const stopVoiceRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
+      }
+    }
+  };
+
+  const cancelVoiceRecording = () => {
+    stopVoiceRecording();
+    setAudioBlob(null);
+    setRecordingDuration(0);
+  };
+
+  const sendVoiceMessage = async () => {
+    if (!audioBlob || !activeConversation) return;
+
+    const messageId = `msg-${Date.now()}`;
+    const voiceUrl = URL.createObjectURL(audioBlob);
+
+    const voiceMessage = {
+      id: messageId,
+      text: '',
+      sender: 'user',
+      timestamp: new Date(),
+      status: 'sending',
+      voice: {
+        blob: audioBlob,
+        url: voiceUrl,
+        duration: recordingDuration
+      }
+    };
+
+    setMessages(prev => [...prev, voiceMessage]);
+    setAudioBlob(null);
+    setRecordingDuration(0);
+
+    // Save to IndexedDB
+    if (activeConversation) {
+      setAllMessages(prev => ({
+        ...prev,
+        [activeConversation.id]: [...(prev[activeConversation.id] || []), voiceMessage]
+      }));
+
+      try {
+        await chatStorage.saveMessages(activeConversation.id, [{
+          id: messageId,
+          content: '',
+          sender_id: user.id,
+          created_at: voiceMessage.timestamp.toISOString(),
+          status: 'sending',
+          voice: voiceMessage.voice
+        }]);
+      } catch (error) {
+        console.error('Error saving voice message:', error);
+      }
+    }
+
+    setTimeout(() => {
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === messageId ? { ...msg, status: 'delivered' } : msg
+        )
+      );
+    }, 500);
+  };
+
+  // CRUD operations - Update IndexedDB
+  const deleteConversation = async (conversation) => {
+    try {
+      setConversations(prev => prev.filter(c => c.id !== conversation.id));
+      setArchivedConversations(prev => prev.filter(c => c.id !== conversation.id));
+
+      if (activeConversation?.id === conversation.id) {
+        setActiveConversation(null);
+        setMessages([]);
+        setCurrentView('conversations');
+      }
+
+      // Delete from IndexedDB
+      if (conversation.type === 'customer_support') {
+        await chatStorage.deleteSupportChat();
+      } else {
+        await chatStorage.deleteConversation(conversation.id);
+      }
+
+      delete allMessages[conversation.id];
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+    }
+  };
+
+  const archiveConversation = async (conversation) => {
+    setConversations(prev => prev.filter(c => c.id !== conversation.id));
+    setArchivedConversations(prev => [...prev, { ...conversation, archived: true }]);
+
+    if (activeConversation?.id === conversation.id) {
+      setActiveConversation(null);
+      setMessages([]);
+      setCurrentView('conversations');
+    }
+
+    // Update in IndexedDB
+    try {
+      await chatStorage.saveConversation(user.id, {
+        id: conversation.id,
+        title: conversation.name,
+        archived: true
+      });
+    } catch (error) {
+      console.error('Error archiving conversation:', error);
+    }
+  };
+
+  const unarchiveConversation = async (conversation) => {
+    setArchivedConversations(prev => prev.filter(c => c.id !== conversation.id));
+    setConversations(prev => [...prev, { ...conversation, archived: false }]);
+
+    // Update in IndexedDB
+    try {
+      await chatStorage.saveConversation(user.id, {
+        id: conversation.id,
+        title: conversation.name,
+        archived: false
+      });
+    } catch (error) {
+      console.error('Error unarchiving conversation:', error);
+    }
+  };
+
+  const toggleMuteConversation = async (conversation) => {
+    const newMutedState = !conversation.muted;
+
+    setConversations(prev =>
+      prev.map(c =>
+        c.id === conversation.id ? { ...c, muted: newMutedState } : c
+      )
+    );
+    setArchivedConversations(prev =>
+      prev.map(c =>
+        c.id === conversation.id ? { ...c, muted: newMutedState } : c
+      )
+    );
+
+    // Update in IndexedDB
+    try {
+      await chatStorage.saveConversation(user.id, {
+        id: conversation.id,
+        title: conversation.name,
+        muted: newMutedState
+      });
+    } catch (error) {
+      console.error('Error toggling mute:', error);
+    }
+  };
+
+  // Recreate blob URLs for media and voice messages
+  useEffect(() => {
+    setMessages(prevMessages => {
+      return prevMessages.map(msg => {
+        let updatedMsg = { ...msg };
+
+        if (msg.media && msg.media.blob) {
+          if (!msg.media.url || !msg.media.url.startsWith('blob:')) {
+            updatedMsg = {
+              ...updatedMsg,
+              media: {
+                ...msg.media,
+                url: URL.createObjectURL(msg.media.blob)
+              }
+            };
+          }
+        }
+
+        if (msg.voice && msg.voice.blob) {
+          if (!msg.voice.url || !msg.voice.url.startsWith('blob:')) {
+            updatedMsg = {
+              ...updatedMsg,
+              voice: {
+                ...msg.voice,
+                url: URL.createObjectURL(msg.voice.blob)
+              }
+            };
+          }
+        }
+
+        return updatedMsg;
+      });
+    });
+  }, [messages.length]);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  // Initialize conversations when modal opens
+  // Initialize conversations when modal opens - Load from IndexedDB like messages page
+  useEffect(() => {
+    if (isOpen && user) {
+      loadConversationsFromDB();
+    }
+  }, [isOpen, user]);
+
+  const loadConversationsFromDB = async () => {
+    try {
+      console.log('🔄 Loading conversations from IndexedDB for user:', user.id);
+
+      // Load conversations from IndexedDB
+      const dbConversations = await chatStorage.getUserConversations(user.id);
+      console.log('📦 Loaded conversations:', dbConversations);
+
+      // Map to modal format
+      const mappedConversations = dbConversations.map(conv => ({
+        id: conv.id,
+        name: conv.title,
+        avatar: conv.avatar || '/assets/images/default-shop.png',
+        lastMessage: conv.last_message?.content || 'No messages yet',
+        timestamp: conv.last_message_at ? new Date(conv.last_message_at) : new Date(),
+        unread: conv.unread_count || 0,
+        online: conv.is_online || false,
+        type: conv.type,
+        muted: conv.muted || false,
+        archived: conv.archived || false
+      }));
+
+      console.log('🗂️ Mapped conversations:', mappedConversations);
+
+      setConversations(mappedConversations.filter(c => !c.archived));
+      setArchivedConversations(mappedConversations.filter(c => c.archived));
+
+      // Load messages for each conversation
+      const messagesMap = {};
+      for (const conv of dbConversations) {
+        const messages = await chatStorage.getConversationMessages(conv.id);
+        console.log(`💬 Loaded ${messages.length} messages for conversation ${conv.id}`);
+
+        messagesMap[conv.id] = messages.map(msg => ({
+          id: msg.id,
+          text: msg.content || '',
+          sender: msg.sender_id === user.id ? 'user' : (msg.is_bot_message ? 'support' : 'shop'),
+          timestamp: new Date(msg.created_at),
+          status: msg.status || 'delivered',
+          media: msg.media,
+          voice: msg.voice,
+          isQuotedError: msg.isQuotedError,
+          quotedContent: msg.quotedContent
+        }));
+      }
+
+      console.log('📨 All messages loaded:', messagesMap);
+      setAllMessages(messagesMap);
+
+    } catch (error) {
+      console.error('❌ Error loading conversations from IndexedDB:', error);
+    }
+  };
+
+  // Save to IndexedDB when conversations/messages change
+  useEffect(() => {
+    if (isOpen && user && activeConversation) {
+      const saveMessages = async () => {
+        try {
+          const messagesToSave = messages.map(msg => ({
+            id: msg.id,
+            content: msg.text,
+            sender_id: msg.sender === 'user' ? user.id : null,
+            created_at: msg.timestamp.toISOString(),
+            status: msg.status,
+            is_bot_message: msg.sender === 'support',
+            media: msg.media,
+            voice: msg.voice,
+            conversationId: activeConversation.id
+          }));
+
+          await chatStorage.saveMessages(activeConversation.id, messagesToSave);
+        } catch (error) {
+          console.error('Error saving messages:', error);
+        }
+      };
+
+      saveMessages();
+    }
+  }, [messages, isOpen, user, activeConversation]);
+
+  // Original logic for specific shop/order context
   useEffect(() => {
     if (isOpen) {
-      // Load saved conversations from localStorage or initialize with sample data
-      const savedConversations = localStorage.getItem('chatConversations');
-      const savedMessages = localStorage.getItem('chatMessages');
-
-      if (savedConversations && savedMessages) {
-        setConversations(JSON.parse(savedConversations));
-        setAllMessages(JSON.parse(savedMessages));
-      } else {
-        // Initialize with sample conversations
-        const initialConversations = [
-          {
-            id: 'techshop-cm',
-            name: 'TechShop CM',
-            avatar: '/assets/images/default-shop.png',
-            lastMessage: 'Thank you for your order!',
-            timestamp: new Date(Date.now() - 300000),
-            unread: 2,
-            online: true,
-            type: 'shop'
-          },
-          {
-            id: 'fashion-hub',
-            name: 'Fashion Hub',
-            avatar: '/assets/images/default-shop.png',
-            lastMessage: 'Your package is ready for pickup',
-            timestamp: new Date(Date.now() - 3600000),
-            unread: 0,
-            online: false,
-            type: 'shop'
-          },
-          {
-            id: 'customer-support',
-            name: 'Customer Support',
-            avatar: '/assets/images/support-avatar.png',
-            lastMessage: 'How can we help you today?',
-            timestamp: new Date(Date.now() - 86400000),
-            unread: 0,
-            online: true,
-            type: 'support'
-          }
-        ];
-
-        const initialMessages = {
-          'techshop-cm': [
-            {
-              id: 1,
-              text: 'Hello! Welcome to TechShop CM. How can I help you today?',
-              sender: 'shop',
-              timestamp: new Date(Date.now() - 3600000),
-              status: 'delivered'
-            }
-          ],
-          'fashion-hub': [
-            {
-              id: 1,
-              text: 'Your order #12345 is ready for pickup!',
-              sender: 'shop',
-              timestamp: new Date(Date.now() - 3600000),
-              status: 'delivered'
-            }
-          ],
-          'customer-support': [
-            {
-              id: 1,
-              text: 'Hello! This is IziShop customer support. How can we assist you today?',
-              sender: 'support',
-              timestamp: new Date(Date.now() - 86400000),
-              status: 'delivered'
-            }
-          ]
-        };
-
-        setConversations(initialConversations);
-        setAllMessages(initialMessages);
-      }
 
       // If specific shop/order context is provided, find or create conversation
       if (shop && !customerService) {
@@ -302,14 +665,30 @@ const ChatInterfaceModal = ({ isOpen, onClose, shop, currentProduct, orderContex
           <>
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-teal-50 to-blue-50">
-              <h3 className="font-semibold text-text-primary">Messages</h3>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onClose}
-              >
-                <Icon name="X" size={20} />
-              </Button>
+              <div>
+                <h3 className="font-semibold text-text-primary">Messages</h3>
+                <p className="text-xs text-text-secondary">Quick chat view</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    window.location.href = '/messages';
+                  }}
+                  className="text-xs"
+                >
+                  <Icon name="Maximize2" size={14} className="mr-1" />
+                  Full View
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onClose}
+                >
+                  <Icon name="X" size={20} />
+                </Button>
+              </div>
             </div>
 
             {/* Search */}
@@ -323,6 +702,25 @@ const ChatInterfaceModal = ({ isOpen, onClose, shop, currentProduct, orderContex
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm bg-background"
                 />
+              </div>
+            </div>
+
+            {/* Feature Banner */}
+            <div className="mx-3 mt-3 mb-2 p-3 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-lg text-white text-sm">
+              <div className="flex items-start gap-2">
+                <Icon name="Sparkles" size={16} className="flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium mb-1">Want more features?</p>
+                  <p className="text-xs opacity-90 mb-2">
+                    Send photos, videos, voice messages, and more in the full messaging experience!
+                  </p>
+                  <button
+                    onClick={() => window.location.href = '/messages'}
+                    className="text-xs bg-white text-teal-600 px-3 py-1 rounded-full font-medium hover:bg-gray-100 transition-colors"
+                  >
+                    Open Full Messaging →
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -476,6 +874,21 @@ const ChatInterfaceModal = ({ isOpen, onClose, shop, currentProduct, orderContex
               isTyping={isTyping}
               quickMessages={quickMessages}
               messagesEndRef={messagesEndRef}
+              // Media props
+              selectedMedia={selectedMedia}
+              mediaPreview={mediaPreview}
+              fileInputRef={fileInputRef}
+              onMediaSelect={handleMediaSelect}
+              onCancelMedia={cancelMediaSelection}
+              onSendMedia={sendMediaMessage}
+              // Voice props
+              isRecording={isRecording}
+              recordingDuration={recordingDuration}
+              audioBlob={audioBlob}
+              onStartRecording={startVoiceRecording}
+              onStopRecording={stopVoiceRecording}
+              onCancelRecording={cancelVoiceRecording}
+              onSendVoice={sendVoiceMessage}
             />
           )}
           

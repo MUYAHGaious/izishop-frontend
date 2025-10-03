@@ -48,16 +48,12 @@ const ProfessionalFloatingContact = ({ shop = null }) => {
     };
   }, [isExpanded]);
 
-  // Simulate unread messages for demo
+  // Load actual unread count from storage/API
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (Math.random() > 0.9 && !isChatOpen) {
-        setUnreadCount(prev => prev + 1);
-      }
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, [isChatOpen]);
+    // Only show unread count when there are actual unread messages
+    // This will be populated by the messaging system
+    setUnreadCount(0); // Reset to 0 - real count will come from ChatModal/messages page
+  }, []);
 
   const openChat = () => {
     if (!isAuthenticated()) {

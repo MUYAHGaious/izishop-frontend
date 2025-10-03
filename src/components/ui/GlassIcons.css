@@ -88,10 +88,10 @@
   top: 105%;
   left: 50%;
   transform: translateX(-50%);
-  color: white;
+  color: #000000;
   font-weight: 600;
   transition: opacity 0.3s ease-in-out;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  text-shadow: none;
 }
 
 .icon-btn:focus-visible .icon-btn__back,

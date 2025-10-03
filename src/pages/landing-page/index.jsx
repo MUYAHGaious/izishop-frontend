@@ -52,15 +52,34 @@ const LandingPage = () => {
     const fetchNewArrivals = async () => {
       try {
         setLoading(true);
-        // Fetch latest 4 products sorted by creation date
-        const response = await api.searchProducts({
-          limit: 4,
-          sort: 'newest'
-        });
+        // Fetch latest 4 products
+        const response = await api.getAllProducts(0, 4, true);
 
-        if (response && response.products) {
-          setNewArrivals(response.products);
+        let products = [];
+        if (response && Array.isArray(response)) {
+          products = response;
+        } else if (response && response.products) {
+          products = response.products;
         }
+
+        // Transform snake_case to camelCase for ProductCard compatibility
+        const transformedProducts = products.map(product => ({
+          ...product,
+          shopName: product.shop_name || 'IziShopin Store',
+          shopId: product.shop_id,
+          shopVerified: product.shop_verified || false,
+          shopRating: product.shop_rating || 0,
+          shopReviews: product.shop_reviews || 0,
+          shopLocation: product.shop_location || 'Cameroon',
+          shopOwnerId: product.shop_owner_id,
+          imageUrl: product.image_url,
+          stockQuantity: product.stock_quantity,
+          isActive: product.is_active,
+          createdAt: product.created_at,
+          updatedAt: product.updated_at
+        }));
+
+        setNewArrivals(transformedProducts);
       } catch (error) {
         console.error('Failed to fetch new arrivals:', error);
         // Keep empty array on error

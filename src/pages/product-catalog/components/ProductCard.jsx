@@ -160,15 +160,6 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist }) => {
       <div className="p-3">
         {/* Enhanced Shop Info Section - More Prominent */}
         <div className="mb-3 p-3 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-200 shadow-sm">
-          {/* DEBUG: Shop Data Display */}
-          <div className="mb-2 p-2 bg-red-100 border border-red-300 rounded text-xs">
-            <div><strong>DEBUG - Shop Data:</strong></div>
-            <div>shopName: {JSON.stringify(product.shopName)}</div>
-            <div>shopId: {JSON.stringify(product.shopId)}</div>
-            <div>shopVerified: {JSON.stringify(product.shopVerified)}</div>
-            <div>shopRating: {JSON.stringify(product.shopRating)}</div>
-          </div>
-
           {/* Shop Name and Trust Signals */}
           <div className="flex items-center justify-between mb-2">
             <Link

@@ -10,6 +10,7 @@ import LogoLoop from '../../components/ui/LogoLoop';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
+import api from '../../services/api';
 
 import CardSwap, { Card } from '../../components/ui/CardSwap';
 import GlassIcons from '../../components/ui/GlassIcons';
@@ -24,6 +25,8 @@ const LandingPage = () => {
   const { addToCart } = useCart();
   const { toggleWishlist } = useWishlist();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [newArrivals, setNewArrivals] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const handleAddToCart = async (product) => {
     try {
@@ -44,6 +47,30 @@ const LandingPage = () => {
   useEffect(() => {
     // Scroll to top on page load
     window.scrollTo(0, 0);
+
+    // Fetch latest products for New Arrivals section
+    const fetchNewArrivals = async () => {
+      try {
+        setLoading(true);
+        // Fetch latest 4 products sorted by creation date
+        const response = await api.searchProducts({
+          limit: 4,
+          sort: 'newest'
+        });
+
+        if (response && response.products) {
+          setNewArrivals(response.products);
+        }
+      } catch (error) {
+        console.error('Failed to fetch new arrivals:', error);
+        // Keep empty array on error
+        setNewArrivals([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNewArrivals();
   }, []);
 
   // Category mapping for landing page
@@ -75,36 +102,6 @@ const LandingPage = () => {
     navigate(`/product-catalog?category=${categoryId}`);
   };
 
-  const newArrivals = [
-    { 
-      id: 1, 
-      name: 'Classic Striped Shirt', 
-      price: 45000, 
-      image: 'https://images.unsplash.com/photo-1571945153237-4929e783af4a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80', 
-      category: 'Clothing' 
-    },
-    { 
-      id: 2, 
-      name: 'Elegant White Dress', 
-      price: 65000, 
-      image: 'https://images.unsplash.com/photo-1594633313593-bab3825d0caf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80', 
-      category: 'Dress' 
-    },
-    { 
-      id: 3, 
-      name: 'Business Blazer', 
-      price: 85000, 
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80', 
-      category: 'Blazer' 
-    },
-    { 
-      id: 4, 
-      name: 'Vintage Jacket', 
-      price: 75000, 
-      image: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80', 
-      category: 'Jacket' 
-    }
-  ];
 
   const brandLogos = [
     { node: <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Hermes_logo.svg/1200px-Hermes_logo.svg.png" alt="Hermes" style={{ height: '48px', filter: 'grayscale(100%)' }} />, title: "Hermes" },
@@ -290,29 +287,36 @@ const LandingPage = () => {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {newArrivals.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={{
-                        ...product,
-                        image_url: product.image,
-                        rating: product.rating || 4.5,
-                        reviewCount: product.reviewCount || 0,
-                        stock: product.stock || 10,
-                        shopName: product.shopName || 'IziShopin Store',
-                        shopId: product.shopId || 'default',
-                        shopVerified: product.shopVerified || false,
-                        shopRating: product.shopRating || 4.5,
-                        shopLocation: product.shopLocation || 'Cameroon',
-                        sellerType: product.sellerType || 'shop_owner',
-                        isNew: true
-                      }}
-                      onAddToCart={handleAddToCart}
-                      onToggleWishlist={handleToggleWishlist}
-                    />
-                  ))}
-                </div>
+                {loading ? (
+                  <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+                  </div>
+                ) : newArrivals.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {newArrivals.map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        product={{
+                          ...product,
+                          isNew: true
+                        }}
+                        onAddToCart={handleAddToCart}
+                        onToggleWishlist={handleToggleWishlist}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Icon name="Package" size={48} className="mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-500 text-lg">No new arrivals available at the moment</p>
+                    <button
+                      onClick={() => navigate('/product-catalog')}
+                      className="mt-4 text-teal-600 hover:text-teal-700 font-medium"
+                    >
+                      Browse all products
+                    </button>
+                  </div>
+                )}
               </div>
             </section>
           </ErrorBoundary>

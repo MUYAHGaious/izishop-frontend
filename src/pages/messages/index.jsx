@@ -1286,11 +1286,8 @@ const MessagesPage = () => {
     const MAX_RETRIES = 3;
 
     try {
-      console.log('📤 Uploading media file to server...');
-
       // Upload file to server first
       const uploadResponse = await api.uploadChatMedia(selectedMedia);
-      console.log('✅ Media uploaded:', uploadResponse);
 
       const mediaType = selectedMedia.type.startsWith('image/') ? 'image' : 'video';
       const captionText = newMessage.trim();
@@ -1299,9 +1296,6 @@ const MessagesPage = () => {
       const mediaUrl = uploadResponse.url.startsWith('http')
         ? uploadResponse.url
         : `${api.baseURL}${uploadResponse.url}`;
-
-      console.log('🔗 Media URL constructed:', mediaUrl);
-      console.log('📦 Upload response:', uploadResponse);
 
       // Create message with uploaded media URL
       const mediaMessage = {

@@ -283,7 +283,22 @@ const MessagesPage = () => {
           console.log('📨 New messages detected via polling');
 
           // Backend returns messages in DESC order, reverse to show oldest first
-          const reversedMessages = [...response].reverse();
+          const reversedMessages = [...response].reverse().map(msg => {
+            // Convert attachments array to media format
+            if (msg.attachments && msg.attachments.length > 0) {
+              const attachment = msg.attachments[0];
+              return {
+                ...msg,
+                media: {
+                  url: attachment.url,
+                  type: attachment.type,
+                  name: attachment.name,
+                  size: attachment.size
+                }
+              };
+            }
+            return msg;
+          });
 
           // Merge with existing messages, avoiding duplicates
           setMessages(prev => {
@@ -1082,7 +1097,23 @@ const MessagesPage = () => {
     try {
       const response = await api.getChatMessages(conversationId);
       // Backend returns messages in DESC order (newest first), reverse to show oldest first
-      const reversedMessages = response ? [...response].reverse() : [];
+      const reversedMessages = response ? [...response].reverse().map(msg => {
+        // Convert attachments array to media format
+        if (msg.attachments && msg.attachments.length > 0) {
+          const attachment = msg.attachments[0];
+          return {
+            ...msg,
+            media: {
+              url: attachment.url,
+              type: attachment.type,
+              name: attachment.name,
+              size: attachment.size
+            }
+          };
+        }
+        return msg;
+      }) : [];
+
       setMessages(reversedMessages);
 
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -1255,37 +1286,60 @@ const MessagesPage = () => {
     const MAX_RETRIES = 3;
 
     try {
-      // Create a NEW blob URL for the message (separate from preview URL)
-      // This URL will persist in the messages and won't be revoked
-      const messageMediaUrl = URL.createObjectURL(selectedMedia);
+      console.log('📤 Uploading media file to server...');
 
-      // Create message with media
+      // Upload file to server first
+      const uploadResponse = await api.uploadChatMedia(selectedMedia);
+      console.log('✅ Media uploaded:', uploadResponse);
+
+      const mediaType = selectedMedia.type.startsWith('image/') ? 'image' : 'video';
+      const captionText = newMessage.trim();
+
+      // Construct full URL from relative path
+      const mediaUrl = uploadResponse.url.startsWith('http')
+        ? uploadResponse.url
+        : `${api.baseURL}${uploadResponse.url}`;
+
+      console.log('🔗 Media URL constructed:', mediaUrl);
+      console.log('📦 Upload response:', uploadResponse);
+
+      // Create message with uploaded media URL
       const mediaMessage = {
         id: messageId,
-        content: newMessage.trim() || '', // Optional caption
+        content: captionText || '', // Optional caption
         sender_id: user?.id,
         created_at: new Date().toISOString(),
         status: 'sending',
         is_bot_message: false,
         media: {
-          type: selectedMedia.type.startsWith('image/') ? 'image' : 'video',
-          name: selectedMedia.name,
-          size: selectedMedia.size,
-          mimeType: selectedMedia.type,
-          // Store blob directly (IndexedDB best practice)
-          blob: selectedMedia,
-          // Create NEW permanent URL for message display
-          url: messageMediaUrl
+          type: mediaType,
+          name: uploadResponse.filename,
+          size: uploadResponse.size,
+          url: mediaUrl // Full server URL
         }
       };
 
       // Add message to state immediately
       setMessages(prev => [...prev, mediaMessage]);
-      const captionText = newMessage.trim();
       setNewMessage('');
 
-      // Cancel selection (this will revoke the PREVIEW url, not the message url)
+      // Cancel selection (revoke preview URL)
       cancelMediaSelection();
+
+      // Send via WebSocket if available
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({
+          type: 'send_message',
+          conversation_id: activeConversation.id,
+          content: captionText || `📷 ${mediaType}`,
+          message_type: mediaType,
+          media_url: mediaUrl,
+          media_type: mediaType,
+          media_name: uploadResponse.filename,
+          media_size: uploadResponse.size
+        }));
+        console.log('📤 Media message sent via WebSocket with URL:', mediaUrl);
+      }
 
       // Simulate status progression
       setTimeout(() => {

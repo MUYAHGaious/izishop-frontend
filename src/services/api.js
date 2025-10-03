@@ -2207,6 +2207,31 @@ class ApiService {
     });
   }
 
+  async uploadChatMedia(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = await this.authService.getAccessToken();
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch(`${this.baseURL}/api/chat/media/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to upload media');
+    }
+
+    return response.json();
+  }
+
   // User discovery and contact management
   async searchUsers(query, limit = 20) {
     return this.request(`/api/chat/users/search?query=${encodeURIComponent(query)}&limit=${limit}`, {

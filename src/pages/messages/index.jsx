@@ -270,6 +270,25 @@ const MessagesPage = () => {
     };
   }, [user, location.search]);
 
+  // Poll for new messages every 3 seconds when a conversation is active
+  useEffect(() => {
+    if (!activeConversation || !user) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await api.getChatMessages(activeConversation.id);
+        if (response && response.length > messages.length) {
+          console.log('📨 New messages received via polling');
+          setMessages(response);
+        }
+      } catch (error) {
+        console.error('Failed to poll messages:', error);
+      }
+    }, 3000); // Poll every 3 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [activeConversation?.id, messages.length, user]);
+
   // Debug logging for state changes and automatic deduplication safety net
   useEffect(() => {
     logger.info('📊 STATE UPDATE - conversations', { count: conversations.length, conversations });
@@ -2684,7 +2703,7 @@ const MessageBubble = ({ message, isOwnMessage, onDelete, onEdit }) => {
 
               {/* Text content (caption for media or standalone text) */}
               {message.content && (
-                <p className="text-sm whitespace-pre-line">{message.content}</p>
+                <p className="text-sm whitespace-pre-line break-words">{message.content}</p>
               )}
             </>
           )}

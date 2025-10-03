@@ -1611,11 +1611,19 @@ class ApiService {
   // Customer API methods
   async getCustomerStats() {
     try {
-      return await this.request('/api/customer/stats', {
+      console.log('🔍 API: Calling /api/customer/stats endpoint...');
+      const result = await this.request('/api/customer/stats', {
         method: 'GET'
       });
+      console.log('✅ API: Customer stats response:', result);
+      return result;
     } catch (error) {
-      console.warn('Failed to fetch customer stats:', error);
+      console.error('❌ API: Failed to fetch customer stats:', error);
+      console.error('❌ API: Error details:', {
+        message: error.message,
+        status: error.status,
+        response: error.response
+      });
       // Return empty data instead of mock data
       throw error;
     }

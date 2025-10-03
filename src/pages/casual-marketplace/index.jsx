@@ -593,17 +593,18 @@ const CasualMarketplace = () => {
     <div className="min-h-screen bg-gradient-to-r from-gray-400 via-gray-500 to-gray-600 animate-fadeIn">
       <Header />
       
-      {/* Enhanced Search Section */}
-      <div className="bg-white">
-        <SearchSection 
-          searchParams={searchParams}
-          setSearchParams={setSearchParams}
-          categories={categories}
-          selectedCategory={selectedCategory}
-          onCategorySelect={handleCategorySelect}
-          placeholder="Search marketplace items..."
-        />
-      </div>
+      <main className="pt-20">
+        {/* Enhanced Search Section */}
+        <div className="bg-white">
+          <SearchSection 
+            searchParams={searchParams}
+            setSearchParams={setSearchParams}
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onCategorySelect={handleCategorySelect}
+            placeholder="Search marketplace items..."
+          />
+        </div>
       
       {/* Category Navigation */}
       <div className="bg-white">
@@ -969,6 +970,8 @@ const CasualMarketplace = () => {
           onPriceRangeChange={setPriceRange}
         />
       </div>
+
+      </main>
 
       {/* Footer */}
       <Footer />

@@ -454,10 +454,10 @@ const Header = () => {
               </Link>
               
               <Link
-                to="/create-shop"
+                to="/add-product"
                 onClick={() => setIsMenuOpen(false)}
                 className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  isActive('/create-shop')
+                  isActive('/add-product')
                     ? 'text-teal-700 bg-teal-50/80 backdrop-blur-sm border border-teal-200/50' 
                     : 'text-gray-700 hover:bg-gray-50/80 backdrop-blur-sm hover:text-gray-900'
                 }`}

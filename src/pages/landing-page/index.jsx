@@ -168,7 +168,7 @@ const LandingPage = () => {
         </ErrorBoundary>
         
         {/* Main Content */}
-        <main className="pt-0">
+        <main className="pt-20">
           {/* Hero Section - Exact Reference Match */}
           <ErrorBoundary>
             <section className="relative h-[500px] bg-gradient-to-r from-gray-400 to-gray-500 rounded-3xl mx-6 mb-12 overflow-hidden">

@@ -21,28 +21,48 @@ const InventoryTab = () => {
       const products = await api.getMyProducts(0, 200, false); // Get all products including inactive
 
       // Transform API response to match inventory structure
-      const transformedInventory = products.map(product => ({
-        id: product.id,
-        name: product.name,
-        sku: product.id.slice(-8), // Use last 8 chars of ID as SKU for now
-        category: product.category || 'Uncategorized',
-        currentStock: product.stock_quantity || 0,
-        minStock: 10, // Default reorder point - this should come from product model later
-        maxStock: 100, // Default max stock - this should be configurable later
-        unitCost: 0, // Cost price - not available in current model, will be 0 for now
-        sellingPrice: parseFloat(product.price || 0),
-        supplier: 'N/A', // Supplier info not in current model
-        lastRestocked: product.updated_at || product.created_at,
-        image: (product.image_urls && product.image_urls.length > 0)
-               ? product.image_urls[0]
-               : '/assets/images/no_image.png',
-        status: product.stock_quantity === 0
-                ? 'out_of_stock'
-                : product.stock_quantity <= 10
-                ? 'low_stock'
-                : 'in_stock',
-        isActive: product.is_active
-      }));
+      const transformedInventory = products.map(product => {
+        const currentStock = product.stock_quantity || 0;
+        
+        // Calculate dynamic min/max stock based on current stock and price
+        // Higher priced items typically have lower stock levels
+        const price = parseFloat(product.price || 0);
+        let minStock, maxStock;
+        
+        if (price > 100000) { // High-value items (>100k XAF)
+          minStock = 1;
+          maxStock = Math.max(currentStock * 3, 10);
+        } else if (price > 50000) { // Medium-value items (50k-100k XAF)
+          minStock = 2;
+          maxStock = Math.max(currentStock * 4, 20);
+        } else { // Low-value items (<50k XAF)
+          minStock = 5;
+          maxStock = Math.max(currentStock * 5, 50);
+        }
+        
+        return {
+          id: product.id,
+          name: product.name,
+          sku: product.sku || product.id.slice(-8), // Use actual SKU if available
+          category: product.category || 'Uncategorized',
+          currentStock: currentStock,
+          minStock: minStock,
+          maxStock: maxStock,
+          unitCost: 0, // Cost price - not available in current model, will be 0 for now
+          sellingPrice: price,
+          supplier: 'N/A', // Supplier info not in current model
+          lastRestocked: product.updated_at || product.created_at,
+          image: (product.image_urls && product.image_urls.length > 0)
+                 ? product.image_urls[0]
+                 : '/assets/images/no_image.png',
+          status: currentStock === 0
+                  ? 'out_of_stock'
+                  : currentStock <= minStock
+                  ? 'low_stock'
+                  : 'in_stock',
+          isActive: product.is_active
+        };
+      });
 
       setInventory(transformedInventory);
     } catch (error) {
@@ -119,11 +139,11 @@ const InventoryTab = () => {
     let statusConfig;
 
     if (currentStock === 0) {
-      statusConfig = { label: 'Out of Stock', color: 'text-destructive bg-destructive/10' };
+      statusConfig = { label: 'Out of Stock', color: 'text-red-600 bg-red-100' };
     } else if (currentStock <= minStock) {
-      statusConfig = { label: 'Low Stock', color: 'text-warning bg-warning/10' };
+      statusConfig = { label: 'Low Stock', color: 'text-yellow-600 bg-yellow-100' };
     } else {
-      statusConfig = { label: 'In Stock', color: 'text-success bg-success/10' };
+      statusConfig = { label: 'In Stock', color: 'text-green-600 bg-green-100' };
     }
 
     return (
@@ -134,17 +154,24 @@ const InventoryTab = () => {
   };
 
   const getStockLevel = (current, min, max) => {
-    const percentage = (current / max) * 100;
-    let colorClass = 'bg-success';
-
+    // Calculate percentage based on current stock vs max stock
+    const percentage = max > 0 ? (current / max) * 100 : 0;
+    let colorClass = 'bg-green-500'; // Default green for in stock
+    
     if (current === 0) {
-      colorClass = 'bg-destructive';
+      colorClass = 'bg-red-500'; // Red for out of stock
     } else if (current <= min) {
-      colorClass = 'bg-warning';
+      colorClass = 'bg-yellow-500'; // Yellow for low stock
+    } else if (percentage > 80) {
+      colorClass = 'bg-green-600'; // Darker green for high stock
+    } else if (percentage > 50) {
+      colorClass = 'bg-green-500'; // Green for good stock
+    } else {
+      colorClass = 'bg-blue-500'; // Blue for moderate stock
     }
 
     return (
-      <div className="w-full bg-muted rounded-full h-2">
+      <div className="w-full bg-gray-200 rounded-full h-2">
         <div
           className={`h-2 rounded-full transition-all duration-300 ${colorClass}`}
           style={{ width: `${Math.min(percentage, 100)}%` }}
@@ -178,23 +205,23 @@ const InventoryTab = () => {
       {!loading && (lowStockItems.length > 0 || outOfStockItems.length > 0) && (
         <div className="space-y-3 mb-6">
           {outOfStockItems.length > 0 && (
-            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex items-center space-x-2 mb-2">
-                <Icon name="AlertTriangle" size={20} className="text-destructive" />
-                <h3 className="font-medium text-destructive">Out of Stock Alert</h3>
+                <Icon name="AlertTriangle" size={20} className="text-red-600" />
+                <h3 className="font-medium text-red-600">Out of Stock Alert</h3>
               </div>
-              <p className="text-sm text-destructive/80">
+              <p className="text-sm text-red-700">
                 {outOfStockItems.length} item{outOfStockItems.length > 1 ? 's are' : ' is'} out of stock and need immediate restocking.
               </p>
             </div>
           )}
           {lowStockItems.length > 0 && (
-            <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="flex items-center space-x-2 mb-2">
-                <Icon name="AlertCircle" size={20} className="text-warning" />
-                <h3 className="font-medium text-warning">Low Stock Warning</h3>
+                <Icon name="AlertCircle" size={20} className="text-yellow-600" />
+                <h3 className="font-medium text-yellow-600">Low Stock Warning</h3>
               </div>
-              <p className="text-sm text-warning/80">
+              <p className="text-sm text-yellow-700">
                 {lowStockItems.length} item{lowStockItems.length > 1 ? 's are' : ' is'} running low on stock.
               </p>
             </div>

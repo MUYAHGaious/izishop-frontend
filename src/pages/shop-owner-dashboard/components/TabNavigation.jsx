@@ -4,9 +4,9 @@ import Icon from '../../../components/AppIcon';
 const TabNavigation = ({ activeTab, onTabChange }) => {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: 'LayoutDashboard', count: null },
-    { id: 'products', label: 'Products', icon: 'Package', count: 156 },
-    { id: 'orders', label: 'Orders', icon: 'ShoppingCart', count: 23 },
-    { id: 'inventory', label: 'Inventory', icon: 'Warehouse', count: 12 },
+    { id: 'products', label: 'Products', icon: 'Package', count: null },
+    { id: 'orders', label: 'Orders', icon: 'ShoppingCart', count: null },
+    { id: 'inventory', label: 'Inventory', icon: 'Warehouse', count: null },
     { id: 'analytics', label: 'Analytics', icon: 'BarChart3', count: null },
     { id: 'earnings', label: 'Earnings', icon: 'DollarSign', count: null }
   ];

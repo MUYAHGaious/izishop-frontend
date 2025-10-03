@@ -9,7 +9,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useShop } from '../../../contexts/ShopContext';
 import api from '../../../services/api';
 
-const ShopOverview = ({ shopData, onTabChange }) => {
+const ShopOverview = ({ shopData, stats, onTabChange }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { selectedShop } = useShop();
@@ -311,15 +311,22 @@ const ShopOverview = ({ shopData, onTabChange }) => {
         setLoadingStats(true);
         try {
           const todayStatsData = await api.getShopOwnerTodayStats();
-          setTodayStats(todayStatsData);
+          console.log('📊 Today stats data:', todayStatsData);
+          // Map the API response to the expected format
+          setTodayStats({
+            orders: todayStatsData.today_orders || 0,
+            revenue: todayStatsData.today_sales || 0,
+            visitors: 0, // Not available yet
+            conversionRate: 0 // Not available yet
+          });
         } catch (error) {
           const is404Error = error.status === 404 || error.message?.includes('404') || error.message?.includes('Shop not found') || error.message?.includes('not found');
           if (is404Error) {
             console.log('No today stats found - expected for new shops');
-            setTodayStats({ sales: 0, orders: 0, revenue: 0, visitors: 0 });
+            setTodayStats({ orders: 0, revenue: 0, visitors: 0, conversionRate: 0 });
           } else {
             console.error('Error fetching today stats:', error);
-            setTodayStats({ sales: 0, orders: 0, revenue: 0, visitors: 0 });
+            setTodayStats({ orders: 0, revenue: 0, visitors: 0, conversionRate: 0 });
           }
         }
         
@@ -462,7 +469,7 @@ const ShopOverview = ({ shopData, onTabChange }) => {
             </div>
             <div>
               <h2 className="text-3xl font-bold mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
-                Welcome back, {shopData.owner}!
+                Welcome back, {user?.first_name || user?.firstName || shopData?.owner || 'Shop Owner'}!
               </h2>
               <p className="text-teal-100 text-lg">Here's how your shop is performing today.</p>
             </div>
@@ -473,29 +480,29 @@ const ShopOverview = ({ shopData, onTabChange }) => {
               <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <Icon name="Package" className="w-6 h-6 text-white" />
               </div>
-              <p className="text-2xl font-bold">{formatNumber(shopData.totalProducts)}</p>
+              <p className="text-2xl font-bold">{formatNumber(stats?.totalProducts || 0)}</p>
               <p className="text-sm text-teal-100">Products</p>
             </div>
             <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-4">
               <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <Icon name="ShoppingCart" className="w-6 h-6 text-white" />
               </div>
-              <p className="text-2xl font-bold">{formatNumber(shopData.totalOrders)}</p>
+              <p className="text-2xl font-bold">{formatNumber(stats?.totalOrders || 0)}</p>
               <p className="text-sm text-teal-100">Total Orders</p>
             </div>
             <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-4">
               <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-3">
-                <Icon name="Star" className="w-6 h-6 text-white" />
+                <Icon name="AlertTriangle" className="w-6 h-6 text-white" />
               </div>
-              <p className="text-2xl font-bold">{shopData.rating}</p>
-              <p className="text-sm text-teal-100">Rating ({shopData.totalReviews || 0} reviews)</p>
+              <p className="text-2xl font-bold">{formatNumber(stats?.pendingOrders || 0)}</p>
+              <p className="text-sm text-teal-100">Pending Orders</p>
             </div>
             <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-4">
               <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <Icon name="DollarSign" className="w-6 h-6 text-white" />
               </div>
-              <p className="text-2xl font-bold">{formatCurrency(shopData.monthlyRevenue)}</p>
-              <p className="text-sm text-teal-100">Monthly Revenue</p>
+              <p className="text-2xl font-bold">{formatCurrency(stats?.totalRevenue || 0)}</p>
+              <p className="text-sm text-teal-100">Total Revenue</p>
             </div>
           </div>
         </div>
@@ -651,41 +658,41 @@ const ShopOverview = ({ shopData, onTabChange }) => {
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300 hover:scale-105">
             <div className="flex items-center justify-between mb-4">
               <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Icon name="Eye" className="w-7 h-7 text-white" />
+                <Icon name="AlertTriangle" className="w-7 h-7 text-white" />
               </div>
               <div className="text-right">
                 {loadingStats ? (
                   <div className="w-16 h-8 bg-gray-200 rounded animate-pulse"></div>
                 ) : (
-                  <p className="text-3xl font-bold text-gray-900">{formatNumber(todayStats.visitors)}</p>
+                  <p className="text-3xl font-bold text-gray-900">{formatNumber(stats?.pendingOrders || 0)}</p>
                 )}
-                <p className="text-sm font-medium text-gray-600">Visitors</p>
+                <p className="text-sm font-medium text-gray-600">Pending</p>
               </div>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-gradient-to-r from-teal-500 to-teal-600 h-2 rounded-full" style={{ width: '60%' }}></div>
+              <div className="bg-gradient-to-r from-teal-500 to-teal-600 h-2 rounded-full" style={{ width: `${Math.min((stats?.pendingOrders || 0) * 10, 100)}%` }}></div>
             </div>
-            <p className="text-xs text-gray-500 mt-2">Analytics needed</p>
+            <p className="text-xs text-gray-500 mt-2">Orders to process</p>
           </div>
 
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300 hover:scale-105">
             <div className="flex items-center justify-between mb-4">
               <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Icon name="Target" className="w-7 h-7 text-white" />
+                <Icon name="Package" className="w-7 h-7 text-white" />
               </div>
               <div className="text-right">
                 {loadingStats ? (
                   <div className="w-14 h-8 bg-gray-200 rounded animate-pulse"></div>
                 ) : (
-                  <p className="text-3xl font-bold text-gray-900">{todayStats.conversionRate}%</p>
+                  <p className="text-3xl font-bold text-gray-900">{formatNumber(stats?.lowStockItems || 0)}</p>
                 )}
-                <p className="text-sm font-medium text-gray-600">Conversion</p>
+                <p className="text-sm font-medium text-gray-600">Low Stock</p>
               </div>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full" style={{ width: '45%' }}></div>
+              <div className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full" style={{ width: `${Math.min((stats?.lowStockItems || 0) * 10, 100)}%` }}></div>
             </div>
-            <p className="text-xs text-gray-500 mt-2">Analytics needed</p>
+            <p className="text-xs text-gray-500 mt-2">Items need restocking</p>
           </div>
         </div>
       </div>
@@ -731,7 +738,10 @@ const ShopOverview = ({ shopData, onTabChange }) => {
         <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Recent Orders</h3>
-            <button className="text-sm text-teal-600 hover:text-teal-700 font-medium">
+            <button
+              onClick={() => onTabChange && onTabChange('orders')}
+              className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+            >
               View All
             </button>
           </div>
@@ -788,7 +798,10 @@ const ShopOverview = ({ shopData, onTabChange }) => {
         <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Customer Reviews</h3>
-            <button className="text-sm text-teal-600 hover:text-teal-700 font-medium">
+            <button
+              onClick={() => navigate('/shop-reviews')}
+              className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+            >
               View All
             </button>
           </div>

@@ -369,7 +369,7 @@ const UserProfile = () => {
       
       <Header />
       
-      <main className="pt-16 pb-20 lg:pb-8 relative z-10">
+      <main className="pt-20 pb-20 lg:pb-8 relative z-10">
         {/* Cover/Header Section - Facebook Style */}
         <div className="relative">
           <div 
@@ -386,8 +386,8 @@ const UserProfile = () => {
             {/* Cover Photo Overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-transparent to-black/30 group-hover:from-black/40 group-hover:to-black/50 transition-all duration-300"></div>
             
-            {/* Edit Cover Button with glass morphism */}
-            <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 rounded-xl px-4 py-2 opacity-0 group-hover:opacity-100 transition-all duration-300 ">
+            {/* Edit Cover Button with glass morphism - positioned below top nav */}
+            <div className="absolute top-20 right-4 bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 rounded-xl px-3 py-2 opacity-90 hover:opacity-100 transition-all duration-300 shadow-lg">
               <div className="flex items-center space-x-2">
                 <Icon name="Camera" size={16} className="text-white" />
                 <span className="text-sm font-semibold text-white">Edit Cover</span>

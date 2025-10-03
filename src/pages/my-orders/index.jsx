@@ -384,9 +384,11 @@ Could you please help me resolve this issue?`
   }, [orders, searchQuery, sortBy, dateRange, amountRange, selectedShop]);
 
   const handleReorder = (order) => {
-    // Add items to cart and navigate to cart
-    console.log('Reordering:', order);
-    // Implementation for reorder functionality
+    showNotificationMessage(
+      'Reorder feature will be implemented soon',
+      'warning',
+      3000
+    );
   };
 
   const handleCancelOrder = async (order) => {
@@ -886,6 +888,16 @@ Could you please help me resolve this issue?`
                             iconName="Star"
                             iconPosition="left"
                             className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                            onClick={() => {
+                              // Navigate to first product in order to leave review
+                              if (order.items && order.items.length > 0) {
+                                const firstItem = order.items[0];
+                                const productId = firstItem.product_id || firstItem.id;
+                                navigate(`/product-detail?id=${productId}&review=true`);
+                              } else {
+                                showNotificationMessage('No products found to review', 'error');
+                              }
+                            }}
                           >
                             Review
                           </Button>
@@ -898,6 +910,7 @@ Could you please help me resolve this issue?`
                           iconName="Download"
                           iconPosition="left"
                           className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                          onClick={() => showNotificationMessage('Invoice download feature will be implemented soon', 'warning', 3000)}
                         >
                           Invoice
                         </Button>
@@ -924,6 +937,7 @@ Could you please help me resolve this issue?`
                             iconName="RefreshCw"
                             iconPosition="left"
                             className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                            onClick={() => showNotificationMessage('Return/Exchange feature will be implemented soon', 'warning', 3000)}
                           >
                             Return
                           </Button>

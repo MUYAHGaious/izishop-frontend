@@ -4,10 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
 import { showToast } from '../../components/ui/Toast';
-import LoadingScreen from '../../components/ui/LoadingScreen';
 import Header from '../../components/ui/Header';
 import NavigationSection from '../../components/ui/NavigationSection';
 import MobileBottomTab from '../../components/ui/MobileBottomTab';
+import OrderDetailModal from '../../components/ui/OrderDetailModal';
 import api from '../../services/api';
 
 const CustomerDashboard = () => {
@@ -23,10 +23,12 @@ const CustomerDashboard = () => {
     loyalty_points: 0
   });
   const [recentOrders, setRecentOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [wishlistCount, setWishlistCount] = useState(0);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isOrderDetailModalOpen, setIsOrderDetailModalOpen] = useState(false);
 
   // Optimized refresh interval to reduce server load
   const REFRESH_INTERVAL = 300000; // 5 minutes
@@ -51,18 +53,30 @@ const CustomerDashboard = () => {
 
   const loadCustomerData = async () => {
     try {
-      setLoading(true);
-      console.log('Loading customer dashboard data...');
-      
+      console.log('🔄 Loading customer dashboard data...');
+
       // Fetch data in parallel for better performance
+      console.log('📡 Calling API endpoints...');
       const [statsData, ordersData, wishlistData] = await Promise.all([
-        api.getCustomerStats(),
-        api.getCustomerRecentOrders(5),
-        api.getCustomerWishlist({ limit: 1 }) // Just get count
+        api.getCustomerStats().catch(err => {
+          console.error('❌ Stats API failed:', err);
+          return { total_orders: 0, pending_orders: 0, total_spent: 0, avg_order_value: 0 };
+        }),
+        api.getCustomerRecentOrders(5).catch(err => {
+          console.error('❌ Recent orders API failed:', err);
+          return [];
+        }),
+        api.getCustomerWishlist({ limit: 1 }).catch(err => {
+          console.error('❌ Wishlist API failed:', err);
+          return [];
+        })
       ]);
-      
-      console.log('Customer data loaded:', { statsData, ordersData, wishlistData });
-      
+
+      console.log('✅ Customer data loaded:');
+      console.log('  📊 Stats:', statsData);
+      console.log('  📦 Orders:', ordersData);
+      console.log('  ❤️  Wishlist:', wishlistData);
+
       // Update state with fresh data - map backend fields to frontend structure
       const mappedStats = {
         total_orders: statsData.total_orders || 0,
@@ -76,13 +90,21 @@ const CustomerDashboard = () => {
         avg_order_value: statsData.avg_order_value || 0
       };
 
+      console.log('📝 Mapped stats:', mappedStats);
+
       setStats(mappedStats);
       setRecentOrders(ordersData);
       setWishlistCount(wishlistData.length);
       setLastUpdated(new Date());
-      
+
     } catch (error) {
-      console.error('Failed to load customer data:', error);
+      console.error('❌ Failed to load customer data:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        response: error.response
+      });
+
       showToast({
         type: 'error',
         message: 'Failed to load dashboard data. Please check your connection.',
@@ -103,7 +125,6 @@ const CustomerDashboard = () => {
       setRecentOrders([]);
       setWishlistCount(0);
     } finally {
-      setLoading(false);
     }
   };
   
@@ -148,6 +169,91 @@ const CustomerDashboard = () => {
     }
   }, []);
 
+  // Helper functions from my-orders page
+  const getStatusColor = (status) => {
+    const normalizedStatus = status?.toLowerCase();
+    switch (normalizedStatus) {
+      case 'delivered':
+      case 'completed':
+        return 'text-green-800 bg-green-100 border-green-300 ring-1 ring-green-200';
+      case 'shipped':
+      case 'in_transit':
+        return 'text-teal-800 bg-teal-100 border-teal-300 ring-1 ring-teal-200';
+      case 'processing':
+        return 'text-blue-800 bg-blue-100 border-blue-300 ring-1 ring-blue-200';
+      case 'pending':
+      case 'confirmed':
+        return 'text-orange-800 bg-orange-100 border-orange-300 ring-1 ring-orange-200';
+      case 'cancelled':
+      case 'failed':
+        return 'text-red-800 bg-red-100 border-red-300 ring-1 ring-red-200';
+      default:
+        return 'text-gray-800 bg-gray-100 border-gray-300 ring-1 ring-gray-200';
+    }
+  };
+
+  const getStatusText = (status) => {
+    const normalizedStatus = status?.toLowerCase();
+    switch (normalizedStatus) {
+      case 'delivered':
+      case 'completed':
+        return 'Delivered';
+      case 'shipped':
+      case 'in_transit':
+        return 'Shipped';
+      case 'processing':
+        return 'Processing';
+      case 'pending':
+        return 'Pending';
+      case 'confirmed':
+        return 'Confirmed';
+      case 'cancelled':
+        return 'Cancelled';
+      case 'failed':
+        return 'Failed';
+      default:
+        return status || 'Unknown';
+    }
+  };
+
+  const getProgressPercentage = (status) => {
+    const progressMap = {
+      'pending': 5,
+      'confirmed': 15,
+      'payment_processing': 20,
+      'payment_confirmed': 25,
+      'processing': 35,
+      'picking': 45,
+      'packed': 55,
+      'ready_for_pickup': 65,
+      'picked_up': 75,
+      'in_transit': 85,
+      'out_for_delivery': 95,
+      'shipped': 85,
+      'delivered': 100,
+      'completed': 100
+    };
+    return progressMap[status?.toLowerCase()] || 0;
+  };
+
+  const handleViewOrderDetails = (order) => {
+    setSelectedOrder(order);
+    setIsOrderDetailModalOpen(true);
+  };
+
+  const handleCloseOrderDetailModal = () => {
+    setIsOrderDetailModalOpen(false);
+    setSelectedOrder(null);
+  };
+
+  const handleReorder = (order) => {
+    showToast({
+      type: 'warning',
+      message: 'Reorder feature will be implemented soon',
+      duration: 3000
+    });
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('fr-CM', {
       style: 'currency',
@@ -165,26 +271,6 @@ const CustomerDashboard = () => {
     });
   };
 
-  const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
-      case 'processing': return 'bg-yellow-100 text-yellow-800';
-      case 'shipped': return 'bg-blue-100 text-blue-800';
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  if (loading) {
-    return (
-      <LoadingScreen 
-        message="Loading your customer dashboard..."
-        variant="default"
-        showProgress={false}
-      />
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Main Navigation Header */}
@@ -194,7 +280,7 @@ const CustomerDashboard = () => {
       <NavigationSection />
       
       {/* Dashboard Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
+      <div className="bg-white shadow-sm border-b border-gray-200 pt-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div>
@@ -247,34 +333,6 @@ const CustomerDashboard = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    iconName="ShoppingCart"
-                    iconPosition="left"
-                    onClick={() => navigate('/shopping-cart')}
-                    className="relative"
-                  >
-                    Cart
-                    {/* Cart badge could go here */}
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    iconName="Heart"
-                    iconPosition="left"
-                    onClick={() => navigate('/wishlist')}
-                    className="relative"
-                  >
-                    Wishlist
-                    {wishlistCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        {wishlistCount}
-                      </span>
-                    )}
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
                     iconName="Package"
                     iconPosition="left"
                     onClick={() => navigate('/my-orders')}
@@ -305,17 +363,6 @@ const CustomerDashboard = () => {
                       {stats.loyalty_points} pts
                     </Button>
                   )}
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    iconName="LogOut"
-                    iconPosition="left"
-                    onClick={logout}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    Logout
-                  </Button>
                 </div>
               </div>
             </div>
@@ -511,67 +558,159 @@ const CustomerDashboard = () => {
               </div>
             ) : (
               recentOrders.map((order) => (
-              <div key={order.id} className="p-6 hover:bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div>
-                      <div className="flex items-center space-x-2 mb-1">
-                        <h3 className="text-lg font-medium text-gray-900">{order.order_number}</h3>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                          {order.status}
-                        </span>
+                <div key={order.id} className="bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200 overflow-hidden hover:bg-white hover:border-gray-300 mb-3">
+                  {/* Order Header */}
+                  <div className="p-4 border-b border-gray-100">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                      <div className="mb-3 lg:mb-0">
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">
+                          Order #{order.order_number || order.id}
+                        </h3>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                          <p className="text-gray-600 flex items-center text-sm">
+                            <Icon name="Calendar" size={14} className="mr-2 text-gray-400" />
+                            {formatDate(order.created_at)}
+                          </p>
+                          {order.shop_name && (
+                            <p className="text-gray-600 flex items-center text-sm">
+                              <Icon name="Store" size={14} className="mr-2 text-gray-400" />
+                              {order.shop_name}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-500">From: {order.shop_name}</p>
-                      <p className="text-xs text-gray-400">Tracking: {order.tracking_number}</p>
+
+                      <div className="flex flex-col lg:items-end gap-3">
+                        <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold border-2 ${getStatusColor(order.status)}`}>
+                          {getStatusText(order.status)}
+                        </span>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {formatCurrency(order.total_amount || order.total || 0)}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-gray-900">{formatCurrency(order.total_amount)}</p>
-                    <p className="text-sm text-gray-500">{order.items_count} items • {formatDate(order.order_date)}</p>
-                    <p className="text-xs text-gray-400">{order.payment_method}</p>
-                  </div>
-                </div>
 
-                <div className="mt-4">
-                  <div className="text-sm text-gray-600 mb-2">
-                    <strong>Items:</strong> {order.items?.map(item => `${item.name} (x${item.quantity})`).join(', ')}
-                  </div>
-                  <div className="text-sm text-gray-500 mb-3">
-                    Delivery to: {order.delivery_address}
-                  </div>
-                </div>
+                  {/* Order Items */}
+                  <div className="p-4">
+                    {/* Progress Bar */}
+                    <div className="relative mb-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-medium text-gray-700">Order Progress</span>
+                        <span className="text-xs text-gray-500">{getProgressPercentage(order.status)}% Complete</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-1.5">
+                        <div
+                          className="bg-gradient-to-r from-teal-500 to-emerald-500 h-1.5 rounded-full transition-all duration-500"
+                          style={{ width: `${getProgressPercentage(order.status)}%` }}
+                        />
+                      </div>
+                    </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-500">
-                    Ordered: {formatDate(order.order_date)}
-                    {order.delivery_date && (
-                      <span> • Delivered: {formatDate(order.delivery_date)}</span>
+                    <h4 className="text-base font-semibold text-gray-900 mb-2">Order Items</h4>
+                    <div className="space-y-2">
+                      {order.items && order.items.length > 0 ? (
+                        order.items.map((item, index) => (
+                          <div key={item.id || index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                            <div className="w-12 h-12 lg:w-14 lg:h-14 flex-shrink-0 overflow-hidden rounded-lg bg-gray-200">
+                              {item.product_image ? (
+                                <img
+                                  src={item.product_image}
+                                  alt={item.product_name || 'Product'}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'flex';
+                                  }}
+                                />
+                              ) : null}
+                              <div className="w-full h-full flex items-center justify-center" style={{ display: item.product_image ? 'none' : 'flex' }}>
+                                <Icon name="Package" size={16} className="text-gray-400" />
+                              </div>
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <h5 className="font-semibold text-gray-900 text-sm lg:text-base mb-1">
+                                {item.product_name || 'Product'}
+                              </h5>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                                <div>
+                                  <span className="text-gray-500">Qty:</span>
+                                  <span className="ml-1 font-medium text-gray-900">{item.quantity || 1}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500">Price:</span>
+                                  <span className="ml-1 font-medium text-gray-900">
+                                    {formatCurrency(item.unit_price || item.price || 0)}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500">Total:</span>
+                                  <span className="ml-1 font-semibold text-gray-900">
+                                    {formatCurrency(item.total_price || ((item.unit_price || item.price || 0) * (item.quantity || 1)))}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-6 bg-gray-50 rounded-lg text-center">
+                          <Icon name="Package" size={32} className="text-gray-400 mx-auto mb-2" />
+                          <p className="text-gray-600">No items information available</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Order Actions */}
+                  <div className="p-4 bg-gray-50/50 border-t border-gray-100">
+                    {order.tracking_number && (
+                      <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-xs text-blue-800 font-medium mb-1">Tracking Number</p>
+                        <p className="text-blue-600 font-mono text-sm">{order.tracking_number}</p>
+                      </div>
                     )}
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      iconName="Eye"
-                      iconPosition="left"
-                      onClick={() => navigate(`/order-details/${order.id}`)}
-                    >
-                      View Details
-                    </Button>
-                    {order.status !== 'Delivered' && order.status !== 'Cancelled' && (
+
+                    <div className="flex flex-wrap gap-2">
                       <Button
+                        variant="default"
                         size="sm"
-                        variant="outline"
-                        iconName="MapPin"
+                        iconName="Eye"
                         iconPosition="left"
-                        onClick={() => navigate(`/track-order/${order.tracking_number}`)}
+                        className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 text-sm"
+                        onClick={() => handleViewOrderDetails(order)}
                       >
-                        Track Order
+                        View Details
                       </Button>
-                    )}
+
+                      {(order.status === 'shipped' || order.status === 'in_transit') && order.tracking_number && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          iconName="Truck"
+                          iconPosition="left"
+                          className="border-teal-300 text-teal-700 hover:bg-teal-50"
+                        >
+                          Track Package
+                        </Button>
+                      )}
+
+                      {(order.status === 'delivered' || order.status === 'completed') && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          iconName="RotateCcw"
+                          iconPosition="left"
+                          className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                          onClick={() => handleReorder(order)}
+                        >
+                          Reorder
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
               ))
             )}
           </div>
@@ -710,6 +849,13 @@ const CustomerDashboard = () => {
       
       {/* Mobile Bottom Navigation */}
       <MobileBottomTab />
+
+      {/* Order Detail Modal */}
+      <OrderDetailModal
+        isOpen={isOrderDetailModalOpen}
+        onClose={handleCloseOrderDetailModal}
+        order={selectedOrder}
+      />
     </div>
   );
 };

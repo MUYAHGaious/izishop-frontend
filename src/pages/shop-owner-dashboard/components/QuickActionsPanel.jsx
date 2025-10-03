@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 
-const QuickActionsPanel = () => {
+const QuickActionsPanel = ({ onTabChange }) => {
   const navigate = useNavigate();
   
   const quickActions = [
@@ -24,10 +24,11 @@ const QuickActionsPanel = () => {
       color: 'warning',
       action: () => {
         // Switch to orders tab in current dashboard
-        const event = new CustomEvent('switchDashboardTab', { detail: 'orders' });
-        window.dispatchEvent(event);
+        if (onTabChange) {
+          onTabChange('orders');
+        }
       },
-      badge: '5'
+      badge: null
     },
     {
       id: 'customer-messages',
@@ -35,8 +36,8 @@ const QuickActionsPanel = () => {
       description: 'Respond to customer inquiries',
       icon: 'MessageCircle',
       color: 'secondary',
-      action: () => navigate('/chat-interface-modal'),
-      badge: '3'
+      action: () => navigate('/messages'),
+      badge: null
     },
     {
       id: 'inventory-check',
@@ -55,8 +56,9 @@ const QuickActionsPanel = () => {
       color: 'accent',
       action: () => {
         // Switch to analytics tab in current dashboard
-        const event = new CustomEvent('switchDashboardTab', { detail: 'analytics' });
-        window.dispatchEvent(event);
+        if (onTabChange) {
+          onTabChange('analytics');
+        }
       },
       badge: null
     },
@@ -120,11 +122,11 @@ const QuickActionsPanel = () => {
             return (
               <div
                 key={action.id}
-                className={`${gradients[index]} text-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer relative overflow-hidden group`}
+                className={`${gradients[index]} text-white rounded-2xl p-6 shadow-xl hover:shadow-lg transition-all duration-200 cursor-pointer relative overflow-hidden group`}
                 onClick={action.action}
               >
                 {/* Blur effects */}
-                <div className="absolute top-0 left-0 w-20 h-20 bg-white/15 rounded-full -translate-y-10 -translate-x-10 pointer-events-none group-hover:scale-110 transition-transform duration-300"></div>
+                <div className="absolute top-0 left-0 w-20 h-20 bg-white/15 rounded-full -translate-y-10 -translate-x-10 pointer-events-none group-hover:scale-105 transition-transform duration-200"></div>
                 
                 <div className="relative z-10">
                   <div className="flex items-start justify-between mb-4">
@@ -161,11 +163,11 @@ const QuickActionsPanel = () => {
             return (
               <div
                 key={action.id}
-                className={`${gradients[index]} text-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer relative overflow-hidden group`}
+                className={`${gradients[index]} text-white rounded-xl p-4 shadow-lg hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden group`}
                 onClick={action.action}
               >
                 {/* Blur effect */}
-                <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -translate-y-8 translate-x-8 pointer-events-none group-hover:scale-110 transition-transform duration-300"></div>
+                <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -translate-y-8 translate-x-8 pointer-events-none group-hover:scale-105 transition-transform duration-200"></div>
                 
                 <div className="flex items-center space-x-4 relative z-10">
                   <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
@@ -196,14 +198,14 @@ const QuickActionsPanel = () => {
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={quickActions[0].action}
-              className="bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl px-4 py-3 font-semibold hover:from-teal-600 hover:to-teal-700 transition-all duration-300 hover:scale-105 shadow-lg flex items-center justify-center space-x-2"
+              className="bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl px-4 py-3 font-semibold hover:from-teal-600 hover:to-teal-700 transition-all duration-200 shadow-lg flex items-center justify-center space-x-2"
             >
               <Icon name={quickActions[0].icon} size={16} />
               <span>Add Product</span>
             </button>
             <button
               onClick={quickActions[1].action}
-              className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl px-4 py-3 font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 hover:scale-105 shadow-lg flex items-center justify-center space-x-2 relative"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl px-4 py-3 font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-lg flex items-center justify-center space-x-2 relative"
             >
               <Icon name={quickActions[1].icon} size={16} />
               <span>Orders</span>

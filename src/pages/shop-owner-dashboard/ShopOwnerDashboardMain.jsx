@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../../components/ui/Header';
 import NavigationSection from '../../components/ui/NavigationSection';
 import TabNavigation from './components/TabNavigation';
-import QuickActionsPanel from './components/QuickActionsPanel';
 import ShopOverview from './components/ShopOverview';
 import ProductsTab from './components/ProductsTab';
 import OrdersTab from './components/OrdersTab';
@@ -154,13 +153,6 @@ const ShopOwnerDashboardMain = () => {
         <DashboardHeader shopData={shop} stats={stats} />
       </div>
       
-      {/* Quick Actions Panel */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <QuickActionsPanel />
-        </div>
-      </div>
-
       {/* Tab Navigation */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

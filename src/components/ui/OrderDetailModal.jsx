@@ -3,6 +3,7 @@ import Icon from '../AppIcon';
 import Button from './Button';
 import Modal from './Modal';
 import api from '../../services/api';
+import { showToast } from './Toast';
 
 const OrderDetailModal = ({ isOpen, onClose, order: orderProp }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -11,6 +12,48 @@ const OrderDetailModal = ({ isOpen, onClose, order: orderProp }) => {
   const order = orderProp;
   const isLoading = false;
   const error = null;
+
+  // Handler functions for buttons
+  const handleTrackPackage = () => {
+    if (order?.tracking_number) {
+      // Open tracking in new tab - you can customize this URL based on your carrier
+      window.open(`https://www.track.com/tracking/${order.tracking_number}`, '_blank');
+    }
+  };
+
+  const handleLeaveReview = () => {
+    if (order?.items && order.items.length > 0) {
+      const firstItem = order.items[0];
+      const productId = firstItem.product_id || firstItem.id;
+      // Use window.location to navigate
+      window.location.href = `/product-detail?id=${productId}&review=true`;
+    }
+  };
+
+  const handleDownloadInvoice = () => {
+    showToast({
+      type: 'warning',
+      message: 'Invoice download feature will be implemented soon',
+      duration: 3000
+    });
+  };
+
+  const handleCancelOrder = async () => {
+    if (confirm('Are you sure you want to cancel this order?')) {
+      try {
+        await api.cancelOrder(order.id, {
+          reason: 'customer_request',
+          description: 'Cancelled from order details modal'
+        });
+        alert('Order cancelled successfully');
+        onClose();
+        window.location.reload();
+      } catch (error) {
+        console.error('Error cancelling order:', error);
+        alert('Failed to cancel order. Please try again.');
+      }
+    }
+  };
 
   // Debug: Log the order data to see what we're working with
   React.useEffect(() => {
@@ -672,6 +715,7 @@ const OrderDetailModal = ({ isOpen, onClose, order: orderProp }) => {
                   iconName="ExternalLink"
                   iconPosition="left"
                   className="border-teal-300 text-teal-700 hover:bg-teal-50"
+                  onClick={handleTrackPackage}
                 >
                   Track Package
                 </Button>
@@ -684,6 +728,7 @@ const OrderDetailModal = ({ isOpen, onClose, order: orderProp }) => {
                   iconName="Star"
                   iconPosition="left"
                   className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                  onClick={handleLeaveReview}
                 >
                   Leave Review
                 </Button>
@@ -695,6 +740,7 @@ const OrderDetailModal = ({ isOpen, onClose, order: orderProp }) => {
                 iconName="Download"
                 iconPosition="left"
                 className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                onClick={handleDownloadInvoice}
               >
                 Download Invoice
               </Button>
@@ -706,6 +752,7 @@ const OrderDetailModal = ({ isOpen, onClose, order: orderProp }) => {
                   iconName="X"
                   iconPosition="left"
                   className="border-red-300 text-red-700 hover:bg-red-50"
+                  onClick={handleCancelOrder}
                 >
                   Cancel Order
                 </Button>

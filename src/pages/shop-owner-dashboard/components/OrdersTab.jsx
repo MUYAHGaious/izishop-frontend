@@ -222,7 +222,7 @@ const OrdersTab = () => {
     { value: '', label: 'All Orders' },
     { value: 'pending', label: 'Pending' },
     { value: 'processing', label: 'Processing' },
-    { value: 'shipped', label: 'Shipped' },
+    { value: 'in_transit', label: 'Shipped' },
     { value: 'delivered', label: 'Delivered' },
     { value: 'cancelled', label: 'Cancelled' }
   ];
@@ -231,7 +231,7 @@ const OrdersTab = () => {
     const statusConfig = {
       pending: { label: 'Pending', color: 'text-warning bg-warning/10' },
       processing: { label: 'Processing', color: 'text-primary bg-primary/10' },
-      shipped: { label: 'Shipped', color: 'text-secondary bg-secondary/10' },
+      in_transit: { label: 'Shipped', color: 'text-secondary bg-secondary/10' },
       delivered: { label: 'Delivered', color: 'text-success bg-success/10' },
       cancelled: { label: 'Cancelled', color: 'text-destructive bg-destructive/10' }
     };
@@ -501,14 +501,14 @@ const OrdersTab = () => {
                   size="sm"
                   iconName="Truck"
                   iconPosition="left"
-                  onClick={() => handleStatusUpdate(order.id, 'shipped', 'Order has been shipped')}
+                  onClick={() => handleStatusUpdate(order.id, 'in_transit', 'Order has been shipped and is in transit')}
                   disabled={updatingOrderId === order.id}
                   className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 disabled:opacity-50"
                 >
                   {updatingOrderId === order.id ? 'Updating...' : 'Mark as Shipped'}
                 </Button>
               )}
-              {order.status === 'shipped' && (
+              {order.status === 'in_transit' && (
                 <Button
                   variant="default"
                   size="sm"
@@ -665,7 +665,7 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate, updatingOrderId }) 
     switch (status) {
       case 'pending': return 'text-yellow-600 bg-yellow-100';
       case 'processing': return 'text-blue-600 bg-blue-100';
-      case 'shipped': return 'text-purple-600 bg-purple-100';
+      case 'in_transit': return 'text-purple-600 bg-purple-100';
       case 'delivered': return 'text-green-600 bg-green-100';
       case 'cancelled': return 'text-red-600 bg-red-100';
       case 'returned': return 'text-orange-600 bg-orange-100';
@@ -677,7 +677,7 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate, updatingOrderId }) 
     switch (status) {
       case 'pending': return 'Clock';
       case 'processing': return 'Package';
-      case 'shipped': return 'Truck';
+      case 'in_transit': return 'Truck';
       case 'delivered': return 'CheckCircle';
       case 'cancelled': return 'XCircle';
       case 'returned': return 'RotateCcw';
@@ -921,14 +921,14 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate, updatingOrderId }) 
                 variant="default"
                 iconName="Truck"
                 iconPosition="left"
-                onClick={() => onStatusUpdate(order?.id, 'shipped', 'Order has been shipped')}
+                onClick={() => onStatusUpdate(order?.id, 'in_transit', 'Order has been shipped and is in transit')}
                 disabled={updatingOrderId === order?.id}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 {updatingOrderId === order?.id ? 'Updating...' : 'Mark as Shipped'}
               </Button>
             )}
-            {order?.status === 'shipped' && (
+            {order?.status === 'in_transit' && (
               <Button
                 variant="default"
                 iconName="Package"

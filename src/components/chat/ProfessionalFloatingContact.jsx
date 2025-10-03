@@ -123,7 +123,8 @@ const ProfessionalFloatingContact = ({ shop = null }) => {
     <>
       <div
         ref={containerRef}
-        className="fixed bottom-6 right-6 z-[9998] flex flex-col items-end pointer-events-none"
+        className="fixed bottom-6 right-6 z-50 flex flex-col items-end"
+        style={{ pointerEvents: 'none' }}
       >
         {/* Quick Actions Menu */}
         <div className={`mb-4 transition-all duration-300 ease-out transform pointer-events-auto ${

@@ -277,9 +277,43 @@ const MessagesPage = () => {
     const pollInterval = setInterval(async () => {
       try {
         const response = await api.getChatMessages(activeConversation.id);
+        console.log('🔄 Polling - Backend returned:', response?.length, 'messages, Local has:', messages.length);
+
         if (response && response.length > messages.length) {
-          console.log('📨 New messages received via polling');
-          setMessages(response);
+          console.log('📨 New messages detected via polling');
+
+          // Backend returns messages in DESC order, reverse to show oldest first
+          const reversedMessages = [...response].reverse();
+
+          // Merge with existing messages, avoiding duplicates
+          setMessages(prev => {
+            console.log('🔍 Polling - Filtering duplicates from', reversedMessages.length, 'messages');
+
+            const newMessages = reversedMessages.filter(newMsg => {
+              const isDuplicate = prev.some(existingMsg => {
+                const idMatch = existingMsg.id === newMsg.id;
+                const contentMatch = existingMsg.content === newMsg.content &&
+                                   existingMsg.sender_id === newMsg.sender_id;
+                const timeDiff = Math.abs(new Date(existingMsg.created_at) - new Date(newMsg.created_at));
+
+                if (idMatch || (contentMatch && timeDiff < 5000)) {
+                  console.log('🔄 Polling - Skipping duplicate:', newMsg.id, newMsg.content.substring(0, 20));
+                  return true;
+                }
+                return false;
+              });
+
+              return !isDuplicate;
+            });
+
+            if (newMessages.length > 0) {
+              console.log(`✅ Polling - Adding ${newMessages.length} new message(s):`, newMessages);
+              return [...prev, ...newMessages];
+            }
+
+            console.log('ℹ️ Polling - No new messages to add (all were duplicates)');
+            return prev;
+          });
         }
       } catch (error) {
         console.error('Failed to poll messages:', error);
@@ -499,7 +533,41 @@ const MessagesPage = () => {
   };
 
   const handleNewMessage = (message) => {
-    setMessages(prev => [...prev, message]);
+    console.log('🔔 handleNewMessage called with:', message);
+
+    // Prevent duplicate messages - check if message already exists
+    setMessages(prev => {
+      console.log('📋 Current messages count:', prev.length);
+      console.log('🔍 Checking for duplicates...');
+
+      const messageExists = prev.some(msg => {
+        const idMatch = msg.id === message.id;
+        const contentMatch = msg.content === message.content && msg.sender_id === message.sender_id;
+        const timeDiff = Math.abs(new Date(msg.created_at) - new Date(message.created_at));
+
+        if (idMatch) {
+          console.log('⚠️ Found duplicate by ID:', msg.id);
+        }
+        if (contentMatch && timeDiff < 5000) {
+          console.log('⚠️ Found duplicate by content+sender+time:', {
+            content: msg.content,
+            sender_id: msg.sender_id,
+            timeDiff: timeDiff + 'ms'
+          });
+        }
+
+        return idMatch || (contentMatch && timeDiff < 5000);
+      });
+
+      if (messageExists) {
+        console.log('❌ Message already exists, skipping duplicate:', message.id);
+        return prev;
+      }
+
+      console.log('✅ Adding new message from WebSocket:', message.id);
+      return [...prev, message];
+    });
+
     setConversations(prev => prev.map(conv =>
       conv.id === message.conversation_id
         ? {
@@ -1013,7 +1081,9 @@ const MessagesPage = () => {
   const loadMessages = async (conversationId) => {
     try {
       const response = await api.getChatMessages(conversationId);
-      setMessages(response || []);
+      // Backend returns messages in DESC order (newest first), reverse to show oldest first
+      const reversedMessages = response ? [...response].reverse() : [];
+      setMessages(reversedMessages);
 
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({

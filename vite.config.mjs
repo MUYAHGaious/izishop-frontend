@@ -10,6 +10,15 @@ export default defineConfig({
   build: {
     outDir: "dist",
     chunkSizeWarningLimit: 2000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom", "react-router-dom"],
+          charts: ["recharts"],
+          reports: ["jspdf", "jspdf-autotable", "xlsx"],
+        },
+      },
+    },
   },
   plugins: [tsconfigPaths(), react()],
   server: {

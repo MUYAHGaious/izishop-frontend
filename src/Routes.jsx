@@ -1,4 +1,4 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { Routes as RouterRoutes, Route, Navigate } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -10,45 +10,44 @@ import RouteGuard, {
   PublicRouteGuard 
 } from "./components/RouteGuard";
 // Add your imports here
-import ProductCatalog from "./pages/product-catalog";
-import ShoppingCartCheckout from "./pages/shopping-cart-checkout";
-import ShopProfile from "./pages/shop-profile";
-import ProductDetailModal from "./pages/product-detail-modal";
-import ShopOwnerDashboard from "./pages/shop-owner-dashboard";
-import AdminDashboard from "./pages/admin-dashboard";
-import AdminLogin from "./pages/admin-login";
-import ShopsListing from "./pages/shops-listing";
-import ChatInterfaceModal from "./pages/chat-interface-modal";
-import MessagesPage from "./pages/messages";
-import NotificationCenterModal from "./pages/notification-center-modal";
-import NotificationsPage from "./pages/notifications";
-import LandingPage from "./pages/landing-page";
-import AuthenticationLoginRegister from "./pages/authentication-login-register";
-import Checkout from "./pages/checkout";
-import ProductDetail from "./pages/product-detail";
-import ShoppingCart from "./pages/shopping-cart";
-import NotFound from "./pages/NotFound";
-import AdminSetup from "./pages/admin-setup";
-import MyShopProfile from "./pages/my-shop-profile";
-import AddProduct from "./pages/add-product";
-import UserProfile from "./pages/user-profile";
-import PublicProfile from "./pages/public-profile";
-import Wishlist from "./pages/wishlist";
-import WishlistDemo from "./components/ProductDisplay/WishlistDemo";
-import TagDemo from "./components/ProductDisplay/TagDemo";
-import SellerDashboard from "./pages/seller-dashboard";
-import MyProducts from "./pages/my-products";
-import OrderSuccess from "./pages/order-success";
-import MyOrders from "./pages/my-orders";
-import CustomerSupport from "./pages/customer-support";
-import OrderManagement from "./pages/order-management";
-import CustomerDashboard from "./pages/customer-dashboard";
-import DeliveryAgentDashboard from "./pages/delivery-agent-dashboard";
-import UserSettings from "./pages/user-settings";
-import Settings from "./pages/Settings";
-import CasualMarketplace from "./pages/casual-marketplace";
-import CreateShop from "./pages/CreateShop";
-
+const ProductCatalog = lazy(() => import("./pages/product-catalog"));
+const ShoppingCartCheckout = lazy(() => import("./pages/shopping-cart-checkout"));
+const ShopProfile = lazy(() => import("./pages/shop-profile"));
+const ProductDetailModal = lazy(() => import("./pages/product-detail-modal"));
+const ShopOwnerDashboard = lazy(() => import("./pages/shop-owner-dashboard"));
+const AdminDashboard = lazy(() => import("./pages/admin-dashboard"));
+const AdminLogin = lazy(() => import("./pages/admin-login"));
+const ShopsListing = lazy(() => import("./pages/shops-listing"));
+const ChatInterfaceModal = lazy(() => import("./pages/chat-interface-modal"));
+const MessagesPage = lazy(() => import("./pages/messages"));
+const NotificationCenterModal = lazy(() => import("./pages/notification-center-modal"));
+const NotificationsPage = lazy(() => import("./pages/notifications"));
+const LandingPage = lazy(() => import("./pages/landing-page"));
+const AuthenticationLoginRegister = lazy(() => import("./pages/authentication-login-register"));
+const Checkout = lazy(() => import("./pages/checkout"));
+const ProductDetail = lazy(() => import("./pages/product-detail"));
+const ShoppingCart = lazy(() => import("./pages/shopping-cart"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const AdminSetup = lazy(() => import("./pages/admin-setup"));
+const MyShopProfile = lazy(() => import("./pages/my-shop-profile"));
+const AddProduct = lazy(() => import("./pages/add-product"));
+const UserProfile = lazy(() => import("./pages/user-profile"));
+const PublicProfile = lazy(() => import("./pages/public-profile"));
+const Wishlist = lazy(() => import("./pages/wishlist"));
+const WishlistDemo = lazy(() => import("./components/ProductDisplay/WishlistDemo"));
+const TagDemo = lazy(() => import("./components/ProductDisplay/TagDemo"));
+const SellerDashboard = lazy(() => import("./pages/seller-dashboard"));
+const MyProducts = lazy(() => import("./pages/my-products"));
+const OrderSuccess = lazy(() => import("./pages/order-success"));
+const MyOrders = lazy(() => import("./pages/my-orders"));
+const CustomerSupport = lazy(() => import("./pages/customer-support"));
+const OrderManagement = lazy(() => import("./pages/order-management"));
+const CustomerDashboard = lazy(() => import("./pages/customer-dashboard"));
+const DeliveryAgentDashboard = lazy(() => import("./pages/delivery-agent-dashboard"));
+const UserSettings = lazy(() => import("./pages/user-settings"));
+const Settings = lazy(() => import("./pages/Settings"));
+const CasualMarketplace = lazy(() => import("./pages/casual-marketplace"));
+const CreateShop = lazy(() => import("./pages/CreateShop"));
 // Protected Route Component
 const ProtectedRoute = ({ children, requiredRole = null }) => {
   const { user, isAuthenticated, loading } = useAuth();
@@ -414,7 +413,13 @@ const Routes = () => {
   return (
     <ErrorBoundary>
       <ScrollToTop />
-      <AppRoutes />
+      <Suspense fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      }>
+        <AppRoutes />
+      </Suspense>
     </ErrorBoundary>
   );
 };

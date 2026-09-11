@@ -135,6 +135,17 @@ function Image({
     }
   };
 
+  // Fix cache race: a fast/cached image can finish loading before React
+  // attaches the onLoad handler, so onLoad never fires and isLoading sticks.
+  // Check the img element directly on mount / when the source changes.
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth > 0) {
+      setIsLoading(false);
+      setHasError(false);
+    }
+  }, [currentSrc]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {

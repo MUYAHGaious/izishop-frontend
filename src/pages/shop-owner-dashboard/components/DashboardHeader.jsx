@@ -20,7 +20,7 @@ const DashboardHeader = ({ shopData, notifications }) => {
             <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center overflow-hidden border border-white/10">
               {shopData.profile_photo ? (
                 <img
-                  src={`https://izishop-backend.onrender.com${shopData.profile_photo}`}
+                  src={`${window.location.origin}${shopData.profile_photo}`}
                   alt={`${shopData.name} profile`}
                   className="w-full h-full object-cover rounded-2xl"
                 />

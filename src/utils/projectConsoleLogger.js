@@ -197,7 +197,7 @@ class ProjectConsoleLogger {
                 }
 
                 // Default to production
-                return 'https://izishop-backend.onrender.com';
+                return window.location.origin;
             };
 
             const url = `${getApiBaseUrl()}/api/debug/frontend-logs`;

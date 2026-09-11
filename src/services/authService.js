@@ -22,7 +22,7 @@ const getApiBaseUrl = () => {
   }
   
   // Default to production
-  return 'https://izishop-backend.onrender.com/api';
+  return window.location.origin + '/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();

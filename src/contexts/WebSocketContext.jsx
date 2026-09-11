@@ -23,7 +23,7 @@ const WebSocketProvider = ({ children }) => {
   const maxReconnectAttempts = 5;
 
   // WebSocket URL - replace with your actual WebSocket server URL
-  const WS_URL = import.meta.env.VITE_WEBSOCKET_URL || 'wss://izishop-backend.onrender.com/ws';
+  const WS_URL = import.meta.env.VITE_WEBSOCKET_URL || `wss://${window.location.host}/ws`;
 
   const connect = () => {
     if (!isAuthenticated() || socket?.readyState === WebSocket.OPEN) {

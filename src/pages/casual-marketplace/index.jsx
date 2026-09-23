@@ -108,7 +108,7 @@ const CasualMarketplace = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await api.get('casual-listings/categories/list', {}, false);
+      const response = await api.get('/api/casual-listings/categories/list', {}, false);
       const apiCategories = response.data?.categories || [];
       // Update categories with real counts
       setCategories(prev => prev.map(cat => {
@@ -123,7 +123,7 @@ const CasualMarketplace = () => {
 
   const fetchConditions = async () => {
     try {
-      const response = await api.get('casual-listings/conditions/list', {}, false);
+      const response = await api.get('/api/casual-listings/conditions/list', {}, false);
       setConditions(response.data?.conditions || ['New', 'Like New', 'Good', 'Fair', 'Poor']);
     } catch (error) {
       console.log('Conditions endpoint not available, using defaults');
@@ -146,7 +146,7 @@ const CasualMarketplace = () => {
       // Filter to show only customer and casual seller products (exclude shop owners and delivery agents)
       params.append('seller_type', 'customer,casual_seller');
 
-      const response = await api.get(`casual-listings/?${params.toString()}`, {}, false);
+      const response = await api.get(`/api/casual-listings/?${params.toString()}`, {}, false);
       let listings = response.data || [];
 
       // Additional client-side filtering to ensure only customer and casual_seller products are shown
@@ -184,7 +184,7 @@ const CasualMarketplace = () => {
   const fetchMyListings = async () => {
     setLoading(true);
     try {
-      const response = await api.get('casual-listings/my-listings');
+      const response = await api.get('/api/casual-listings/my-listings');
       const listings = response.data || [];
       setMyListings(listings);
       setResultsCount(listings.length);
@@ -253,7 +253,7 @@ const CasualMarketplace = () => {
         tags: listingForm.tags.filter(tag => tag.trim() !== '')
       };
 
-      await api.post('casual-listings/', listingData);
+      await api.post('/api/casual-listings/', listingData);
       showToast('Listing created successfully!', 'success');
       
       // Reset form and switch to my listings
@@ -282,7 +282,7 @@ const CasualMarketplace = () => {
     }
 
     try {
-      await api.delete(`casual-listings/${listingId}`);
+      await api.delete(`/api/casual-listings/${listingId}`);
       showToast('Listing deleted successfully', 'success');
       fetchMyListings();
     } catch (error) {

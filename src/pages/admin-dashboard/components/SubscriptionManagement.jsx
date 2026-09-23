@@ -23,23 +23,23 @@ const SubscriptionManagement = () => {
       setLoading(true);
       
       // Fetch subscriptions
-      const subscriptionResponse = await api.get('/admin/subscriptions');
+      const subscriptionResponse = await api.get('/api/admin/subscriptions');
       setSubscriptions(subscriptionResponse.data || []);
       
       // Fetch subscription metrics
-      const metricsResponse = await api.get(`/admin/subscription-metrics?period=${selectedPeriod}`);
+      const metricsResponse = await api.get(`/api/admin/subscription-metrics?period=${selectedPeriod}`);
       setMetrics(metricsResponse.data || metrics);
       
     } catch (error) {
       console.error('Error fetching subscription data:', error);
       // Use mock data for development
-      setSubscriptions(generateMockSubscriptions());
+      setSubscriptions([]);
       setMetrics({
-        totalSubscriptions: 45,
-        activeSubscriptions: 38,
-        monthlyRevenue: 1134.62,
-        churnRate: 8.5,
-        trialConversions: 72.3
+        totalSubscriptions: 0,
+        activeSubscriptions: 0,
+        monthlyRevenue: 0,
+        churnRate: 0,
+        trialConversions: 0
       });
     } finally {
       setLoading(false);

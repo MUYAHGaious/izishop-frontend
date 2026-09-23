@@ -27,32 +27,32 @@ const MarketplaceAnalytics = () => {
       setLoading(true);
       
       // Fetch marketplace metrics
-      const metricsResponse = await api.get(`/admin/marketplace-metrics?period=${selectedPeriod}`);
+      const metricsResponse = await api.get(`/api/admin/marketplace-metrics?period=${selectedPeriod}`);
       setMarketplaceData(metricsResponse.data || marketplaceData);
       
       // Fetch recent activity
-      const activityResponse = await api.get('/admin/recent-marketplace-activity');
+      const activityResponse = await api.get('/api/admin/recent-marketplace-activity');
       setRecentActivity(activityResponse.data || []);
       
       // Fetch top categories
-      const categoriesResponse = await api.get('/admin/top-categories');
+      const categoriesResponse = await api.get('/api/admin/top-categories');
       setTopCategories(categoriesResponse.data || []);
       
     } catch (error) {
       console.error('Error fetching marketplace data:', error);
       // Use mock data for development
       setMarketplaceData({
-        totalListings: 1247,
-        activeListings: 892,
-        totalTransactions: 2156,
-        transactionVolume: 45678.92,
-        casualSellers: 234,
-        shopOwners: 45,
-        deliveryAgents: 18
+        totalListings: 0,
+        activeListings: 0,
+        totalTransactions: 0,
+        transactionVolume: 0,
+        casualSellers: 0,
+        shopOwners: 0,
+        deliveryAgents: 0
       });
       
-      setRecentActivity(generateMockActivity());
-      setTopCategories(generateMockCategories());
+      setRecentActivity([]);
+      setTopCategories([]);
     } finally {
       setLoading(false);
     }

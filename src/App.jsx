@@ -13,7 +13,7 @@ import { ToastManager } from './components/ui/Toast';
 import SessionExpiryWarning from './components/ui/SessionExpiryWarning';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useNavigationHandler } from './hooks/useNavigationListener';
-import ProfessionalFloatingContact from './components/chat/ProfessionalFloatingContact';
+import TawkToWidget from './components/TawkToWidget';
 import './styles/index.css';
 
 function App() {
@@ -113,7 +113,7 @@ function App() {
                         <Routes />
                         <ToastManager />
                         <SessionExpiryWarning />
-                        <ProfessionalFloatingContact />
+                        <TawkToWidget />
                       </div>
                     </NotificationProvider>
                   </WebSocketProvider>

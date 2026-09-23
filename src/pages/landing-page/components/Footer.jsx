@@ -111,7 +111,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center">
                 <Icon name="Phone" size={16} className="mr-2 text-primary" />
-                +237 6XX XXX XXX
+                <a href="tel:+23774740791" className="hover:text-primary transition-colors">+237 74740791</a>
               </div>
               <div className="flex items-center">
                 <Icon name="Mail" size={16} className="mr-2 text-primary" />

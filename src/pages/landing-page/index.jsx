@@ -4,17 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../../components/ui/Header';
 import ErrorBoundary from '../../components/ErrorBoundary';
 import Icon from '../../components/AppIcon';
-import BlurText from '../../components/ui/BlurText';
-import ShinyText from '../../components/ui/ShinyText';
-import LogoLoop from '../../components/ui/LogoLoop';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 import api from '../../services/api';
 
-import CardSwap, { Card } from '../../components/ui/CardSwap';
-import GlassIcons from '../../components/ui/GlassIcons';
-import ScrollStack, { ScrollStackItem } from '../../components/ui/ScrollStack';
 import Footer from './components/Footer';
 import ProductCard from '../product-catalog/components/ProductCard';
 
@@ -123,18 +117,11 @@ const LandingPage = () => {
 
 
   const brandLogos = [
-    { node: <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Hermes_logo.svg/1200px-Hermes_logo.svg.png" alt="Hermes" style={{ height: '48px', filter: 'grayscale(100%)' }} />, title: "Hermes" },
-    { node: <img src="https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg" alt="Nike" style={{ height: '48px', filter: 'grayscale(100%)' }} />, title: "Nike" },
-    { node: <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/New_Balance_logo.svg/1280px-New_Balance_logo.svg.png" alt="New Balance" style={{ height: '48px', filter: 'grayscale(100%)' }} />, title: "New Balance" },
-    { node: <img src="/assets/brands/Puma.svg" alt="Puma" style={{ height: '48px', filter: 'grayscale(100%)' }} />, title: "Puma" },
-    { node: <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Uniqlo_logo.svg/1280px-Uniqlo_logo.svg.png" alt="Uniqlo" style={{ height: '48px', filter: 'grayscale(100%)' }} />, title: "Uniqlo" },
-    { node: <img src="/assets/brands/Zara_Logo.svg" alt="Zara" style={{ height: '48px', filter: 'grayscale(100%)' }} />, title: "Zara" },
-    { node: <img src="https://upload.wikimedia.org/wikipedia/commons/2/20/Adidas_Logo.svg" alt="Adidas" style={{ height: '48px', filter: 'grayscale(100%)' }} />, title: "Adidas" },
-    { node: <img src="/assets/brands/polo-ralph-lauren.jpg" alt="Polo Ralph Lauren" style={{ height: '48px', filter: 'grayscale(100%)' }} />, title: "Polo Ralph Lauren" },
-    { node: <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/H%26M-Logo.svg/1280px-H%26M-Logo.svg.png" alt="H&M" style={{ height: '48px', filter: 'grayscale(100%)' }} />, title: "H&M" },
-    { node: <img src="https://upload.wikimedia.org/wikipedia/en/thumb/4/45/Beverly_Hills_Polo_Club_logo.svg/1200px-Beverly_Hills_Polo_Club_logo.svg.png" alt="Beverly Hills Polo Club" style={{ height: '48px', filter: 'grayscale(100%)' }} />, title: "Beverly Hills Polo Club" },
-    { node: <img src="/assets/brands/champion-logo.svg" alt="Champion" style={{ height: '48px', filter: 'grayscale(100%)' }} />, title: "Champion" },
-    { node: <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Sch_logo.svg/1200px-Sch_logo.svg.png" alt="Sch" style={{ height: '48px', filter: 'grayscale(100%)' }} />, title: "Sch" }
+    { node: <img src="/assets/brands/nike.svg" alt="Nike" style={{ height: '34px' }} />, title: "Nike" },
+    { node: <img src="/assets/brands/adidas.svg" alt="Adidas" style={{ height: '34px' }} />, title: "Adidas" },
+    { node: <img src="/assets/brands/puma.svg" alt="Puma" style={{ height: '34px' }} />, title: "Puma" },
+    { node: <img src="/assets/brands/zara.svg" alt="Zara" style={{ height: '30px' }} />, title: "Zara" },
+    { node: <img src="/assets/brands/hm.svg" alt="H&M" style={{ height: '34px' }} />, title: "H&M" }
   ];
 
   const formatCurrency = (amount) => {
@@ -177,24 +164,6 @@ const LandingPage = () => {
                 <div className="absolute inset-0 bg-black/20"></div>
               </div>
 
-              {/* Image positioned directly on hero section */}
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[480px] h-[480px] sm:w-[520px] sm:h-[480px] lg:w-[560px] lg:h-[480px] rounded-2xl overflow-hidden z-10">
-                <img 
-                  src="/2.png" 
-                  alt="Fashion Model" 
-                  className="w-full h-full object-contain object-center"
-                  loading="eager"
-                  decoding="sync"
-                  style={{ 
-                    imageRendering: '-webkit-optimize-contrast',
-                    filter: 'contrast(1.05) brightness(1.02)',
-                    transform: 'translateZ(0)',
-                    backfaceVisibility: 'hidden',
-                    willChange: 'transform'
-                  }}
-                    />
-                  </div>
-
               {/* Content Overlay */}
               <div className="absolute inset-0 flex items-start">
                 {/* Large Left Blur Circle - Positioned relative to entire hero section */}
@@ -211,55 +180,16 @@ const LandingPage = () => {
                     </div>
                       </div>
 
-                      <BlurText
-                        text="Simple is More"
-                        delay={150}
-                        animateBy="words"
-                        direction="top"
-                        className="text-7xl lg:text-8xl font-extrabold text-white mb-8 leading-tight tracking-wider"
+                      <h1
+                        className="text-6xl lg:text-7xl font-extrabold text-white mb-8 leading-tight tracking-wide"
                         style={{ fontFamily: "'Playfair Display', serif" }}
-                        stepDuration={0.5}
-                      />
+                      >
+                        Simple is More
+                      </h1>
                     </div>
 
-                    {/* Right Content */}
-                    <div className="flex justify-end">
-                      <div style={{ height: '300px', position: 'relative', marginTop: '200px' }}>
-                        {/* Circular Design Elements - Similar to Customer Card */}
-                        <div className="absolute top-0 left-0 w-80 h-80 bg-white/10 rounded-full -translate-y-40 -translate-x-40 pointer-events-none z-10"></div>
-                        <div className="absolute bottom-0 right-0 w-64 h-64 bg-white/5 rounded-full translate-y-32 translate-x-32 pointer-events-none z-10"></div>
-                        
-                        <CardSwap
-                          cardDistance={40}
-                          verticalDistance={50}
-                          delay={4000}
-                          pauseOnHover={false}
-                          width={350}
-                          height={250}
-                        >
-                          {/* Card 1: Free Delivery - EXACT ScrollStack teal */}
-                          <Card customClass="bg-gradient-to-br from-teal-400 to-teal-600 text-white flex flex-col justify-center items-center text-center p-4">
-                            <Icon name="Truck" size={32} className="text-white mb-3" />
-                            <h3 className="text-xl font-bold mb-1">{t('landing.freeDelivery')}</h3>
-                            <p className="text-sm text-teal-100">{t('landing.ordersOver')}</p>
-                          </Card>
-
-                          {/* Card 2: Secure Payments - EXACT ScrollStack gray-900 */}
-                          <Card customClass="bg-gray-900 text-white flex flex-col justify-center items-center text-center p-4">
-                            <Icon name="Shield" size={32} className="text-white mb-3" />
-                            <h3 className="text-xl font-bold mb-1">{t('landing.securePayments')}</h3>
-                            <p className="text-sm text-gray-300">{t('landing.paymentMethods')}</p>
-                          </Card>
-
-                          {/* Card 3: Local Sellers - EXACT ScrollStack gray gradient */}
-                          <Card customClass="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900 flex flex-col justify-center items-center text-center p-4">
-                            <Icon name="Store" size={32} className="text-teal-600 mb-3" />
-                            <h3 className="text-xl font-bold mb-1">{t('landing.localSellers')}</h3>
-                            <p className="text-sm text-gray-600">{t('landing.acrossCameroon')}</p>
-                            </Card>
-                        </CardSwap>
-                      </div>
-                    </div>
+                    {/* Right Content intentionally left minimal */}
+                    <div className="hidden lg:block" aria-hidden="true"></div>
                   </div>
                 </div>
               </div>
@@ -276,17 +206,19 @@ const LandingPage = () => {
                   </button>
                 </div>
 
-                <div className="flex justify-center -mt-2">
-                  <GlassIcons 
-                    items={categories.map((category, index) => ({
-                      icon: <Icon name={category.icon} size={24} className="text-white" />,
-                      color: category.color,
-                      label: category.name,
-                      customClass: "cursor-pointer",
-                      onClick: () => handleCategoryClick(category.id)
-                    }))} 
-                    className="custom-class"
-                  />
+                <div className="flex flex-wrap justify-center gap-x-8 gap-y-6">
+                  {categories.map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() => handleCategoryClick(category.id)}
+                      className="flex flex-col items-center gap-2 w-20 group"
+                    >
+                      <span className="w-16 h-16 rounded-full bg-teal-50 group-hover:bg-teal-100 flex items-center justify-center transition-colors">
+                        <Icon name={category.icon} size={24} className="text-teal-600" />
+                      </span>
+                      <span className="text-sm text-gray-700 text-center leading-tight">{category.name}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
             </section>
@@ -340,167 +272,47 @@ const LandingPage = () => {
             </section>
           </ErrorBoundary>
 
-          {/* Featured Stack */}
+          {/* Featured collections — static row (scroll-stack animation removed) */}
           <ErrorBoundary>
-                        <ScrollStack
-              itemDistance={150}
-              itemScale={0.05}
-              itemStackDistance={40}
-              stackPosition="15%"
-              scaleEndPosition="5%"
-              baseScale={0.8}
-              rotationAmount={2}
-              blurAmount={1}
-            >
-              <ScrollStackItem itemClassName="bg-gradient-to-br from-teal-400 to-teal-600 text-white mx-6 relative overflow-hidden">
-                {/* Blur Circle Effects for this card */}
-                <div className="absolute top-0 left-0 w-48 h-48 bg-white/15 rounded-full -translate-y-24 -translate-x-24 pointer-events-none"></div>
-                <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 translate-x-16 pointer-events-none"></div>
-                
-                <div className="flex flex-col justify-between h-full relative z-10">
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-6">
-                      <Icon name="Package" size={24} />
-                      <span className="text-xl font-medium">Siriia</span>
+            <section className="px-6 my-10">
+              <div className="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+                <div className="bg-gradient-to-br from-teal-400 to-teal-600 text-white rounded-2xl p-6 flex flex-col justify-between min-h-[200px]">
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Icon name="Package" size={20} />
+                      <span className="text-lg font-medium">Siriia</span>
                     </div>
-                    <h3 className="text-3xl font-bold mb-4 leading-tight">
-                      {t('landing.yourStyleDelivered')}<br />
-                      {t('landing.exclusivelyOnline')}
+                    <h3 className="text-xl font-bold leading-snug">
+                      {t('landing.yourStyleDelivered')} {t('landing.exclusivelyOnline')}
                     </h3>
-                    <button className="bg-white text-teal-600 px-8 py-4 rounded-full font-semibold hover:bg-gray-50 transition-colors text-lg shadow-lg">
-                      {t('landing.shopNow')}
-                    </button>
                   </div>
-                  
-                  <div className="absolute right-8 top-1/2 transform -translate-y-1/2 w-40 h-48 bg-white/10 rounded-2xl overflow-hidden">
-                    <img 
-                      src="https://images.unsplash.com/photo-1556157382-97eda2d62296?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80" 
-                      alt="Person with packages"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                  <button className="self-start mt-4 bg-white text-teal-600 px-6 py-2.5 rounded-full font-semibold hover:bg-gray-50 transition-colors">
+                    {t('landing.shopNow')}
+                  </button>
                 </div>
-              </ScrollStackItem>
 
-              <ScrollStackItem itemClassName="bg-gray-900 text-white mx-6 relative overflow-hidden">
-                {/* Blur Circle Effects for this card */}
-                <div className="absolute top-0 left-0 w-48 h-48 bg-white/15 rounded-full -translate-y-24 -translate-x-24 pointer-events-none"></div>
-                <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 translate-x-16 pointer-events-none"></div>
-                
-                <div className="flex flex-col justify-between h-full relative z-10">
-                  
-                  <div className="relative z-10">
-                    <span className="text-teal-400 mb-4 block text-lg">{t('landing.exploreCollection')}</span>
-                    <h3 className="text-4xl font-bold mb-6 leading-tight">
-                      {t('landing.discoverOur')}<br />
-                      {t('landing.accessoriesCollection')}
+                <div className="bg-gray-900 text-white rounded-2xl p-6 flex flex-col justify-between min-h-[200px]">
+                  <div>
+                    <span className="text-teal-400 mb-2 block text-sm">{t('landing.exploreCollection')}</span>
+                    <h3 className="text-xl font-bold leading-snug">
+                      {t('landing.discoverOur')} {t('landing.accessoriesCollection')}
                     </h3>
-                    <button className="bg-teal-500 text-white px-8 py-4 rounded-full font-semibold hover:bg-teal-600 transition-colors text-lg">
-                      {t('landing.shopNow')}
-                          </button>
-                        </div>
-                  <div className="absolute right-8 top-1/2 transform -translate-y-1/2 w-32 h-32 bg-white/10 rounded-2xl overflow-hidden">
-                    <img 
-                      src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=989&q=80" 
-                      alt="Watch accessories"
-                      className="w-full h-full object-cover"
-                    />
-                          </div>
-                        </div>
-              </ScrollStackItem>
+                  </div>
+                  <button className="self-start mt-4 bg-teal-500 text-white px-6 py-2.5 rounded-full font-semibold hover:bg-teal-600 transition-colors">
+                    {t('landing.shopNow')}
+                  </button>
+                </div>
 
-              <ScrollStackItem itemClassName="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900 mx-6 relative overflow-hidden">
-                {/* Blur Circle Effects for this card */}
-                <div className="absolute top-0 left-0 w-48 h-48 bg-white/15 rounded-full -translate-y-24 -translate-x-24 pointer-events-none"></div>
-                <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 translate-x-16 pointer-events-none"></div>
-                
-                <div className="flex flex-col justify-between h-full relative z-10">
-                  
-                  <div className="relative z-10">
-                    <span className="text-gray-600 mb-4 block text-lg">{t('landing.findPerfectPair')}</span>
-                    <h3 className="text-4xl font-bold mb-6 leading-tight">
-                      {t('landing.exploreOurShoes')}<br />
-                      {t('landing.shoesCollection')}
+                <div className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900 rounded-2xl p-6 flex flex-col justify-between min-h-[200px]">
+                  <div>
+                    <span className="text-gray-600 mb-2 block text-sm">{t('landing.findPerfectPair')}</span>
+                    <h3 className="text-xl font-bold leading-snug">
+                      {t('landing.exploreOurShoes')} {t('landing.shoesCollection')}
                     </h3>
-                    <button className="bg-teal-500 text-white px-8 py-4 rounded-full font-semibold hover:bg-teal-600 transition-colors text-lg">
-                      {t('landing.shopNow')}
-                        </button>
-                      </div>
-                  <div className="absolute right-8 top-1/2 transform -translate-y-1/2 w-32 h-32 bg-white/50 rounded-2xl overflow-hidden">
-                    <img 
-                      src="https://images.unsplash.com/photo-1549298916-b41d501d3772?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=812&q=80" 
-                      alt="Sneakers collection"
-                      className="w-full h-full object-cover"
-                    />
-                    </div>
-                </div>
-                                                              </ScrollStackItem>
-                </ScrollStack>
-              </ErrorBoundary>
-
-          {/* Featured Deals */}
-          <ErrorBoundary>
-            <section className="px-6 mb-8">
-              <div className="container mx-auto">
-                <h2 className="text-2xl font-bold text-gray-900 mb-8">Featured Deals</h2>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Exclusive Deals */}
-                  <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-3xl p-8 text-white relative overflow-hidden">
-                    {/* Blur Circle Effects */}
-                    <div className="absolute top-0 left-0 w-48 h-48 bg-white/15 rounded-full -translate-y-24 -translate-x-24 pointer-events-none"></div>
-                    <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 translate-x-16 pointer-events-none"></div>
-                    
-                    <div className="relative z-10">
-                      <div className="flex items-center gap-2 mb-6">
-                        <Icon name="Package" size={20} />
-                        <span className="font-medium">Siriia</span>
-                      </div>
-                      <h3 className="text-2xl font-bold mb-4">
-                        {t('landing.indulgeIn')}<br />
-                        {t('landing.exclusiveDeals')}
-                      </h3>
-                      <p className="text-blue-100 mb-6">
-                        {t('landing.shopNowAndEnjoyDesc')}
-                      </p>
-                      <button className="bg-white text-blue-600 px-6 py-2 rounded-full font-semibold hover:bg-gray-50 transition-colors">
-                        {t('landing.shopNow')}
-                      </button>
-                </div>
-                    {/* Fashion person image */}
-                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2 w-32 h-40 bg-white/10 rounded-2xl overflow-hidden">
-                      <img 
-                        src="https://images.unsplash.com/photo-1506629905270-11674752ca4d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80" 
-                        alt="Fashion person"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
                   </div>
-
-                  {/* Welcome Offer */}
-                  <div className="bg-gradient-to-r from-teal-400 to-teal-500 rounded-3xl p-8 text-white relative overflow-hidden">
-                    {/* Blur Circle Effects */}
-                    <div className="absolute top-0 left-0 w-48 h-48 bg-white/15 rounded-full -translate-y-24 -translate-x-24 pointer-events-none"></div>
-                    <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 translate-x-16 pointer-events-none"></div>
-                    
-                    <div className="relative z-10">
-                      <h3 className="text-2xl font-bold mb-4">
-                        Welcome offer just<br />
-                        for you
-                      </h3>
-                      <p className="text-teal-100 mb-6">
-                        Sign up and be first to know about<br />
-                        our exclusive offers
-                      </p>
-                      <button className="bg-white text-teal-600 px-6 py-2 rounded-full font-semibold hover:bg-gray-50 transition-colors">
-                        Get discount
-                      </button>
-                    </div>
-                    {/* Placeholder for gift box */}
-                    <div className="absolute right-8 top-1/2 transform -translate-y-1/2 w-24 h-24 bg-orange-400 rounded-2xl flex items-center justify-center">
-                      <Icon name="Gift" size={32} className="text-white" />
-                    </div>
-                  </div>
+                  <button className="self-start mt-4 bg-teal-500 text-white px-6 py-2.5 rounded-full font-semibold hover:bg-teal-600 transition-colors">
+                    {t('landing.shopNow')}
+                  </button>
                 </div>
               </div>
             </section>
@@ -517,116 +329,50 @@ const LandingPage = () => {
                   </button>
                 </div>
 
-                <div className="h-20 relative overflow-hidden">
-                  <LogoLoop
-                    logos={brandLogos}
-                    speed={80}
-                    direction="left"
-                    logoHeight={48}
-                    gap={60}
-                    pauseOnHover
-                    scaleOnHover
-                    fadeOut
-                    fadeOutColor="#ffffff"
-                    ariaLabel="Partner brands"
-                  />
+                <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-6 py-4">
+                  {brandLogos.map((logo, i) => (
+                    <span key={i} className="opacity-70 hover:opacity-100 transition-opacity" title={logo.title}>
+                      {logo.node}
+                    </span>
+                  ))}
                 </div>
               </div>
             </section>
           </ErrorBoundary>
 
-          {/* Recent Posts */}
+          {/* Success Stats */}
           <ErrorBoundary>
-            <section className="px-6 mb-12">
+            <section className="px-6 mb-8">
               <div className="container mx-auto">
-                <h2 className="text-2xl font-bold text-gray-900 mb-8">Recent Posts</h2>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Athletic Outfits */}
-                  <div className="lg:col-span-2">
-                    <div className="bg-gradient-to-r from-gray-400 to-gray-500 rounded-3xl p-8 h-80 text-white relative overflow-hidden">
-                      {/* Blur Circle Effects */}
-                      <div className="absolute top-0 left-0 w-48 h-48 bg-white/15 rounded-full -translate-y-24 -translate-x-24 pointer-events-none"></div>
-                      <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 translate-x-16 pointer-events-none"></div>
-                      
-                      <div className="relative z-10">
-                        <span className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">Outfit</span>
-                        <h3 className="text-3xl font-bold mt-4 mb-4 leading-tight">
-                          Trendy athletic<br />
-                          outfits for active<br />
-                          lifestyles
-                        </h3>
+                <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-3xl p-8 md:p-12 text-white relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
+                  <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 -translate-x-24"></div>
+                  
+                  <div className="relative z-10">
+                    <div className="text-center mb-8">
+                  <h2 className="text-3xl font-bold mb-4">Join Thousands of Happy Customers</h2>
+                      <p className="text-teal-100 text-lg">
+                        Experience the difference with Cameroon's most trusted marketplace
+                      </p>
                 </div>
-                      {/* Athletic people image */}
-                      <div className="absolute right-8 bottom-8 w-32 h-32 bg-white/10 rounded-2xl overflow-hidden">
-                        <img 
-                          src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80" 
-                          alt="Athletic people"
-                          className="w-full h-full object-cover"
-                        />
-                        </div>
-                        </div>
-                      </div>
 
-                  {/* Modern Fashion */}
-                  <div>
-                    <div className="bg-gradient-to-r from-teal-400 to-teal-500 rounded-3xl p-6 h-80 text-white relative overflow-hidden">
-                      {/* Blur Circle Effects */}
-                      <div className="absolute top-0 left-0 w-48 h-48 bg-white/15 rounded-full -translate-y-24 -translate-x-24 pointer-events-none"></div>
-                      <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-y-16 translate-x-16 pointer-events-none"></div>
-                      
-                      <div className="relative z-10">
-                        <span className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">Style</span>
-                        <h3 className="text-xl font-bold mt-4 leading-tight">
-                          Modern fashion for<br />
-                          the contemporary<br />
-                          woman
-                        </h3>
-                      </div>
-                      {/* Fashion woman image */}
-                      <div className="absolute right-4 bottom-4 w-24 h-32 bg-white/10 rounded-2xl overflow-hidden">
-                        <img 
-                          src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80" 
-                          alt="Fashion woman"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                      <div className="text-center">
+                    <div className="text-4xl font-bold mb-2">50K+</div>
+                    <div className="text-teal-100">Active Users</div>
                   </div>
-                </div>
-              </div>
-            </section>
-          </ErrorBoundary>
-
-          {/* Help Section */}
-          <ErrorBoundary>
-            <section className="px-6 mb-12">
-              <div className="container mx-auto">
-                <div className="bg-gray-50 rounded-3xl p-8 relative overflow-hidden">
-                  {/* Blur Circle Effects */}
-                  <div className="absolute top-0 left-0 w-64 h-64 bg-white/20 rounded-full -translate-y-32 -translate-x-32 pointer-events-none"></div>
-                  <div className="absolute bottom-0 right-0 w-48 h-48 bg-white/15 rounded-full translate-y-24 translate-x-24 pointer-events-none"></div>
-                  
-                  <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">We're always here to help</h2>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <Icon name="Headphones" size={24} className="text-white" />
+                      <div className="text-center">
+                        <div className="text-4xl font-bold mb-2">15K+</div>
+                        <div className="text-teal-100">Products Sold</div>
+                  </div>
+                      <div className="text-center">
+                        <div className="text-4xl font-bold mb-2">2K+</div>
+                    <div className="text-teal-100">Verified Sellers</div>
+                  </div>
+                      <div className="text-center">
+                        <div className="text-4xl font-bold mb-2">98%</div>
+                        <div className="text-teal-100">Satisfaction Rate</div>
                       </div>
-                      <h3 className="font-semibold text-gray-900 mb-2">{t('landing.realtimeSupport')}</h3>
-                          </div>
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <Icon name="Users" size={24} className="text-white" />
-                        </div>
-                      <h3 className="font-semibold text-gray-900 mb-2">{t('landing.buyingConcierge')}</h3>
-                        </div>
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <Icon name="Shield" size={24} className="text-white" />
-                      </div>
-                      <h3 className="font-semibold text-gray-900 mb-2">{t('landing.sellingProtection')}</h3>
                     </div>
                   </div>
                 </div>
@@ -643,11 +389,9 @@ const LandingPage = () => {
               
               <div className="container mx-auto">
                 <div className="text-center mb-8">
-                  <ShinyText
-                    text={t('landing.whyChoose')}
-                    className="text-3xl font-bold text-gray-900 mb-3"
-                    shimmerWidth={100}
-                  />
+                  <h2 className="text-3xl font-bold text-gray-900 mb-3">
+                    {t('landing.whyChoose')}
+                  </h2>
                   <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                     {t('landing.whyChooseSubtext')}
                   </p>
@@ -698,46 +442,6 @@ const LandingPage = () => {
             </section>
           </ErrorBoundary>
 
-          {/* Success Stats */}
-          <ErrorBoundary>
-            <section className="px-6 mb-8">
-              <div className="container mx-auto">
-                <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-3xl p-8 md:p-12 text-white relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
-                  <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 -translate-x-24"></div>
-                  
-                  <div className="relative z-10">
-                    <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold mb-4">Join Thousands of Happy Customers</h2>
-                      <p className="text-teal-100 text-lg">
-                        Experience the difference with Cameroon's most trusted marketplace
-                      </p>
-                </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                      <div className="text-center">
-                    <div className="text-4xl font-bold mb-2">50K+</div>
-                    <div className="text-teal-100">Active Users</div>
-                  </div>
-                      <div className="text-center">
-                        <div className="text-4xl font-bold mb-2">15K+</div>
-                        <div className="text-teal-100">Products Sold</div>
-                  </div>
-                      <div className="text-center">
-                        <div className="text-4xl font-bold mb-2">2K+</div>
-                    <div className="text-teal-100">Verified Sellers</div>
-                  </div>
-                      <div className="text-center">
-                        <div className="text-4xl font-bold mb-2">98%</div>
-                        <div className="text-teal-100">Satisfaction Rate</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </ErrorBoundary>
-
           {/* Customer Testimonials */}
           <ErrorBoundary>
             <section className="px-6 mb-8 relative overflow-hidden">
@@ -765,13 +469,7 @@ const LandingPage = () => {
                       and excellent customer service. Highly recommended!"
                     </p>
                     <div className="flex items-center">
-                      <div className="w-12 h-12 rounded-full overflow-hidden">
-                        <img 
-                          src="https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80" 
-                          alt="Marie Kamga"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                      <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-semibold" aria-label="Marie Kamga">MK</div>
                       <div className="ml-4">
                         <div className="font-semibold text-gray-900">Marie Kamga</div>
                         <div className="text-sm text-gray-500">Douala, Cameroon</div>
@@ -790,13 +488,7 @@ const LandingPage = () => {
                       The platform is user-friendly and payments are always on time."
                     </p>
                     <div className="flex items-center">
-                      <div className="w-12 h-12 rounded-full overflow-hidden">
-                        <img 
-                          src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80" 
-                          alt="Jean Nkomo"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                      <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-semibold" aria-label="Jean Nkomo">JN</div>
                       <div className="ml-4">
                         <div className="font-semibold text-gray-900">Jean Nkomo</div>
                         <div className="text-sm text-gray-500">Yaoundé, Cameroon</div>
@@ -815,13 +507,7 @@ const LandingPage = () => {
                       renovation project at competitive prices."
                     </p>
                     <div className="flex items-center">
-                      <div className="w-12 h-12 rounded-full overflow-hidden">
-                        <img 
-                          src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80" 
-                          alt="Amina Tchoua"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                      <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-semibold" aria-label="Amina Tchoua">AT</div>
                       <div className="ml-4">
                         <div className="font-semibold text-gray-900">Amina Tchoua</div>
                         <div className="text-sm text-gray-500">Bamenda, Cameroon</div>
@@ -892,57 +578,6 @@ const LandingPage = () => {
               </div>
             </section>
           </ErrorBoundary>
-
-          {/* Mobile App Download */}
-          <ErrorBoundary>
-            <section className="px-6 mb-8">
-              <div className="container mx-auto">
-                <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-3xl p-8 md:p-12 text-white overflow-hidden relative">
-                  <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 rounded-full -translate-y-48 translate-x-48"></div>
-                  
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center relative z-10">
-                    <div>
-                      <h2 className="text-3xl font-bold mb-6">Shop Anytime, Anywhere</h2>
-                      <p className="text-gray-300 text-lg mb-8 leading-relaxed">
-                        Download the IziShopin mobile app for the ultimate shopping experience. 
-                        Get exclusive mobile-only deals, push notifications for your favorite items, 
-                        and shop on the go.
-                      </p>
-                      
-                      <div className="flex flex-col sm:flex-row gap-4">
-                        <button className="flex items-center space-x-3 bg-white text-gray-900 px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors">
-                          <div className="w-8 h-8 bg-gray-900 rounded flex items-center justify-center">
-                            <Icon name="Smartphone" size={16} className="text-white" />
-                          </div>
-                          <div className="text-left">
-                            <div className="text-xs text-gray-600">Download on the</div>
-                            <div className="text-sm font-semibold">App Store</div>
-                          </div>
-                  </button>
-
-                        <button className="flex items-center space-x-3 bg-white text-gray-900 px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors">
-                          <div className="w-8 h-8 bg-gray-900 rounded flex items-center justify-center">
-                            <Icon name="Smartphone" size={16} className="text-white" />
-                          </div>
-                          <div className="text-left">
-                            <div className="text-xs text-gray-600">Get it on</div>
-                            <div className="text-sm font-semibold">Google Play</div>
-                          </div>
-                  </button>
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-center">
-                      <div className="w-64 h-64 bg-teal-500/20 rounded-full flex items-center justify-center">
-                        <Icon name="Smartphone" size={80} className="text-teal-400" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </ErrorBoundary>
-
           {/* Final CTA */}
           <ErrorBoundary>
             <section className="px-6 mb-12">

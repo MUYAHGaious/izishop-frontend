@@ -311,15 +311,8 @@ const AppRoutes = () => {
          element={<TagDemo />}
        />
       
-      {/* Customer routes */}
-      <Route 
-        path="/wishlist" 
-        element={
-          <AuthenticatedRouteGuard>
-            <Wishlist />
-          </AuthenticatedRouteGuard>
-        } 
-      />
+      {/* Wishlist — public (guest wishlist persists in localStorage) */}
+      <Route path="/wishlist" element={<Wishlist />} />
       
       {/* Casual seller routes */}
       <Route 
@@ -361,15 +354,8 @@ const AppRoutes = () => {
       <Route path="/landing-page" element={<Navigate to="/" replace />} />
       <Route path="/shop-profile" element={<Navigate to="/shops-listing" replace />} />
       
-      {/* Customer Support */}
-      <Route 
-        path="/customer-support" 
-        element={
-          <AuthenticatedRouteGuard>
-            <CustomerSupport />
-          </AuthenticatedRouteGuard>
-        } 
-      />
+      {/* Customer Support — public (must be reachable without an account) */}
+      <Route path="/customer-support" element={<CustomerSupport />} />
       
       {/* Order Management */}
       <Route 

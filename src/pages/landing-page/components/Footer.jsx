@@ -250,24 +250,6 @@ const Footer = () => {
               {t('footer.contactInfo')}
             </p>
 
-            {/* Admin Links */}
-            <div className="mt-2 pt-2 border-t border-background/10">
-              <p className="text-xs text-background/40 mb-1">{t('footer.adminAccess')}:</p>
-              <div className="flex justify-center space-x-4">
-                <a
-                  href="/admin-setup"
-                  className="text-xs text-background/60 hover:text-primary marketplace-transition"
-                >
-                  {t('footer.adminSetup')}
-                </a>
-                <a
-                  href="/admin-login"
-                  className="text-xs text-background/60 hover:text-primary marketplace-transition"
-                >
-                  {t('footer.adminLogin')}
-                </a>
-              </div>
-            </div>
           </div>
         </div>
       </div>

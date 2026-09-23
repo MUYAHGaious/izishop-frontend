@@ -44,9 +44,9 @@ const ListingCard = ({ listing, onDeleteListing, showActions, viewMode }) => {
             {!imageLoaded && (
               <div className="absolute inset-0 bg-gray-200 animate-pulse rounded-lg"></div>
             )}
-            {listing.images && listing.images.length > 0 ? (
+            {(listing.image_urls || listing.images) && (listing.image_urls || listing.images).length > 0 ? (
               <img 
-                src={listing.images[0]} 
+                src={(listing.image_urls || listing.images)[0]} 
                 alt={listing.title}
                 className={`w-full h-full object-cover rounded-lg transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                 onLoad={() => setImageLoaded(true)}
@@ -147,9 +147,9 @@ const ListingCard = ({ listing, onDeleteListing, showActions, viewMode }) => {
         {!imageLoaded && (
           <div className="absolute inset-0 bg-gray-200 animate-pulse"></div>
         )}
-        {listing.images && listing.images.length > 0 ? (
+        {(listing.image_urls || listing.images) && (listing.image_urls || listing.images).length > 0 ? (
           <img 
-            src={listing.images[0]} 
+            src={(listing.image_urls || listing.images)[0]} 
             alt={listing.title}
             className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
             onLoad={() => setImageLoaded(true)}

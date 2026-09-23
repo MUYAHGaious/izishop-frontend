@@ -11,7 +11,7 @@ function Image({
   ...props
 }) {
   const [hasError, setHasError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!!src);
   const [currentSrc, setCurrentSrc] = useState(src);
   const [attempts, setAttempts] = useState(0);
   const retryTimeoutRef = useRef(null);
@@ -172,6 +172,19 @@ function Image({
           <div className="text-xs opacity-40 mt-1">
             Failed after {attempts} attempts
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // No source provided: show a static placeholder instead of an infinite spinner
+  if (!currentSrc || currentSrc === '') {
+    if (fallback) return fallback;
+    return (
+      <div className={`${className} bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center border border-gray-200 rounded`}>
+        <div className="text-gray-400 text-center p-2">
+          <div className="w-8 h-8 mx-auto mb-1 opacity-40">📷</div>
+          <div className="text-xs opacity-60">No image</div>
         </div>
       </div>
     );

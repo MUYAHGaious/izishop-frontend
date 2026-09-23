@@ -141,7 +141,7 @@ const ProductGrid = ({ products, shopId }) => {
           {filteredAndSortedProducts.map((product, index) => (
           <Link
             key={product.id}
-            to={`/product-detail-modal?id=${product.id}`}
+            to={`/product-detail?id=${product.id}`}
             className="group bg-white/70 backdrop-blur-sm rounded-3xl border border-slate-200/50 overflow-hidden hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-500 hover:-translate-y-2"
           >
             {/* Product Image */}

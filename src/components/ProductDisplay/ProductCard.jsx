@@ -154,7 +154,7 @@ const ProductCard = ({
 
   const renderImage = () => (
     <div className={config.imageContainer}>
-      <Link to={`/product-detail-modal?id=${product.id}`}>
+      <Link to={`/product-detail?id=${product.id}`}>
         <Image
           src={product.image_urls?.[0] || product.image || '/assets/images/no_image.png'}
           alt={product.name}
@@ -199,7 +199,7 @@ const ProductCard = ({
       {showQuickActions && (
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
           <div className="flex gap-2">
-            <Link to={`/product-detail-modal?id=${product.id}`}>
+            <Link to={`/product-detail?id=${product.id}`}>
               <Button variant="secondary" size="sm" iconName="Eye">
                 Quick View
               </Button>
@@ -221,7 +221,7 @@ const ProductCard = ({
         </Link>
       )}
 
-      <Link to={`/product-detail-modal?id=${product.id}`}>
+      <Link to={`/product-detail?id=${product.id}`}>
         <h3 className={config.title}>
           {product.name}
         </h3>

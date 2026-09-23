@@ -81,7 +81,7 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist }) => {
     <div className="group bg-card rounded-lg border border-border hover:shadow-moderate transition-all duration-200 overflow-hidden">
       {/* Product Image */}
       <div className="relative aspect-square overflow-hidden bg-muted">
-        <Link to={`/product-detail-modal?id=${product.id}`}>
+        <Link to={`/product-detail?id=${product.id}`}>
           <Image
             src={product.image_url || product.image_urls?.[0] || product.image || '/assets/images/no_image.png'}
             alt={product.name}
@@ -147,7 +147,7 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist }) => {
         {/* Quick Actions Overlay */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
           <div className="flex gap-2">
-            <Link to={`/product-detail-modal?id=${product.id}`}>
+            <Link to={`/product-detail?id=${product.id}`}>
               <Button variant="secondary" size="sm" iconName="Eye">
                 Quick View
               </Button>
@@ -229,7 +229,7 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist }) => {
         </div>
 
         {/* Product Name */}
-        <Link to={`/product-detail-modal?id=${product.id}`}>
+        <Link to={`/product-detail?id=${product.id}`}>
           <h3 className="font-medium text-text-primary line-clamp-2 hover:text-primary transition-colors mb-2">
             {product.name}
           </h3>

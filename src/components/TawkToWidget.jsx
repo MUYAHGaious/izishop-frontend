@@ -11,6 +11,13 @@ export default function TawkToWidget() {
     window.__tawkLoaded = true;
     window.Tawk_API = window.Tawk_API || {};
     window.Tawk_LoadStart = new Date();
+    // Lift the launcher above sticky bottom bars (e.g. "Proceed to buy") on mobile
+    window.Tawk_API.customStyle = {
+      visibility: {
+        desktop: { position: 'br', xOffset: 20, yOffset: 20 },
+        mobile: { position: 'br', xOffset: 10, yOffset: 90 },
+      },
+    };
 
     const s1 = document.createElement('script');
     s1.async = true;

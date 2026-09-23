@@ -361,7 +361,7 @@ const ShopProfile = () => {
                 {activeTab === 'products' && (
                   <ModernProductGrid 
                     products={products} 
-                    onProductClick={(productId) => navigate(`/product-detail-modal?id=${productId}`)}
+                    onProductClick={(productId) => navigate(`/product-detail?id=${productId}`)}
                     onAddToCart={(productId) => {
                       showToast('Product added to cart!', 'success');
                     }}
@@ -374,7 +374,7 @@ const ShopProfile = () => {
                 {activeTab === 'collections' && (
                   <ProductCollections
                     products={products}
-                    onProductClick={(productId) => navigate(`/product-detail-modal?id=${productId}`)}
+                    onProductClick={(productId) => navigate(`/product-detail?id=${productId}`)}
                     onAddToCart={(productId) => {
                       showToast('Product added to cart!', 'success');
                     }}

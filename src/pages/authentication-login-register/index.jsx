@@ -236,30 +236,10 @@ const AuthenticationLoginRegister = () => {
     }
   };
 
-  const handleSocialLogin = async (provider) => {
-    setIsLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const mockSocialUser = {
-        id: Date.now(),
-        email: `user@${provider}.com`,
-        name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
-        role: 'customer',
-        avatar: `https://ui-avatars.com/api/?name=${provider}+User&background=1E40AF&color=fff`,
-        provider: provider,
-        createdAt: new Date().toISOString()
-      };
-      localStorage.setItem('user', JSON.stringify(mockSocialUser));
-      localStorage.setItem('authToken', `mock-${provider}-token-` + Date.now());
-      setShowSuccessMessage(true);
-      setTimeout(() => {
-        redirectToDashboard(mockSocialUser.role);
-      }, 2000);
-    } catch (error) {
-      console.error('Social login error:', error);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleSocialLogin = (provider) => {
+    // No real OAuth is wired up yet. Never fake a login (no mock user/token).
+    const name = provider.charAt(0).toUpperCase() + provider.slice(1);
+    showToast(`${name} sign-in isn't available yet — please sign in with your email.`, 'info');
   };
 
   // Show auto-login loading message using LoadingScreen component

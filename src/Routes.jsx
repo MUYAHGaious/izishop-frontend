@@ -234,15 +234,8 @@ const AppRoutes = () => {
         } 
       />
       
-      {/* Cart and checkout - require authentication */}
-      <Route 
-        path="/shopping-cart" 
-        element={
-          <AuthenticatedRouteGuard>
-            <ShoppingCart />
-          </AuthenticatedRouteGuard>
-        } 
-      />
+      {/* Cart is public (guest cart); only checkout requires authentication */}
+      <Route path="/shopping-cart" element={<ShoppingCart />} />
       <Route 
         path="/shopping-cart-checkout" 
         element={

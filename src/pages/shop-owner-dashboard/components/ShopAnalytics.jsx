@@ -73,11 +73,11 @@ const ShopAnalytics = () => {
           console.warn('Failed to load traffic sources, using fallback data:', trafficError);
           // Fallback to mock data only if API fails
           setTrafficSources([
-            { source: 'Direct', visitors: Math.floor(Math.random() * 300) + 100, percentage: 35 },
-            { source: 'Social Media', visitors: Math.floor(Math.random() * 200) + 80, percentage: 27 },
-            { source: 'Search Engine', visitors: Math.floor(Math.random() * 180) + 70, percentage: 22 },
-            { source: 'Email', visitors: Math.floor(Math.random() * 100) + 30, percentage: 11 },
-            { source: 'Referral', visitors: Math.floor(Math.random() * 50) + 20, percentage: 5 }
+            { source: 'Direct', visitors: 0, percentage: 35 },
+            { source: 'Social Media', visitors: 0, percentage: 27 },
+            { source: 'Search Engine', visitors: 0, percentage: 22 },
+            { source: 'Email', visitors: 0, percentage: 11 },
+            { source: 'Referral', visitors: 0, percentage: 5 }
           ]);
         }
         

@@ -41,10 +41,10 @@ const SystemMonitoringWidget = () => {
     const interval = setInterval(() => {
       setSystemStatus(prev => ({
         ...prev,
-        activeUsers: prev.activeUsers + Math.floor(Math.random() * 10) - 5,
-        responseTime: Math.max(0.8, prev.responseTime + (Math.random() - 0.5) * 0.2),
-        serverLoad: Math.max(0, Math.min(100, prev.serverLoad + Math.floor(Math.random() * 6) - 3)),
-        memoryUsage: Math.max(0, Math.min(100, prev.memoryUsage + Math.floor(Math.random() * 4) - 2))
+        activeUsers: prev.activeUsers + 0 - 5,
+        responseTime: Math.max(0.8, prev.responseTime + (0 - 0.5) * 0.2),
+        serverLoad: Math.max(0, Math.min(100, prev.serverLoad + 0 - 3)),
+        memoryUsage: Math.max(0, Math.min(100, prev.memoryUsage + 0 - 2))
       }));
     }, 5000);
 

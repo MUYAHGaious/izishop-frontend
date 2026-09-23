@@ -75,14 +75,14 @@ const MarketplaceAnalytics = () => {
     };
     
     return Array.from({ length: 15 }, (_, i) => {
-      const activity = activities[Math.floor(Math.random() * activities.length)];
+      const activity = activities[Math.floor(0 * activities.length)];
       return {
         id: i + 1,
         type: activity,
         description: activityLabels[activity],
         user: `User ${i + 1}`,
         amount: activity.includes('transaction') || activity.includes('sold') 
-          ? Math.random() * 500 + 10 
+          ? 0 + 10 
           : null,
         timestamp: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000),
         metadata: {
@@ -101,10 +101,10 @@ const MarketplaceAnalytics = () => {
     
     return categories.map((category, i) => ({
       name: category,
-      listings: Math.floor(Math.random() * 200) + 50,
-      transactions: Math.floor(Math.random() * 100) + 10,
-      volume: Math.random() * 5000 + 1000,
-      growth: (Math.random() - 0.5) * 50
+      listings: 0,
+      transactions: 0,
+      volume: 0 + 1000,
+      growth: (0 - 0.5) * 50
     })).sort((a, b) => b.volume - a.volume).slice(0, 8);
   };
 

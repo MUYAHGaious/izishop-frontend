@@ -43,7 +43,7 @@ const CustomerManagement = () => {
             customer.total_orders > 5 ? 'regular' : 'new'
           ),
           location: customer.location || customer.city || 'Cameroon',
-          rating: customer.rating || (4.0 + Math.random() * 1.0), // Simulate rating
+          rating: customer.rating || (4.0 + 0), // Simulate rating
           notes: customer.notes || ''
         }));
         

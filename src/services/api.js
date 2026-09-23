@@ -801,9 +801,7 @@ class ApiService {
         const categoryBoost = ['electronics', 'fashion', 'home'].includes(product.category?.toLowerCase()) ? 1.5 : 1;
         trendScore *= categoryBoost;
         
-        // Add some randomness to simulate market conditions
-        const marketFactor = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2
-        trendScore *= marketFactor;
+        // Trend is derived from real signals only (orders, price, stock) — no randomness
         
         // Convert to percentage growth
         const growthPercentage = Math.round((trendScore - 2.5) * 10); // Center around 0
@@ -1520,8 +1518,8 @@ class ApiService {
       });
     } catch (error) {
       console.warn('Failed to fetch delivery details:', error);
-      // Return mock delivery details
-      return this.getMockDeliveryDetails(deliveryId);
+      // Do not fabricate data — surface the failure so the UI shows an empty/error state
+      return null;
     }
   }
 

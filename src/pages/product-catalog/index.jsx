@@ -410,8 +410,8 @@ const ProductCatalog = () => {
       originalPrice: parseFloat(product.original_price || product.price),
       image: productImage,
       image_urls: product.image_urls || [],
-      rating: product.rating || Math.round((Math.random() * 1.5 + 3.5) * 10) / 10,
-      reviewCount: product.review_count || Math.floor(Math.random() * 200) + 10,
+      rating: product.rating || 0,
+      reviewCount: product.review_count || 0,
       stock: product.stock_quantity,
       shopName: shopName,
       shopId: product.shop_id || product.seller_id, // Use shop_id if available, fallback to seller_id
@@ -572,7 +572,7 @@ const ProductCatalog = () => {
     const totalCount = products.length;
     setCategories(prev => prev.map(cat => ({
       ...cat,
-      count: cat.id === 'all' ? totalCount : Math.floor(Math.random() * totalCount * 0.3)
+      count: cat.id === 'all' ? totalCount : products.filter(p => (p.category || '').toLowerCase() === cat.id).length
     })));
   };
 

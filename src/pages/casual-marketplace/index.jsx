@@ -113,7 +113,7 @@ const CasualMarketplace = () => {
       // Update categories with real counts
       setCategories(prev => prev.map(cat => {
         const apiCat = apiCategories.find(api => api === cat.id);
-        return apiCat ? { ...cat, count: Math.floor(Math.random() * 50) } : cat;
+        return apiCat ? { ...cat } : cat;
       }));
     } catch (error) {
       console.log('Categories endpoint not available, using defaults');
